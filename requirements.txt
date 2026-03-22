@@ -1,0 +1,15 @@
+yfinance
+pandas
+pandas_ta
+numpy
+ccxt
+requests
+joblib
+scikit-learn
+rich
+feedparser
+textblob
+pytz
+python-dotenv
+matplotlib
+websocket-client
