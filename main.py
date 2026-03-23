@@ -105,7 +105,17 @@ try:
     ISLEM_MIKTARI_USDT = AYAR.get("islem_miktari_usdt", 50)
     SL_YUZDE = AYAR.get("sl_yuzde", 0.01)
     TP_YUZDE = AYAR.get("tp_yuzde", 0.02)
-except: exit()
+except Exception as e: 
+    print(f"⚠️ [KRİTİK UYARI] ayar.json okunamadı veya bozuk! Bot varsayılan ayarlar ile zorla başlatılıyor... Hata: {e}")
+    PORTFOY = []
+    REF = "BTC/USDT"
+    RISK_AYAR = {"tp_atr_carpani": 2.0}
+    TELEGRAM_AYAR = {"aktif_mi": False}
+    TESTNET_API_KEY = ""
+    TESTNET_SECRET = ""
+    ISLEM_MIKTARI_USDT = 11.5
+    SL_YUZDE = 0.01
+    TP_YUZDE = 0.02
 
 # Kaptan, bu liste senin yeni ordun ve sektörleri:
 SEKTORLER = {
