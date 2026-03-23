@@ -5,8 +5,8 @@ import joblib
 import os
 
 class BeyinMotoru:
-    def __init__(self, n_estimators=300, max_depth=4):
-        # Ortak model hiperparametreleri (Overfit önlemleri alınmış V6 Ayarları)
+    def __init__(self, n_estimators=300, max_depth=5):
+        # Model 4 Optimizasyon Şampiyonu: Derinlik 5, Ağaç 300
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.min_samples_split = 20
