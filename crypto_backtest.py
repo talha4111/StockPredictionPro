@@ -83,6 +83,23 @@ def ccxt_gecmis_tam(coin, ref_coin='BTC/USDT', limit=1500, timeframe='1h'):
         df['Vol_Ret'] = df['volume'].pct_change()
         df['Korelasyon'] = df['Hedef_Ret'].rolling(window=14).corr(df['Ref_Ret'])
         df['Kriz'] = np.where(df['Hedef_Ret'] < -0.05, 1.0, 0.0)
+        epsilon = 1e-9
+        high_low_diff = df['high'] - df['low']
+        high_low_diff = high_low_diff.replace(0, epsilon)
+        
+        tr = pd.concat([df['high'] - df['low'], (df['high'] - df['Hedef_Close'].shift()).abs(), (df['low'] - df['Hedef_Close'].shift()).abs()], axis=1).max(axis=1)
+        tr = tr.replace(0, epsilon)
+        df['CHOP'] = 100 * np.log10(tr.rolling(14).sum() / high_low_diff.rolling(14).max()) / np.log10(14)
+        df['CHOP'].fillna(50, inplace=True)
+        
+        # Squeeze Momentum
+        df['Squeeze_ON'] = (df['BB_Width'] < df.ta.atr(high='high', low='low', close='Hedef_Close', length=20) * 1.5).astype(int)
+        
+        # Sentimental Veriler (Backtestte geçmiş OI/Funding alınamadığı için hacimsel simüle edilir)
+        df['Open_Interest'] = df['volume'].rolling(24).mean()
+        df['Funding_Rate'] = df['Hedef_Ret'].rolling(8).mean()
+        
+        # Hisse motorundan kalma zorunlu yapıtaşı destekleyicileri
         df['Haber_Duygu_Puani'] = 50.0 
         df['Faiz_Orani'] = 50.0 
         df['Dolar_Kuru'] = df['Hedef_Close'] / 10.0
