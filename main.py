@@ -374,9 +374,12 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
             toplam_kasa = 1000.0
             
         if is_live:
-            kullanilacak_margin = min(11.5, toplam_kasa * 0.9)  # Max 11.5 USDT Fix
-            kaldirac_orani = 2  # Güvenlik için Sanal ile aynı (2x)
-            risk_metni = "LIVE 11.5 USDT Hard Limit (2x)"
+            if toplam_kasa > 12.0: kullanilacak_margin = 11.5
+            else: kullanilacak_margin = toplam_kasa * 0.95
+            
+            kaldirac_orani = int(max(1, min(20, ai_guven_skoru / 10.0 if getattr(margin_override, 'is_dynamic', False) else 2))) # Sabit 2x
+            kaldirac_orani = 2  # Güvenlik ve matematik hesabı için net 2x'e kilitledik
+            risk_metni = f"LIVE Hard Limit: {kullanilacak_margin:.2f}$ (Hedef: 2x)"
         else:
             if margin_override is not None:
                 margin_yuzdesi = margin_override
@@ -392,13 +395,15 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
                 risk_metni = "%3 (Muhafazakar Mod)"
             kullanilacak_margin = toplam_kasa * margin_yuzdesi
             
-        # 1. Kaldıraç Ayarlama
+        # 1. Kaldıraç Ayarlama (Çökerse sessiz gitmesin, uyaralım)
         try:
             borsa_istemci.set_leverage(kaldirac_orani, sembol)
-        except Exception:
-            pass
+            kaldirac = kaldirac_orani
+        except Exception as e:
+            print(f"⚠️ [DİKKAT] Binance API Kaldıraç Ayarını Reddetti! (Hata: {e})")
+            print(f"⚠️ Binance mobil uygulamasındaki varsayılan kaldıracınız (Örn: 5x veya 20x) geçerli olacak. Bu yüzden cüzdandan kesilen blokaj tutarı (Marjin) beklediğinizden daha düşük veya yüksek görünebilir!")
+            kaldirac = kaldirac_orani # Hesaplama için varsayılanı kullanmaya devam (Notional boyutu sabit tutmak için)
 
-        kaldirac = kaldirac_orani
         islem_hacmi = kullanilacak_margin * kaldirac 
         
         miktar_hesap = islem_hacmi / anlik_fiyat
