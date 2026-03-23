@@ -893,19 +893,15 @@ def pozisyon_takip_paneli():
                         if poz['scale_out_done']: tsl_tetik = max(tsl_tetik, poz['giris'] * 1.002) # Kârda kalma garantisi
 
                         if not poz['scale_out_done'] and anlik >= poz['scale_out']:
-                            net_kar_yuzde = ((anlik - poz['giris']) / poz['giris']) * 100 * 10.0 # 10x
-                            if net_kar_yuzde >= 0.5:
-                                poz['scale_out_done'] = True
-                                kar_brut = (anlik - poz['giris']) * (poz['miktar'] / 2)
-                                SANAL_KRIPTO_KASA += kar_brut
-                                poz['miktar'] = poz['miktar'] / 2
-                                print(f"✨ [SCALE-OUT] {sym} %50 Kâr Alındı. Yeni Kasa: {SANAL_KRIPTO_KASA:.2f}$")
-                            
+                            poz['scale_out_done'] = True
+                            kar_brut = (anlik - poz['giris']) * (poz['miktar'] / 2)
+                            SANAL_KRIPTO_KASA += kar_brut
+                            poz['miktar'] = poz['miktar'] / 2
+                            print(f"✨ [SCALE-OUT] {sym} %50 Kâr Alındı. Yeni Kasa: {SANAL_KRIPTO_KASA:.2f}$")
+                        
                         if anlik >= poz['hedef']:
-                            net_kar_yuzde = ((anlik - poz['giris']) / poz['giris']) * 100 * 10.0
-                            if net_kar_yuzde >= 0.5:
-                                kapanma_fiyati = poz['hedef']
-                                sebep = "TAKE PROFIT"
+                            kapanma_fiyati = poz['hedef']
+                            sebep = "TAKE PROFIT"
                         elif anlik <= tsl_tetik or anlik <= poz['zayiat']:
                             kapanma_fiyati = anlik
                             sebep = "STOP/TSL"
@@ -916,19 +912,15 @@ def pozisyon_takip_paneli():
                         if poz['scale_out_done']: tsl_tetik = min(tsl_tetik, poz['giris'] * 0.998)
                         
                         if not poz['scale_out_done'] and anlik <= poz['scale_out']:
-                            net_kar_yuzde = ((poz['giris'] - anlik) / poz['giris']) * 100 * 10.0
-                            if net_kar_yuzde >= 0.5:
-                                poz['scale_out_done'] = True
-                                kar_brut = (poz['giris'] - anlik) * (poz['miktar'] / 2)
-                                SANAL_KRIPTO_KASA += kar_brut
-                                poz['miktar'] = poz['miktar'] / 2
-                                print(f"✨ [SCALE-OUT] {sym} %50 Kâr Alındı. Yeni Kasa: {SANAL_KRIPTO_KASA:.2f}$")
+                            poz['scale_out_done'] = True
+                            kar_brut = (poz['giris'] - anlik) * (poz['miktar'] / 2)
+                            SANAL_KRIPTO_KASA += kar_brut
+                            poz['miktar'] = poz['miktar'] / 2
+                            print(f"✨ [SCALE-OUT] {sym} %50 Kâr Alındı. Yeni Kasa: {SANAL_KRIPTO_KASA:.2f}$")
                             
                         if anlik <= poz['hedef']:
-                            net_kar_yuzde = ((poz['giris'] - anlik) / poz['giris']) * 100 * 10.0
-                            if net_kar_yuzde >= 0.5:
-                                kapanma_fiyati = poz['hedef']
-                                sebep = "TAKE PROFIT"
+                            kapanma_fiyati = poz['hedef']
+                            sebep = "TAKE PROFIT"
                         elif anlik >= tsl_tetik or anlik >= poz['zayiat']:
                             kapanma_fiyati = anlik
                             sebep = "STOP/TSL"
