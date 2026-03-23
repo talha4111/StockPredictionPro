@@ -295,8 +295,9 @@ def islem_ac(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, margin_over
             return  # DEMO Max 7 İşlem Sınırı
             
         if sembol not in SANAL_KRIPTO_POZISYONLAR:
-            # 1. Sabit İşlem Büyüklüğü (Lot Size Normalizasyonu)
-            islem_boyutu = 11.5 # Maksimum bütçe
+            # 1. Dinamik İşlem Büyüklüğü (Yapay Zeka Kelly Bütçesi)
+            margin_yuzdesi = margin_override if margin_override is not None else 0.05
+            islem_boyutu = max(11.5, SANAL_KRIPTO_KASA * margin_yuzdesi) # Asgari 11.5, normalde Kelly bütçesi
             
             # 2. Fizik Kuralı: Gerçek dünyadaki adet (Kaldıraç Çarpanı YOK)
             anlik_fiyat = float(anlik_fiyat)
