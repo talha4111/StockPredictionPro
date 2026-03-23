@@ -1130,4 +1130,16 @@ if __name__ == "__main__":
     t_panel = threading.Thread(target=pozisyon_takip_paneli, daemon=True)
     t_panel.start()
     
-    surekli_tarama_ve_analiz()
+    # --- Ölümsüzlük Döngüsü (Continuous Execution Engine) ---
+    import sys
+    while True:
+        try:
+            surekli_tarama_ve_analiz()
+        except KeyboardInterrupt:
+            print("\n🛑 Sistem manuel olarak durduruldu.")
+            sys.exit(0)
+        except Exception as e:
+            zaman = datetime.now().strftime('%H:%M:%S')
+            print(f"\n🔥 [{zaman}] [KRİTİK HATA] Ana Motor Şiddetli Hata Aldı: {e}")
+            print("⏳ 10 Saniye sonra sistem kendi kendini otonom olarak yeniden başlatacak (Rate Limit ve CPU Koruması)...")
+            time.sleep(10)
