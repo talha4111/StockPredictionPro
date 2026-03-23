@@ -299,9 +299,13 @@ def islem_ac(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, margin_over
             margin_yuzdesi = margin_override if margin_override is not None else 0.05
             islem_boyutu = max(11.5, SANAL_KRIPTO_KASA * margin_yuzdesi) # Asgari 11.5, normalde Kelly bütçesi
             
-            # 2. Fizik Kuralı: Gerçek dünyadaki adet (Kaldıraç Çarpanı YOK)
+            # 2. Kaldıraç Etkisi (Demo = 5x)
+            kaldirac_orani = 5 
+            islem_hacmi = islem_boyutu * kaldirac_orani
+            
+            # 3. Fiziksel Adet Hesaplaması (Notional Volume üzerinden)
             anlik_fiyat = float(anlik_fiyat)
-            miktar = float(f"{islem_boyutu / anlik_fiyat:.6f}")
+            miktar = float(f"{islem_hacmi / anlik_fiyat:.6f}")
             
             atr_mesafe = abs(anlik_fiyat - hesaplanan_sl)
             volatilite_yuzde = (atr_mesafe / anlik_fiyat) * 100
