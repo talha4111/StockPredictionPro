@@ -13,8 +13,8 @@ class BeyinMotoru:
         self.min_samples_leaf = 10
         self.random_state = 42
         
-        # Kullanılacak Özellik Sütunları Ayrıştırıldı (Borsa vs Kripto)
-        self.stock_features = ['Hedef_Ret', 'Ref_Ret', 'RSI', 'MACD', 'Vol_Ret', 'Korelasyon', 'OBV', 'BB_Width', 'MFI', 'VP_Sapma', 'Kriz', 'Haber_Duygu_Puani', 'Faiz_Orani', 'Dolar_Kuru']
+        # Kullanılacak Özellik Sütunları (Sadece GERÇEK verİ — sahte/sabit değerler çıkarıldı)
+        self.stock_features = ['Hedef_Ret', 'Ref_Ret', 'RSI', 'MACD', 'Vol_Ret', 'Korelasyon', 'OBV', 'BB_Width', 'MFI', 'VP_Sapma', 'ADX', 'EMA_Slope']
         self.crypto_features = self.stock_features + ['Open_Interest', 'Funding_Rate', 'CHOP', 'Squeeze_ON']
 
     def df_hazirla(self, df):
@@ -32,24 +32,22 @@ class BeyinMotoru:
         if 'Vol_Ret' not in df.columns and 'Volume' in df.columns:
             df['Vol_Ret'] = df['Volume'].pct_change()
         if 'Korelasyon' not in df.columns:
-            df['Korelasyon'] = 0.0 # Boşsa nötr referans korelasyonu doldur
+            df['Korelasyon'] = 0.0
         if 'Kriz' not in df.columns:
             df['Kriz'] = 0.0 
-        if 'Haber_Duygu_Puani' not in df.columns:
-            df['Haber_Duygu_Puani'] = 50.0 
-        if 'Faiz_Orani' not in df.columns:
-            df['Faiz_Orani'] = 50.0  # Varsayılan TR Politika Faizi %50
-        if 'Dolar_Kuru' not in df.columns:
-            df['Dolar_Kuru'] = df['Hedef_Close'] / 10.0 # Sembolik
+        if 'ADX' not in df.columns:
+            df['ADX'] = 25.0  # Nötr ADX değeri
+        if 'EMA_Slope' not in df.columns:
+            df['EMA_Slope'] = 0.0  # Nötr trend
             
-        # Yeni Eklenen Güçlü Metrikler (Eksikse Baseline Doldurur)
+        # Kripto Özel Metrikler (Eksikse Baseline Doldurur)
         if 'Open_Interest' not in df.columns: df['Open_Interest'] = 0.0
         if 'Funding_Rate' not in df.columns: df['Funding_Rate'] = 0.0001
         if 'CHOP' not in df.columns: df['CHOP'] = 50.0
         if 'Squeeze_ON' not in df.columns: df['Squeeze_ON'] = 0.0
             
-        # Data Leakage olmadan 4 mum sonrasının getiri oranını hesapla
-        df['Gelecek_Ret'] = (df['Hedef_Close'].shift(-4) - df['Hedef_Close']) / df['Hedef_Close']
+        # Data Leakage olmadan 8 mum sonrasının getiri oranını hesapla (15m x 8 = 2 saat ileri)
+        df['Gelecek_Ret'] = (df['Hedef_Close'].shift(-8) - df['Hedef_Close']) / df['Hedef_Close']
         df.dropna(inplace=True)
         
         # 0'dan büyükse Yükseliş(1), değilse Düşüş(0)
@@ -104,16 +102,25 @@ class BeyinMotoru:
     def tahmin_et(self, sembol, df, is_crypto=True):
         """
         Önceden eğitilmiş modeli yükler ve gelen ANLIK veri (df) üzerinden son satırı okuyarak tahminde bulunur.
+        Model dosyası yoksa otomatik olarak eğitir (Auto-Train).
         Dönüş: Tahmin Olasılığı (Float, 0.0 ile 1.0 arası)
         """
         safe_name = sembol.replace('/', '-')
         prefix = "beyin" if is_crypto else "stock_beyin"
         model_adi = f'{prefix}_{safe_name}.pkl'
         
+        model = None
         try:
             model = joblib.load(model_adi)
         except:
-            print(f"❌ {model_adi} bulunamadı! Lütfen önce model_egit fonksiyonunu çalıştırın.")
+            # Model dosyası yok → Otomatik eğit (sessiz mod)
+            try:
+                model = self.model_egit(sembol, df.copy(), is_crypto)
+            except Exception as e:
+                print(f"⚠️ {sembol} model eğitimi başarısız: {e}")
+                return None
+            
+        if model is None:
             return None
             
         # Son satırdaki canlı teknik göstergeleri al

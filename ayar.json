@@ -17,14 +17,13 @@
         "sl_atr_carpani": 1.0,
         "tp_atr_carpani": 2.5
     },
-    "testnet_api_key": "z3REzaRXX837UL9owosyL2e1DRNkBMe3T9v5dw00GF4tjIlZw5W0hhHM4dPhSgvR",
-    "testnet_secret": "d1EuwpGvy2KMreIMbhnCGWulAkIc8d5RxggOP6Z3UFd1zLgLhnX2hgbqALc8mH0h",
     "islem_miktari_usdt": 50,
     "sl_yuzde": 0.01,
     "tp_yuzde": 0.02,
     "telegram": {
         "aktif_mi": true,
-        "bot_token": "8595913395:AAFzFpUiBRueH3fSinM5O2YJykwkBoVQ6qM",
+        "bot_token": "8609459728:AAHGQlxs1yuy_w4GxBC77gbbrQWcZEkonvI",
         "chat_id": "6610085196"
     }
+       
 }

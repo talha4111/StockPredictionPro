@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from ai_core import BeyinMotoru
 
-from tarayici import veri_getir_dortlu, ana_trend_getir
+from tarayici import veri_getir_dortlu
 from analist import korku_acgozluluk_getir, onchain_inflow_durumu, makro_volatilite_beklentisi
 import json
 import requests
@@ -21,6 +21,22 @@ import joblib
 import csv
 import sqlite3
 import websocket
+import glob
+
+# --- .env Dosyasını Otomatik Yükle (LIVE_API_KEY vb. için) ---
+try:
+    from dotenv import load_dotenv
+    load_dotenv(override=False)  # Zaten set edilmiş env var'ları ezme
+except ImportError:
+    # dotenv kurulu değilse manuel oku
+    if os.path.exists('.env'):
+        with open('.env', 'r', encoding='utf-8') as _ef:
+            for _line in _ef:
+                _line = _line.strip()
+                if '=' in _line and not _line.startswith('#'):
+                    _k, _v = _line.split('=', 1)
+                    if _k.strip() not in os.environ:
+                        os.environ[_k.strip()] = _v.strip().strip('"').strip("'")
 
 # --- WSS (WebSocket) VERİ NEHRİ ---
 WSS_TICKERS = {}
@@ -100,8 +116,8 @@ try:
     TELEGRAM_AYAR = AYAR["telegram"]
     
     # CCXT Testnet Ayarları
-    TESTNET_API_KEY = AYAR.get("testnet_api_key", "")
-    TESTNET_SECRET = AYAR.get("testnet_secret", "")
+    TESTNET_API_KEY = AYAR.get("testnet_api_key", "").strip()
+    TESTNET_SECRET = AYAR.get("testnet_secret", "").strip()
     ISLEM_MIKTARI_USDT = AYAR.get("islem_miktari_usdt", 50)
     SL_YUZDE = AYAR.get("sl_yuzde", 0.01)
     TP_YUZDE = AYAR.get("tp_yuzde", 0.02)
@@ -135,7 +151,7 @@ SEKTORLER = {
 borsa_config = {
     'apiKey': TESTNET_API_KEY,
     'secret': TESTNET_SECRET,
-    'enableRateLimit': True,
+    'enableRateLimit': True, 
     'options': {
         'defaultType': 'future',
         'adjustForTimeDifference': True,
@@ -143,7 +159,7 @@ borsa_config = {
     }
 }
 borsa = ccxt.binance(borsa_config)
-borsa.enable_demo_trading(True)
+borsa.set_sandbox_mode(True) # Orijinal CCXT Sandbox metodu
 
 # LIVE Binance CCXT Bağlantısı
 LIVE_API_KEY = os.environ.get('LIVE_API_KEY', '').strip()
@@ -152,23 +168,75 @@ borsa_live_config = {
     'apiKey': LIVE_API_KEY,
     'secret': LIVE_SECRET,
     'enableRateLimit': True,
+    'urls': {
+        'api': {
+            'public': 'https://api3.binance.com/api/v3',
+            'private': 'https://api3.binance.com/api/v3',
+        },
+        'fapi': {
+            'public': 'https://fapi.binance.com/fapi/v1',
+            'private': 'https://fapi.binance.com/fapi/v1',
+        }
+    },
     'options': {
         'defaultType': 'future',
         'adjustForTimeDifference': True,
         'recvWindow': 60000,
     }
 }
-borsa_live = ccxt.binance(borsa_live_config)
+borsa_live = ccxt.binanceusdm(borsa_live_config)
 
 # Piyasa Tarayıcı (Scout) için AYRI bir public CCXT instance (FUTURES - Ticker için)
-scout_borsa = ccxt.binance({'enableRateLimit': True, 'options': {'defaultType': 'future', 'adjustForTimeDifference': True, 'recvWindow': 60000}})
+scout_borsa = ccxt.binanceusdm({
+    'enableRateLimit': True, 
+    'urls': {
+        'api': {'public': 'https://api3.binance.com/api/v3', 'private': 'https://api3.binance.com/api/v3'},
+        'fapi': {'public': 'https://fapi.binance.com/fapi/v1', 'private': 'https://fapi.binance.com/fapi/v1'}
+    },
+    'options': {'defaultType': 'future', 'adjustForTimeDifference': True, 'recvWindow': 60000}
+})
+
+# Zaman Senkronizasyonunu başlar başlamaz KESİN olarak zorla
+import requests
+import time
+max_sync_deneme = 5
+for i in range(max_sync_deneme):
+    try:
+        # Global fapi yerine api3.binance.com kullanarak engelleri asmaya calisiyoruz
+        res = requests.get("https://api3.binance.com/api/v3/time", timeout=5).json()
+        server_msec = res['serverTime']
+        local_msec = int(time.time() * 1000)
+        diff = server_msec - local_msec
+        
+        # CCXT dahili mekanizmasini ve manuel diff'i ayarla
+        borsa.options['timeDifference'] = diff
+        if LIVE_API_KEY: borsa_live.options['timeDifference'] = diff
+        scout_borsa.options['timeDifference'] = diff
+        ui_borsa.options['timeDifference'] = diff
+        
+        # Manuel senkronizasyon basarili
+        break
+    except Exception as e:
+        time.sleep(2)
 
 # Spot API (Veri Çekme ve Analiz Motoru için)
-spot_borsa = ccxt.binance({'enableRateLimit': True, 'options': {'adjustForTimeDifference': True, 'recvWindow': 60000}})
+spot_borsa = ccxt.binance({'enableRateLimit': False, 'options': {'adjustForTimeDifference': True, 'recvWindow': 60000}})
 
 # UI Paneli için AYRI CCXT instance (Hız ve Çakışma Önleme)
-ui_borsa = ccxt.binance({'enableRateLimit': True, 'options': {'defaultType': 'future', 'adjustForTimeDifference': True, 'recvWindow': 60000}})
+ui_borsa = ccxt.binanceusdm({
+    'enableRateLimit': False, 
+    'urls': {
+        'api': {'public': 'https://api3.binance.com/api/v3', 'private': 'https://api3.binance.com/api/v3'},
+        'fapi': {'public': 'https://fapi.binance.com/fapi/v1', 'private': 'https://fapi.binance.com/fapi/v1'}
+    },
+    'options': {'defaultType': 'future', 'adjustForTimeDifference': True, 'recvWindow': 60000}
+})
 
+# ============================================================
+# CCXT Kendi Dinamik Time Difference Senkronizasyonunu Kullanır
+# Manuel müdahaleler (TimeDifference'a dışarıdan veri yazma)
+# CCXT'nin adjustForTimeDifference özelliğini bozduğu için kaldırıldı.
+# ============================================================
 try:
     spot_borsa.load_markets()
     SPOT_SEMBOLLER = set(spot_borsa.symbols)
@@ -190,30 +258,52 @@ except:
 performans = {'kazanc': 0, 'kayip': 0}
 
 ALIM_SATIM_TETIGI_ACIK = True   # CANLI SİSTEM ATEŞLENDİ! 🚀🔥 (Max 1 LIVE Pozisyon Sınırı Aktif)
+CANLI_DEVRE_KESICI_AKTIF = False
+LIVE_ARDISIK_ZARAR = 0
+DEMO_ARDISIK_KAR = 0
+SON_ISLEMLER_PNL_LIVE = []
+GUN_BASLANGIC_BAKIYESI = None
+SON_RESET_TARIHI = datetime.now().date()
 LIVE_ISLEM_KILIDI = threading.Lock() # Race Condition kilidi
 PING_MODU = False               # Test bitti, tüm paritelerde ava çıkıyoruz. (KAPALI)
 
-SANAL_KASA_DOSYASI = 'sanal_kasa_kripto.json'
-try:
-    with open(SANAL_KASA_DOSYASI, 'r') as f:
-        okunan_bakiye = float(json.load(f).get('bakiye', 10000.0))
-        if okunan_bakiye < 5000:
-            print(f"⚠️ [UYARI] Hayalet/Enkaz bakiye tespit edildi ({okunan_bakiye:.2f} USDT). Kasa 10000.0 $ olarak HARD-RESET atıldı!")
-            SANAL_KRIPTO_KASA = 10000.0
-        else:
-            SANAL_KRIPTO_KASA = okunan_bakiye
-except:
-    SANAL_KRIPTO_KASA = 10000.0
+# --- DİNAMİK KARANTİNA SİSTEMİ ---
+KARANTINA_LISTESI = {}   # {sembol: karantina_bitis_datetime}
+COIN_ZARAR_SAYACI = {}   # {sembol: ardisik_zarar_sayisi}
+KARA_LISTE = {'ILV/USDT', 'ILVUSDT'}  # Kalıcı yasaklı pariteler
 
-def sanal_crypto_kasa_kaydet():
-    try:
-        with open(SANAL_KASA_DOSYASI, 'w') as f:
-            json.dump({'bakiye': SANAL_KRIPTO_KASA}, f)
-    except: pass
+# --- TESTNET CACHE SİSTEMİ (API yükünü azalt) ---
+_DEMO_CACHE = {'bakiye': 0.0, 'pozisyonlar': [], 'son_guncelleme': 0}
+_DEMO_CACHE_SURESI = 20  # 20 Saniye (Gerçek zamanlıya yakın, hata olursa önceki değeri gösterir)
 
-# Bot başlarken pırıl pırıl son halini mühürle
-sanal_crypto_kasa_kaydet()
-SANAL_KRIPTO_POZISYONLAR = {}
+KASA_DURUM = {'LIVE_KASA': 0.0, 'DEMO_KASA': 0.0}
+
+# --- BAŞLANGIÇ SERMAYESİ (Binance ile birebir P&L eşleşmesi için) ---
+# Bu değer, hesabına yatırdığın toplam USDT miktarıdır.
+# Gerçek Net K/Z = Mevcut Toplam Varlık - BASLANGIC_SERMAYE
+# Böylece komisyonlar, funding rate ve kapanmış işlemler otomatik dahil olur.
+BASLANGIC_SERMAYE_LIVE = 27.0   # LIVE hesaba yatırılan toplam USDT
+BASLANGIC_SERMAYE_DEMO = 0.0    # Demo başlangıç (ilk senkronizasyonda güncellenir)
+
+# --- TESTNET BAKİYE SENKRONİZASYONU (Açılış) ---
+if TESTNET_API_KEY and TESTNET_SECRET:
+    for _deneme in range(3):
+        try:
+            _sync_bal = borsa.fetch_balance()
+            _testnet_bakiye = float(_sync_bal.get('USDT', {}).get('total', 0))
+            if _testnet_bakiye > 0:
+                KASA_DURUM['DEMO_KASA'] = _testnet_bakiye
+                _DEMO_CACHE['bakiye'] = _testnet_bakiye
+                _DEMO_CACHE['son_guncelleme'] = time.time()
+                print(f"🔗 [SYNC] Demo kasa Binance Testnet ile senkronize edildi: ${_testnet_bakiye:.2f}")
+                break
+        except Exception as e:
+            if _deneme < 2:
+                print(f"⏳ [SYNC] Testnet bağlantısı deneniyor... ({_deneme+1}/3) Hata: {e}")
+                time.sleep(5)
+            else:
+                print(f"⚠️ [SYNC] Testnet 3 denemede başarısız ({e})")
+
 COOLDOWN_DICT = {} # {sembol: kapanis_datetime} - Tekrar girişi engellemek için
 onceki_pozisyonlar = {}  # {sembol: pnl} - Trailing Stop ve kapanış takibi
 aktif_islemler_detay = {}
@@ -263,10 +353,20 @@ def borsa_baglantisini_yenile(hata_mesaji="Bilinmiyor"):
     try:
         zaman = datetime.now().strftime('%H:%M:%S')
         print(f"[{zaman}] 🔄 CCXT Bağlantısı Yenileniyor... (Hata: {hata_mesaji})")
-        borsa = ccxt.binance(borsa_config)
-        borsa.enable_demo_trading(True)
-        borsa.load_markets()
-        scout_borsa = ccxt.binance({'enableRateLimit': True, 'options': {'defaultType': 'future', 'adjustForTimeDifference': True, 'recvWindow': 60000}})
+        borsa = ccxt.binanceusdm(borsa_config)
+        borsa.set_sandbox_mode(True)
+        # load_markets() burada kaldırıldı, surekli_tarama içinde otonom yapılacak
+        scout_borsa = ccxt.binanceusdm({'enableRateLimit': True, 'options': {'defaultType': 'future', 'adjustForTimeDifference': True, 'recvWindow': 60000}})
+        
+        # Donanım saati bypass'ı (Yenileme için)
+        import requests, time
+        try:
+            res = requests.get("https://fapi.binance.com/fapi/v1/time", timeout=5).json()
+            diff = res['serverTime'] - int(time.time() * 1000)
+            borsa.options['timeDifference'] = diff
+            scout_borsa.options['timeDifference'] = diff
+            if LIVE_API_KEY: borsa_live.options['timeDifference'] = diff
+        except: pass
     except Exception as e:
         print(f"[!] Borsa bağlantısı yenilenemedi: {e}")
 
@@ -277,80 +377,101 @@ def telegrama_gonder(mesaj):
                       data={"chat_id": TELEGRAM_AYAR['chat_id'], "text": mesaj, "parse_mode": "Markdown"}, timeout=10)
     except: pass
 
-def islem_ac(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, margin_override=None, ai_guven_skoru=0.0):
-    global SANAL_KRIPTO_KASA, SANAL_KRIPTO_POZISYONLAR, ALIM_SATIM_TETIGI_ACIK, PING_MODU, COOLDOWN_DICT
-    
-    # 1. DEMO İŞLEM (LOKAL SANAL MOTOR) - Her zaman açık!
+def gunluk_rapor_gonder():
+    """Gece 00:00'da otomatik tetiklenen Telegram performans raporu."""
     try:
-        # --- COOLDOWN KONTROLÜ (Aynı koine hemen geri girmeyi engelle) ---
-        simdi = datetime.now()
-        if sembol in COOLDOWN_DICT:
-            gecen = (simdi - COOLDOWN_DICT[sembol]).total_seconds()
-            if gecen < 300: # 5 Dakika Cooldown
-                return
-            else:
-                del COOLDOWN_DICT[sembol]
+        toplam_islem = performans['kazanc'] + performans['kayip']
+        win_rate = (performans['kazanc'] / toplam_islem * 100) if toplam_islem > 0 else 0
         
-        if len(SANAL_KRIPTO_POZISYONLAR) >= 7:
-            return  # DEMO Max 7 İşlem Sınırı
-            
-        if sembol not in SANAL_KRIPTO_POZISYONLAR:
-            # 1. Dinamik İşlem Büyüklüğü (Yapay Zeka Kelly Bütçesi)
-            margin_yuzdesi = margin_override if margin_override is not None else 0.05
-            islem_boyutu = max(11.5, SANAL_KRIPTO_KASA * margin_yuzdesi) # Asgari 11.5, normalde Kelly bütçesi
-            
-            # 2. Kaldıraç Etkisi (Demo = 5x)
-            kaldirac_orani = 5 
-            islem_hacmi = islem_boyutu * kaldirac_orani
-            
-            # 3. Fiziksel Adet Hesaplaması (Notional Volume üzerinden)
-            anlik_fiyat = float(anlik_fiyat)
-            miktar = float(f"{islem_hacmi / anlik_fiyat:.6f}")
-            
-            atr_mesafe = abs(anlik_fiyat - hesaplanan_sl)
-            volatilite_yuzde = (atr_mesafe / anlik_fiyat) * 100
-            hedef_callback = max(0.5, min(4.0, 3.0 / max(0.1, volatilite_yuzde)))
-            
-            if "YÜKSELİŞ" in yon:
-                islem_yonu = 'LONG'
-                scale_out = anlik_fiyat + (atr_mesafe * 1.5)
-            else:
-                islem_yonu = 'SHORT'
-                scale_out = anlik_fiyat - (atr_mesafe * 1.5)
-                
-            SANAL_KRIPTO_POZISYONLAR[sembol] = {
-                'yon': islem_yonu, 'giris': anlik_fiyat, 'miktar': miktar,
-                'hedef': hesaplanan_tp, 'zayiat': hesaplanan_sl,
-                'scale_out': scale_out, 'scale_out_done': False,
-                'tsl_guncel_en_iyi': anlik_fiyat, 'tsl_rate': hedef_callback / 100.0,
-                'guven_skoru': ai_guven_skoru, 'margin': islem_boyutu
-            }
-            print(f"POZİSYON [DEMO-SANAL]: {sembol} | YÖN: {islem_yonu} | GİRİŞ: {anlik_fiyat} | SL: {hesaplanan_sl:.4f} | Scale-Out: {scale_out:.4f}")
-            sanal_crypto_kasa_kaydet()
-    except Exception as e:
-        print(f"[!] DEMO İzole Hata ({sembol}): {e}")
-
-    # 2. LIVE İŞLEM - Güvenlik Kilidine Tabi!
-    if LIVE_API_KEY and LIVE_SECRET:
-        if not ALIM_SATIM_TETIGI_ACIK:
-            if PING_MODU and sembol == 'FDUSD/USDT':
-                print(f"[{sembol}] ⚠️ PING MODU ONAYI: Mikro LIVE test işlemine izin veriliyor...")
-            else:
-                return # Canlı işlem tetiği kapalı!
+        demo_kasa = KASA_DURUM.get('DEMO_KASA', 0.0)
+        acik_poz = len([p for p in _DEMO_CACHE.get('pozisyonlar', [])]) if _DEMO_CACHE else 0
+        karantina_sayisi = len(KARANTINA_LISTESI)
         
+        # SQLite'dan bugünkü işlem detaylarını çek
+        bugunun_islemleri = ""
         try:
-            try: bakiye_bilgisi = borsa_live.fetch_balance()
-            except: bakiye_bilgisi = {}
-            toplam_kasa = float(bakiye_bilgisi.get('USDT', {}).get('total', 0.0))
-            
-            if toplam_kasa >= 10.5:
-                _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa_live, "LIVE", True, margin_override, ai_guven_skoru)
+            conn = sqlite3.connect('trade_log.db')
+            cursor = conn.cursor()
+            bugun_str = datetime.now().strftime('%Y-%m-%d')
+            cursor.execute("SELECT Parite, Islem_Yonu, Net_PNL_USDT, PNL_Yuzde FROM closed_trades WHERE Tarih_Saat LIKE ?", (f"{bugun_str}%",))
+            satirlar = cursor.fetchall()
+            conn.close()
+            if satirlar:
+                bugunun_islemleri = "\n*📋 Bugünkü İşlemler:*\n"
+                toplam_pnl = 0
+                for s in satirlar[-10:]:  # Son 10 işlem
+                    pnl_str = f"+{s[2]:.2f}" if s[2] >= 0 else f"{s[2]:.2f}"
+                    bugunun_islemleri += f"  `{s[0]}` {s[1]} → {pnl_str}$ (%{s[3]:.1f})\n"
+                    toplam_pnl += s[2]
+                bugunun_islemleri += f"  *Toplam P&L: {toplam_pnl:+.2f}$*\n"
+        except:
+            pass
+        
+        rapor = f"""
+🌙 *GECE RAPORU — {datetime.now().strftime('%d.%m.%Y')}*
+━━━━━━━━━━━━━━━━━━━
+🎮 *DEMO Kasa:* ${demo_kasa:.2f}
+📊 *Toplam İşlem:* {toplam_islem}
+✅ *Kazanç:* {performans['kazanc']} | ❌ *Kayıp:* {performans['kayip']}
+🏆 *Win Rate:* %{win_rate:.0f}
+📂 *Açık Pozisyon:* {acik_poz}
+🚫 *Karantina:* {karantina_sayisi} coin
+━━━━━━━━━━━━━━━━━━━{bugunun_islemleri}
+⚡ _Savaş Modu V9.2 — Tam Otonom_
+"""
+        telegrama_gonder(rapor.strip())
+        print("📨 [TELEGRAM] Gece raporu başarıyla gönderildi!")
+    except Exception as e:
+        print(f"⚠️ [TELEGRAM] Rapor gönderilemedi: {e}")
+
+def islem_ac(sinyal):
+    global ALIM_SATIM_TETIGI_ACIK, PING_MODU, COOLDOWN_DICT
+    
+    sembol = sinyal['coin']
+    yon = sinyal['yon']
+    anlik_fiyat = sinyal['fiyat']
+    hesaplanan_tp = sinyal['tp']
+    hesaplanan_sl = sinyal['sl']
+    ai_guven_skoru = sinyal['guven_skoru']
+    live_ok = sinyal.get('live_ok', False)
+    demo_ok = sinyal.get('demo_ok', False)
+    
+    # --- COOLDOWN KONTROLÜ (Akıllı Bekleme Sistemi) ---
+    simdi = datetime.now()
+    if sembol in COOLDOWN_DICT:
+        gecen = (simdi - COOLDOWN_DICT[sembol]).total_seconds()
+        # 2+ ardışık zarar sonrası 1 saat bekleme, normal ise 3 dakika
+        bekleme_suresi = 3600 if LIVE_ARDISIK_ZARAR >= 2 else 180
+        if gecen < bekleme_suresi:
+            return
+        else:
+            del COOLDOWN_DICT[sembol]
+
+    # --- KANAL GÖNDERİMİ (BIFURCATION) ---
+    if demo_ok:
+        try:
+            if hasattr(borsa, 'apiKey') and borsa.apiKey:
+                print(f"POZİSYON [DEMO-TESTNET]: {sembol} | YÖN: {'LONG' if 'YÜKSELİŞ' in yon else 'SHORT'} | GİRİŞ: {anlik_fiyat}")
+                _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa, "TESTNET", False, sinyal.get('margin_override_demo', 0.04), ai_guven_skoru)
         except Exception as e:
-            hata_mesaji = str(e)
-            if "-2010" in hata_mesaji or "insufficient balance" in hata_mesaji.lower():
-                print(f"[LIVE-UYARI] Bakiye yetersiz, LIVE işlem iptal.")
+            print(f"[!] TESTNET API Emir Hatası ({sembol}): {e}")
+
+    if live_ok:
+        if LIVE_API_KEY and LIVE_SECRET:
+            if ALIM_SATIM_TETIGI_ACIK or (PING_MODU and sembol == 'FDUSD/USDT'):
+                if not ALIM_SATIM_TETIGI_ACIK and PING_MODU:
+                    print(f"[{sembol}] ⚠️ PING MODU ONAYI: Mikro LIVE test işlemine izin veriliyor...")
+                try:
+                    _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa_live, "LIVE", True, sinyal.get('margin_override_live', 0.1), ai_guven_skoru)
+                    print(f"POZİSYON [LIVE-GERÇEK]: {sembol} | YÖN: {'LONG' if 'YÜKSELİŞ' in yon else 'SHORT'} | GİRİŞ: {anlik_fiyat}")
+                except Exception as e:
+                    hata_mesaji = str(e)
+                    if "-2010" in hata_mesaji or "insufficient balance" in hata_mesaji.lower():
+                        print(f"[LIVE-UYARI] Bakiye yetersiz, LIVE işlem iptal.")
+                    else:
+                        print(f"[!] LIVE İzole Hata ({sembol}): {e}")
             else:
-                print(f"[!] LIVE İzole Hata ({sembol}): {e}")
+               pass # Canlı işlem tetiği kapalı!
 
 def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa_istemci, hesap_tipi, is_live, margin_override, ai_guven_skoru):
     if not hasattr(borsa_istemci, 'apiKey') or not borsa_istemci.apiKey:
@@ -378,26 +499,33 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
             toplam_kasa = 1000.0
             
         if is_live:
-            if toplam_kasa > 12.0: kullanilacak_margin = 11.5
-            else: kullanilacak_margin = toplam_kasa * 0.95
-            
-            kaldirac_orani = int(max(1, min(20, ai_guven_skoru / 10.0 if getattr(margin_override, 'is_dynamic', False) else 2))) # Sabit 2x
-            kaldirac_orani = 2  # Güvenlik ve matematik hesabı için net 2x'e kilitledik
-            risk_metni = f"LIVE Hard Limit: {kullanilacak_margin:.2f}$ (Hedef: 2x)"
+            if margin_override is not None:
+                kullanilacak_margin = toplam_kasa * margin_override
+            else:
+                kullanilacak_margin = toplam_kasa * 0.90
+                
+            kullanilacak_margin = min(kullanilacak_margin, toplam_kasa * 0.90) # Kasanın max %90'ı kullanılabilir
+            kaldirac_orani = 5 # 5x Kaldıraç (küçük kasa için optimize)
+            risk_metni = f"LIVE Bütçe: {kullanilacak_margin:.2f}$ (Hedef: 5x)"
         else:
             if margin_override is not None:
                 margin_yuzdesi = margin_override
-                kaldirac_orani = 2 
+                kaldirac_orani = 10 # Demo sabit 10x per request
                 risk_metni = f"Özel Kasa ({margin_override*100:.1f}%)"
             elif toplam_kasa > 4000.0:
-                margin_yuzdesi = 0.10 
-                kaldirac_orani = 5    
-                risk_metni = "%10 (Agresif Mod)"
+                margin_yuzdesi = 0.07 # Portföy / Sepet Dağılımı (%7)
+                kaldirac_orani = 10   
+                risk_metni = "%7 (Sepet Modu)"
             else:
-                margin_yuzdesi = 0.03 
-                kaldirac_orani = 2    
-                risk_metni = "%3 (Muhafazakar Mod)"
+                margin_yuzdesi = 0.07 
+                kaldirac_orani = 10    
+                risk_metni = "%7 (Sepet Modu)"
             kullanilacak_margin = toplam_kasa * margin_yuzdesi
+            
+        if sum(SON_ISLEMLER_PNL_LIVE) < 0 and toplam_kasa > 100:
+            kullanilacak_margin *= 0.50
+            risk_metni += " (⚠️ DEFANSİF MOD: Marjin %50 Düşürüldü)"
+            print("\n⚠️ [DEFANSİF MOD] Negatif performans nedeniyle pozisyon büyüklüğü %50 düşürüldü.")
             
         # 1. Kaldıraç Ayarlama (Çökerse sessiz gitmesin, uyaralım)
         try:
@@ -433,21 +561,20 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
                 aktif_islemler_detay[f"{sembol}_{hesap_tipi}"] = {'Giris_Fiyati': gerceklesen_fiyat, 'Islem_Yonu': 'LONG', 'Miktar': miktar, 'AI_Guven_Skoru': ai_guven_skoru, 'Hesap_Tipi': hesap_tipi}
                 
                 tp_fiyat = float(borsa_istemci.price_to_precision(sembol, hesaplanan_tp))
-                
-                # --- ATR Tabanlı Dinamik Ana Stop (Sabit % limitlerinden kurtarıldı) ---
                 sl_fiyat = float(borsa_istemci.price_to_precision(sembol, hesaplanan_sl))
                 atr_mesafe = abs(gerceklesen_fiyat - sl_fiyat)
+                
+                # --- ÇİFT KALKAN & KISMİ KÂR ALIM (VARYASYON 2) ---
+                # 1. Kısmi Kâr Alım (2.5 ATR - Scale Out, %30 pozisyon)
+                scale_out_fark = atr_mesafe * 2.5
+                scale_out_fiyat = float(borsa_istemci.price_to_precision(sembol, gerceklesen_fiyat + scale_out_fark))
+                yari_miktar = float(borsa_istemci.amount_to_precision(sembol, miktar * 0.3))
+                
+                # 2. Dinamik Trailing Stop Esnekliği (Min 2.5, Max 5.0)
                 volatilite_yuzde = (atr_mesafe / gerceklesen_fiyat) * 100
-                
-                # --- Kısmi Kâr Alma (Scale Out - 1.5 ATR) ---
-                scale_out_fiyat = float(borsa_istemci.price_to_precision(sembol, gerceklesen_fiyat + (atr_mesafe * 1.5)))
-                miktar_yari = float(borsa_istemci.amount_to_precision(sembol, miktar * 0.5))
-                kalan_miktar = float(borsa_istemci.amount_to_precision(sembol, miktar - miktar_yari))
-                
-                # Volatilite yüksekse (örn %5) callback_rate düşer (%0.6), düşükse (örn %1) artar (%3.0)
-                hedef_callback = 3.0 / max(0.1, volatilite_yuzde)
-                callback_rate = round(hedef_callback, 1)
-                callback_rate = max(0.5, min(4.0, callback_rate))
+                callback_rate_hesap = 3.0 / max(0.1, volatilite_yuzde)
+                callback_rate = max(2.5, min(5.0, callback_rate_hesap))
+                activation_price = float(borsa_istemci.price_to_precision(sembol, gerceklesen_fiyat * 1.005)) # %0.5 Kârda Aktifleş
                 
                 try: borsa_istemci.cancel_all_orders(sembol)
                 except Exception: pass
@@ -455,34 +582,44 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
                 max_deneme = 3
                 for deneme in range(max_deneme):
                     try:
-                        # 1. ATR Tabanlı Hard Stop (Tüm miktar)
-                        borsa_istemci.create_order(symbol=sembol, type='STOP_MARKET', side='sell', amount=miktar, params={'stopPrice': sl_fiyat, 'reduceOnly': True})
-                        # 2. Scale Out (%50 Kâr Al, 1.5 ATR mesafesinde)
-                        if miktar_yari > 0:
-                            borsa_istemci.create_order(symbol=sembol, type='TAKE_PROFIT_MARKET', side='sell', amount=miktar_yari, params={'stopPrice': scale_out_fiyat, 'reduceOnly': True})
-                        # 3. İz Süren Stop (Geri kalan %50 için)
-                        if kalan_miktar > 0:
-                            borsa_istemci.create_order(symbol=sembol, type='TRAILING_STOP_MARKET', side='sell', amount=kalan_miktar, params={'callbackRate': callback_rate, 'reduceOnly': True})
-                        
-                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: LONG | GİRİŞ: {gerceklesen_fiyat} | TSL: %{callback_rate} | ATR-SL: {sl_fiyat} | Scale-Out: {scale_out_fiyat} | ZIRH: ONAYLI")
+                        # 🛡️ Kalkan 1: KESİN SABİT STOP (Hard Stop Garantisi)
                         try:
-                            kasa = borsa_istemci.fetch_balance().get('USDT', {}).get('total', '?')
-                            if isinstance(kasa, float): kasa = f"{kasa:.2f}"
-                            print(f"GÜNCEL KASA: {kasa} USDT")
-                        except: pass
+                            borsa_istemci.create_order(
+                                symbol=sembol, type='STOP_MARKET', side='sell', amount=miktar,
+                                params={'stopPrice': sl_fiyat, 'reduceOnly': True}
+                            )
+                            print(f"✅ [ÇİFT KALKAN] {sembol} | Sabit Stop Aktif: {sl_fiyat}")
+                        except Exception as sl_err:
+                            if "-4130" not in str(sl_err): print(f"⚠️ [ZIRH UYARISI] Sabit Stop Kurulamadı: {sl_err}")
+
+                        # 🛡️ Kalkan 2: Kısmi Kâr Alım (Scale-Out - 2.0 ATR)
+                        try:
+                            borsa_istemci.create_order(
+                                symbol=sembol, type='TAKE_PROFIT_MARKET', side='sell', amount=yari_miktar,
+                                params={'stopPrice': scale_out_fiyat, 'reduceOnly': True}
+                            )
+                            print(f"💰 [SCALE-OUT] {sembol} | %50 Kâr Alım Aktif: {scale_out_fiyat}")
+                        except Exception as tp_err:
+                            if "-4130" not in str(tp_err): print(f"⚠️ [ZIRH UYARISI] Scale-Out Kurulamadı: {tp_err}")
+
+                        # 🛡️ Kalkan 3: Trailing Stop (Geri Kalanlar İçin Kâr Takibi)
+                        try:
+                            borsa_istemci.create_order(
+                                symbol=sembol, type='TRAILING_STOP_MARKET', side='sell', amount=miktar,
+                                params={'callbackRate': callback_rate, 'activationPrice': activation_price, 'reduceOnly': True}
+                            )
+                            print(f"🎯 [SUNUCU GÜVENLİĞİ] {sembol} | Trailing Stop Aktif: %{callback_rate:.2f} | Aktivasyon: {activation_price}")
+                        except Exception as tsl_error:
+                            if "-4130" not in str(tsl_error): print(f"⚠️ [ZIRH UYARISI] Trailing Stop başarısız: {tsl_error}")
+
+                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: LONG | GİRİŞ: {gerceklesen_fiyat} | ZIRH: BÜTÜN KALKANLAR ONAYLI")
                         break
                     except Exception as zirh_hata:
                         hata_msg = str(zirh_hata)
-                        if "-4130" in hata_msg:
-                            print(f"POZİSYON: {sembol} | LONG | GİRİŞ: {gerceklesen_fiyat} | ZIRH: Zaten Mevcut")
-                            break
-                        elif "-4136" in hata_msg:
-                            print(f"[!] {sembol} TSL strateji uyumsuz (-4136), zırhlar eklendi.")
-                            break
-                        elif ("-4509" in hata_msg or "position" in hata_msg.lower()) and deneme < max_deneme - 1:
+                        if ("-4509" in hata_msg or "position" in hata_msg.lower()) and deneme < max_deneme - 1:
                             time.sleep(2)
                         else:
-                            print(f"[!] {sembol} Zırh Hatası: {hata_msg}")
+                            print(f"[!] {sembol} Ana Zırh Çöktü: {hata_msg}")
                             break
             except Exception as e:
                 print(f"[{zaman}] İŞLEM/ZIRH BAŞARISIZ ({sembol}): {e}")
@@ -496,21 +633,20 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
                 aktif_islemler_detay[f"{sembol}_{hesap_tipi}"] = {'Giris_Fiyati': gerceklesen_fiyat, 'Islem_Yonu': 'SHORT', 'Miktar': miktar, 'AI_Guven_Skoru': ai_guven_skoru, 'Hesap_Tipi': hesap_tipi} 
                 
                 tp_fiyat = float(borsa_istemci.price_to_precision(sembol, hesaplanan_tp))
-                
-                # --- ATR Tabanlı Dinamik Ana Stop (Sabit % limitlerinden kurtarıldı) ---
                 sl_fiyat = float(borsa_istemci.price_to_precision(sembol, hesaplanan_sl))
-                atr_mesafe = abs(sl_fiyat - gerceklesen_fiyat)
+                atr_mesafe = abs(gerceklesen_fiyat - sl_fiyat)
+                
+                # --- ÇİFT KALKAN & KISMİ KÂR ALIM (VARYASYON 2) ---
+                # 1. Kısmi Kâr Alım (2.5 ATR - Scale Out, %30 pozisyon)
+                scale_out_fark = atr_mesafe * 2.5
+                scale_out_fiyat = float(borsa_istemci.price_to_precision(sembol, gerceklesen_fiyat - scale_out_fark))
+                yari_miktar = float(borsa_istemci.amount_to_precision(sembol, miktar * 0.3))
+                
+                # 2. Dinamik Trailing Stop Esnekliği (Min 2.5, Max 5.0)
                 volatilite_yuzde = (atr_mesafe / gerceklesen_fiyat) * 100
-                
-                # --- Kısmi Kâr Alma (Scale Out - 1.5 ATR) ---
-                scale_out_fiyat = float(borsa_istemci.price_to_precision(sembol, gerceklesen_fiyat - (atr_mesafe * 1.5)))
-                miktar_yari = float(borsa_istemci.amount_to_precision(sembol, miktar * 0.5))
-                kalan_miktar = float(borsa_istemci.amount_to_precision(sembol, miktar - miktar_yari))
-                
-                # Volatilite yüksekse (örn %5) callback_rate düşer (%0.6), düşükse (örn %1) artar (%3.0)
-                hedef_callback = 3.0 / max(0.1, volatilite_yuzde)
-                callback_rate = round(hedef_callback, 1)
-                callback_rate = max(0.5, min(4.0, callback_rate))
+                callback_rate_hesap = 3.0 / max(0.1, volatilite_yuzde)
+                callback_rate = max(2.5, min(5.0, callback_rate_hesap))
+                activation_price = float(borsa_istemci.price_to_precision(sembol, gerceklesen_fiyat * 0.995)) # %0.5 Kârda Aktifleş (Short için Aşağı)
                 
                 try: borsa_istemci.cancel_all_orders(sembol)
                 except Exception: pass
@@ -518,34 +654,44 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
                 max_deneme = 3
                 for deneme in range(max_deneme):
                     try:
-                        # 1. ATR Tabanlı Hard Stop
-                        borsa_istemci.create_order(symbol=sembol, type='STOP_MARKET', side='buy', amount=miktar, params={'stopPrice': sl_fiyat, 'reduceOnly': True})
-                        # 2. Scale Out (%50 Kâr Al, 1.5 ATR)
-                        if miktar_yari > 0:
-                            borsa_istemci.create_order(symbol=sembol, type='TAKE_PROFIT_MARKET', side='buy', amount=miktar_yari, params={'stopPrice': scale_out_fiyat, 'reduceOnly': True})
-                        # 3. İz Süren Stop (Geri kalan %50)
-                        if kalan_miktar > 0:
-                            borsa_istemci.create_order(symbol=sembol, type='TRAILING_STOP_MARKET', side='buy', amount=kalan_miktar, params={'callbackRate': callback_rate, 'reduceOnly': True})
-                        
-                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: SHORT | GİRİŞ: {gerceklesen_fiyat} | TSL: %{callback_rate} | ATR-SL: {sl_fiyat} | Scale-Out: {scale_out_fiyat} | ZIRH: ONAYLI")
+                        # 🛡️ Kalkan 1: KESİN SABİT STOP (Hard Stop Garantisi)
                         try:
-                            kasa = borsa_istemci.fetch_balance().get('USDT', {}).get('total', '?')
-                            if isinstance(kasa, float): kasa = f"{kasa:.2f}"
-                            print(f"GÜNCEL KASA: {kasa} USDT")
-                        except: pass
+                            borsa_istemci.create_order(
+                                symbol=sembol, type='STOP_MARKET', side='buy', amount=miktar,
+                                params={'stopPrice': sl_fiyat, 'reduceOnly': True}
+                            )
+                            print(f"✅ [ÇİFT KALKAN] {sembol} | Sabit Stop Aktif: {sl_fiyat}")
+                        except Exception as sl_err:
+                            if "-4130" not in str(sl_err): print(f"⚠️ [ZIRH UYARISI] Sabit Stop Kurulamadı: {sl_err}")
+
+                        # 🛡️ Kalkan 2: Kısmi Kâr Alım (Scale-Out - 2.0 ATR)
+                        try:
+                            borsa_istemci.create_order(
+                                symbol=sembol, type='TAKE_PROFIT_MARKET', side='buy', amount=yari_miktar,
+                                params={'stopPrice': scale_out_fiyat, 'reduceOnly': True}
+                            )
+                            print(f"💰 [SCALE-OUT] {sembol} | %50 Kâr Alım Aktif: {scale_out_fiyat}")
+                        except Exception as tp_err:
+                            if "-4130" not in str(tp_err): print(f"⚠️ [ZIRH UYARISI] Scale-Out Kurulamadı: {tp_err}")
+
+                        # 🛡️ Kalkan 3: Trailing Stop (Geri Kalanlar İçin Kâr Takibi)
+                        try:
+                            borsa_istemci.create_order(
+                                symbol=sembol, type='TRAILING_STOP_MARKET', side='buy', amount=miktar,
+                                params={'callbackRate': callback_rate, 'activationPrice': activation_price, 'reduceOnly': True}
+                            )
+                            print(f"🎯 [SUNUCU GÜVENLİĞİ] {sembol} | Trailing Stop Aktif: %{callback_rate:.2f} | Aktivasyon: {activation_price}")
+                        except Exception as tsl_error:
+                            if "-4130" not in str(tsl_error): print(f"⚠️ [ZIRH UYARISI] Trailing Stop başarısız: {tsl_error}")
+
+                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: SHORT | GİRİŞ: {gerceklesen_fiyat} | ZIRH: BÜTÜN KALKANLAR ONAYLI")
                         break
                     except Exception as zirh_hata:
                         hata_msg = str(zirh_hata)
-                        if "-4130" in hata_msg:
-                            print(f"POZİSYON: {sembol} | SHORT | GİRİŞ: {gerceklesen_fiyat} | ZIRH: Zaten Mevcut")
-                            break
-                        elif "-4136" in hata_msg:
-                            print(f"[!] {sembol} TSL strateji uyumsuz (-4136), zırhlar eklendi.")
-                            break
-                        elif ("-4509" in hata_msg or "position" in hata_msg.lower()) and deneme < max_deneme - 1:
+                        if ("-4509" in hata_msg or "position" in hata_msg.lower()) and deneme < max_deneme - 1:
                             time.sleep(2)
                         else:
-                            print(f"[!] {sembol} Zırh Hatası: {hata_msg}")
+                            print(f"[!] {sembol} Ana Zırh Çöktü: {hata_msg}")
                             break
             except Exception as e:
                 print(f"[{zaman}] İŞLEM/ZIRH BAŞARISIZ ({sembol}): {e}")
@@ -554,181 +700,234 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
         raise e
 
 def analiz_motoru(hedef_coin, beyin):
-    # ── Değişken Sızıntısı Önleme ──
-    guncel = None
-    hedef_fiyat = None
-    tahmin_olasilik = None
-    yon = None
+    """
+    Coin'i analiz eder ve bir sonuç raporu döndürür.
+    success: True ise tüm filtrelerden geçmiş ve işlem açılabilir demektir.
+    """
+    guncel, tahmin_olasilik, yon, dinamik_esik = None, None, None, 0.55
     df = None
     sl, tp, rr = 0, 0, 0
     btc_dom = 50.0  
 
     try:
-        if makro_volatilite_beklentisi():
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] [SİSTEM] Beklemede (Önemli Makro Veri).")
-            return
+        if makro_volatilite_beklentisi(): return None
 
         try:
             df = veri_getir_dortlu(hedef_coin, REF)
-        except Exception:
-            return
+        except: return None
 
-        if df is None or df.empty:
-            return
+        if df is None or df.empty: return None
 
-        features = ['Hedef_Ret', 'Ref_Ret', 'RSI', 'MACD', 'Vol_Ret', 'Korelasyon', 'OBV', 'BB_Width', 'MFI', 'VP_Sapma', 'Kriz', 'Haber_Duygu_Puani', 'Faiz_Orani', 'Dolar_Kuru']
-        eksik = [f for f in features if f not in df.columns]
-        if eksik:
-            return
+        # --- KARANTİNA & KARA LİSTE KONTROLÜ ---
+        if hedef_coin in KARA_LISTE:
+            return None  # Kalıcı yasak
+        if hedef_coin in KARANTINA_LISTESI:
+            if datetime.now() < KARANTINA_LISTESI[hedef_coin]:
+                return None  # Sessizce reddet
+            else:
+                del KARANTINA_LISTESI[hedef_coin]
+                if hedef_coin in COIN_ZARAR_SAYACI: del COIN_ZARAR_SAYACI[hedef_coin]
+                print(f"✅ [KARANTİNA BİTTİ] {hedef_coin} tekrar taranmaya başlandı.")
+
+        features = ['Hedef_Ret', 'Ref_Ret', 'RSI', 'MACD', 'Vol_Ret', 'Korelasyon', 'OBV', 'BB_Width', 'MFI', 'VP_Sapma', 'ADX', 'EMA_Slope']
+        # 'open' sütunu teknik analiz fitil kontrolü için şarttır!
+        if 'open' not in df.columns or any(f not in df.columns for f in features):
+            eksik = [f for f in features + ['open'] if f not in df.columns]
+            print(f"⚠️ Veri Hatası ({hedef_coin}): Eksik Kolonlar: {eksik}")
+            return None
 
         try:
             tahmin_olasilik = beyin.tahmin_et(hedef_coin, df, is_crypto=True)
             if tahmin_olasilik is None:
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] 🧠 {hedef_coin} modeli eğitiliyor...")
                 beyin.model_egit(hedef_coin, df, is_crypto=True)
                 tahmin_olasilik = beyin.tahmin_et(hedef_coin, df, is_crypto=True)
-            
-            if tahmin_olasilik is None:
-                return
-        except Exception:
-            return
+            if tahmin_olasilik is None: return None
+        except: return None
 
         guncel = float(df['Hedef_Close'].iloc[-1])
         atr = float(df['ATR'].iloc[-1])
+        volat_kat = (atr / guncel) * 100 
+        dinamik_esik = 0.55 # XGBoost giriş eşiği kalite odaklı yükseltildi (%50.5 -> %55)
 
-        volatilite_katsayisi = (atr / guncel) * 100 
-        dinamik_esik = 0.53 + (volatilite_katsayisi * 0.02)
-        dinamik_esik = min(0.60, max(0.53, dinamik_esik))
-
-        if tahmin_olasilik > dinamik_esik:
-            yon = "YÜKSELİŞ 🚀"
+        guven_skoru_yuzde = tahmin_olasilik * 100
+        if tahmin_olasilik > dinamik_esik: yon = "YÜKSELİŞ 🚀"
         elif tahmin_olasilik < (1.0 - dinamik_esik):
             yon = "DÜŞÜŞ 📉"
+            guven_skoru_yuzde = 100 - (tahmin_olasilik * 100)
         else:
             yon = "NÖTR ⚖️"
+            if tahmin_olasilik < 0.5: guven_skoru_yuzde = (1.0 - tahmin_olasilik) * 100
+
+        # Rapor Hazırla (Base Sözlük)
+        rapor = {
+            'coin': hedef_coin, 'live_ok': False, 'demo_ok': False,
+            'guven_skoru': guven_skoru_yuzde, 'yon': yon, 'fiyat': guncel,
+            'margin_override': 0.04  # Fallback margin
+        }
+
+        if yon == "NÖTR ⚖️": return rapor
         
-        # --- Dinamik Risk Yönetimi (ATR 1.5x) ---
-        tp_mult = RISK_AYAR["tp_atr_carpani"]
-        
+        # --- TREND KALKANI (Trend Shield) ---
+        from tarayici import ana_trend_getir, btc_kalkan_kontrol, ema_mesafe_kontrol
+        ana_trend = ana_trend_getir(hedef_coin)
+        if "YÜKSELİŞ" in yon and ana_trend == "DOWN":
+            return rapor
+        elif "DÜŞÜŞ" in yon and ana_trend == "UP":
+            return rapor
+
+        # --- 🛡️ BTC KORELASYON KALKANI (Altcoin'in Kral'a Bağımlılığı) ---
+        # BTC düşüyorsa altcoin LONG açma, BTC yükseliyorsa SHORT açma
+        if hedef_coin != 'BTC/USDT':  # BTC'nin kendisi hariç
+            btc_yon = btc_kalkan_kontrol()
+            if "YÜKSELİŞ" in yon and btc_yon == "DOWN":
+                return rapor  # BTC düşerken altcoin LONG açma
+            elif "DÜŞÜŞ" in yon and btc_yon == "UP":
+                return rapor  # BTC yükselirken altcoin SHORT açma
+
+        # --- 1h Trend kaldırıldı (Uzman tavsiyesi: overfiltering riski) ---
+        # 4h trend + 15m sinyal yeterli, 1h arada kalıyor ve lag yaratıyor
+
+        # --- 🛡️ GİRİŞ ZAMANLAMASI (EMA Mesafe Kontrolü) ---
+        # Fiyat EMA20'den çok uzaklaşmışsa treni kaçırmışsın, girme
+        if not ema_mesafe_kontrol(df, yon, atr):
+            return rapor  # Fiyat çok uzakta, tepe/dip kovalama riski
+
+        # --- 🛡️ FUNDING RATE FİLTRESİ (Squeeze Riski Önleme) ---
+        # Aşırı pozitif funding → long açma (short squeeze riski)
+        # Aşırı negatif funding → short açma (long squeeze riski)
+        son_funding = df['Funding_Rate'].iloc[-1] if 'Funding_Rate' in df.columns else 0.0001
+        if "YÜKSELİŞ" in yon and son_funding > 0.001:  # %0.1+ = aşırı kalabalık long
+            return rapor
+        elif "DÜŞÜŞ" in yon and son_funding < -0.001:  # -%0.1 = aşırı kalabalık short
+            return rapor
+
+        # --- 🎯 MARKET REGIME ADAPTIF ATR ÇARPANI ---
+        # Volatilite yüksekse geniş SL/TP, düşükse dar SL/TP
+        volat_yuzde = (atr / guncel) * 100  # ATR'nin fiyata oranı
+        if volat_yuzde > 1.5:  # Yüksek volatilite rejimi
+            atr_carpani = 3.0
+            tp_mult = 2.5  # Yüksek vol'de kâr daha hızlı al
+        elif volat_yuzde < 0.5:  # Düşük volatilite rejimi
+            atr_carpani = 1.8
+            tp_mult = 3.5  # Düşük vol'de kâr hedefini geniş tut
+        else:  # Normal rejim
+            atr_carpani = 2.5
+            tp_mult = 3.0
+
+        # Pazar Gürültüsü (Spread/Taker Fee) Kalkanı:
+        min_guvenli_mesafe = guncel * 0.0075
+        hesaplanan_mesafe = atr * atr_carpani
+        final_mesafe = max(hesaplanan_mesafe, min_guvenli_mesafe)
         if "YÜKSELİŞ" in yon:
-            sl = guncel - (atr * 1.5)
-            tp = guncel + (atr * tp_mult)
+            sl, tp = guncel - final_mesafe, guncel + (final_mesafe * tp_mult)
             rr = (tp - guncel) / (guncel - sl) if (guncel - sl) != 0 else 0
-        elif "DÜŞÜŞ" in yon:
-            sl = guncel + (atr * 1.5)
-            tp = guncel - (atr * tp_mult)
+        else:
+            sl, tp = guncel + final_mesafe, guncel - (final_mesafe * tp_mult)
             rr = (guncel - tp) / (sl - guncel) if (sl - guncel) != 0 else 0
 
-        zaman = datetime.now().strftime('%H:%M:%S')
-        hedef_fiyat = tp if tp != 0 else guncel
+        rapor.update({'tp': tp, 'sl': sl, 'rr': rr})
+
+        # Base Filters
+        son_adx = df['ADX'].iloc[-1] if 'ADX' in df.columns else 25.0
+        son_chop = df['CHOP'].iloc[-1] if 'CHOP' in df.columns else 50.0
+        fg_skor, _ = korku_acgozluluk_getir()
         
-        guven_skoru_yuzde = tahmin_olasilik * 100
-        if "DÜŞÜŞ" in yon:
-            guven_skoru_yuzde = 100 - (tahmin_olasilik * 100)
+        if 'volume' in df.columns:
+            hacim_sma = df['volume'].rolling(window=20).mean().iloc[-1]  # RVOL: 20 mum ortalaması (daha güvenilir)
+            anlik_hacim = df['volume'].iloc[-1]
+            hacim_patlamasi = (anlik_hacim / hacim_sma) - 1.0 if hacim_sma > 0 else 0
+        else:
+            hacim_patlamasi = 0
 
-        if "NÖTR" not in yon:
-            if rr >= 1.4:
-                print(f"[{zaman}] [{hedef_coin}] Güven: %{guven_skoru_yuzde:.1f} | Dinamik Eşik: %{dinamik_esik*100:.1f} -> DURUM: GİRİŞ UYGUN ({yon})")
-            else:
-                print(f"[{zaman}] [{hedef_coin}] Güven: %{guven_skoru_yuzde:.1f} | Dinamik Eşik: %{dinamik_esik*100:.1f} -> DURUM: R/R YETERSİZ ({rr:.2f} < 1.4)")
-
-            try:
-                btc_dom_req = requests.get("https://api.coingecko.com/api/v3/global", timeout=5)
-                btc_dom = float(btc_dom_req.json()["data"]["market_cap_percentage"]["btc"])
-            except:
-                pass 
-
-        if "NÖTR" not in yon and rr >= 1.4:
-            fg_skor, _ = korku_acgozluluk_getir()
-            korku_limiti = 10 if dinamik_esik < 0.58 else 18 
+        # Fitil ve RSI Mutabakatı (Bifurcated kontrol öncesi genel red sebepleri)
+        son_rsi = df['RSI'].iloc[-1] if 'RSI' in df.columns else 50
+        son_macd = df['MACD'].iloc[-1] if 'MACD' in df.columns else 0
+        onceki_macd = df['MACD'].iloc[-2] if 'MACD' in df.columns else 0
+        anlik_mum = df.iloc[-1] 
+        vucut = abs(anlik_mum['Hedef_Close'] - anlik_mum['open'])
+        
+        genel_red = False
+        # MACD Histogram kontrolü (önceki katı filtre yerine histogram yönü)
+        macd_histogram = son_macd - (df['MACD'].rolling(9).mean().iloc[-1] if 'MACD' in df.columns else 0)
+        if "YÜKSELİŞ" in yon:
+            ust_fitil = anlik_mum['high'] - max(anlik_mum['open'], anlik_mum['Hedef_Close'])
+            if ust_fitil > (vucut * 1.5) and ust_fitil > (atr * 0.5): genel_red = True
+            if son_rsi > 70 or macd_histogram < 0: genel_red = True
+            if fg_skor < 18: genel_red = True
+        else:
+            alt_fitil = min(anlik_mum['open'], anlik_mum['Hedef_Close']) - anlik_mum['low']
+            if alt_fitil > (vucut * 1.5) and alt_fitil > (atr * 0.5): genel_red = True
+            if son_rsi < 30 or macd_histogram > 0: genel_red = True
             
-            if fg_skor < korku_limiti and "YÜKSELİŞ" in yon:
-                return
+        sqz_on = df['Squeeze_ON'].iloc[-1] if 'Squeeze_ON' in df.columns else 0.0
+        if sqz_on > 0: genel_red = True
+        
+        if genel_red:
+            return rapor
 
-            # --- 1. Makro Trend Filtresi (Kesin Kurallar) ---
-            ana_trend_yon = ana_trend_getir(hedef_coin)
-            if "YÜKSELİŞ" in yon and ana_trend_yon != "UP":
-                print(f"[{zaman}] 🚫 Makro Trend Reddi: {hedef_coin} (4H: {ana_trend_yon}). LONG işlemi İPTAL!")
-                return
-            if "DÜŞÜŞ" in yon and ana_trend_yon != "DOWN":
-                print(f"[{zaman}] 🚫 Makro Trend Reddi: {hedef_coin} (4H: {ana_trend_yon}). SHORT işlemi İPTAL!")
-                return
+        # =========================================================
+        # BİFURCATION (LIVE vs DEMO ŞARTLARI)
+        # =========================================================
+        # LIVE Şartları (Kalite Odaklı - Daha az ama daha isabetli)
+        _live_prob = tahmin_olasilik if "YÜKSELİŞ" in yon else (1 - tahmin_olasilik)
+        live_ok = (
+            son_adx > 22.0 and
+            son_chop < 58.0 and
+            rr >= 2.0 and
+            hacim_patlamasi > 0.30 and
+            _live_prob > 0.60
+        )
 
-            # --- 2. Yatay Piyasa Kalkanı (Choppy / Squeeze) ---
-            son_chop = df['CHOP'].iloc[-1] if 'CHOP' in df.columns else 50.0
-            sqz_on = df['Squeeze_ON'].iloc[-1] if 'Squeeze_ON' in df.columns else 0.0
-            
-            if son_chop > 61.8:
-                print(f"[{zaman}] 🛑 Yatay Piyasa Reddi: {hedef_coin} Testere/Yönsüz Piyasa (CHOP: {son_chop:.1f} > 61.8).")
-                return
-                
-            if sqz_on > 0:
-                print(f"[{zaman}] 🛑 Sıkışma Reddi: {hedef_coin} Squeeze(ON) Rejiminde. Fiyatın patlaması bekleniyor.")
-                return
+        # DEMO Şartları (Dengeli)
+        _demo_prob = tahmin_olasilik if "YÜKSELİŞ" in yon else (1 - tahmin_olasilik)
+        demo_ok = (
+            son_adx > 18.0 and
+            son_chop < 62.0 and
+            rr >= 1.5 and
+            hacim_patlamasi > 0.10 and
+            _demo_prob > 0.55
+        )
 
-            # --- 3. Dinamik Güven Skoru (Momentum + Hacim + RSI) ---
-            son_rsi = df['RSI'].iloc[-1] if 'RSI' in df.columns else 50
-            son_macd = df['MACD'].iloc[-1] if 'MACD' in df.columns else 0
-            onceki_macd = df['MACD'].iloc[-2] if 'MACD' in df.columns else 0
-            
-            if 'volume' in df.columns:
-                hacim_sma = df['volume'].rolling(window=10).mean().iloc[-1]
-                son_hacim = df['volume'].iloc[-1]
-                if son_hacim < (hacim_sma * 0.8):
-                    print(f"[{zaman}] ⚠️ Hacim Zayıf: {hedef_coin} İşlem reddedildi.")
-                    return
+        if not live_ok and not demo_ok:
+            return rapor
 
-            if "YÜKSELİŞ" in yon:
-                if son_rsi > 70 or son_macd <= onceki_macd:
-                    print(f"[{zaman}] ⚠️ Mutabakat Yok: {hedef_coin} LONG iptal (RSI: {son_rsi:.1f}, MACD Zayıf).")
-                    return
-            elif "DÜŞÜŞ" in yon:
-                if son_rsi < 30 or son_macd >= onceki_macd:
-                    print(f"[{zaman}] ⚠️ Mutabakat Yok: {hedef_coin} SHORT iptal (RSI: {son_rsi:.1f}, MACD Zayıf).")
-                    return
-            
-            margin_override = None
-            if btc_dom > 56.0 and "BTC" not in hedef_coin:
-                if guven_skoru_yuzde < 70.0:
-                    return
-                else:
-                    margin_override = 0.02
+        # Bütçe (Aynı rr ve ihtimalleri kullandığımız için tek frac_kelly hesaplanıyor, 
+        # LIVE mod zaten kendi algoritmasını `margin_override` üzerinden limitliyor.)
+        p_kelly = tahmin_olasilik if "YÜKSELİŞ" in yon else (1.0 - tahmin_olasilik)
+        kelly_orani = max(0, (p_kelly * rr - (1-p_kelly)) / rr) if rr > 0 else 0
+        
+        # Testnet (Demo) işlemleri için sabit bütçe %4
+        # Live işlemleri için max %95 kelly, islem_ac içinde hesaplanıyor veya burada kullanılıyor.
+        frac_kelly_live = max(0.01, min(0.95, kelly_orani))
+        frac_kelly_demo = 0.04
 
-            p_kelly = tahmin_olasilik if "YÜKSELİŞ" in yon else (1.0 - tahmin_olasilik)
-            q_kelly = 1.0 - p_kelly
-            b_kelly = rr
-            
-            kelly_orani = 0.0
-            if b_kelly > 0:
-                kelly_orani = (p_kelly * b_kelly - q_kelly) / b_kelly
-            
-            # --- Dinamik Bütçe Yönetimi: Güven Skoruna Göre Çarpan ---
-            if guven_skoru_yuzde >= 70.0:
-                kelly_carpan = 1.5
-            elif guven_skoru_yuzde >= 60.0:
-                kelly_carpan = 1.0
-            else:
-                kelly_carpan = 0.5
-            
-            fractional_kelly = max(0.01, min(0.20, kelly_orani * 0.25 * kelly_carpan)) 
-            
-            if margin_override is not None:
-                margin_override = min(0.02, fractional_kelly)
-            else:
-                margin_override = fractional_kelly
+        rapor.update({
+            'success': True,  # Genel Success flag ki sinyal havuzuna eklensin
+            'live_ok': live_ok,
+            'demo_ok': demo_ok,
+            'margin_override_live': frac_kelly_live,
+            'margin_override_demo': frac_kelly_demo,
+            'fg_skor': fg_skor
+        })
+        return rapor
 
-            print(f"[{zaman}] 📐 Dinamik Risk Hesaplandı -> Önerilen Pozisyon Büyüklüğü: Kasanın %{margin_override*100:.1f}'i (Güven: %{guven_skoru_yuzde:.1f})")
-
-            msg = f"🚨 *FIRSAT: {hedef_coin}*\n----------------\n🔮 Yön: {yon}\n📈 Güven: %{guven_skoru_yuzde:.1f} (Carpan: {kelly_carpan}x)\n💰 Fiyat: {guncel:.2f}$\n🎯 S.Out: +1.5 ATR\n🛑 Stop: ATR Tabanlı\n⚖️ R/R: {rr:.2f}\n📊 Bütçe: %{margin_override*100:.1f}\n😨 Piyasa: {fg_skor}\n👑 BTC Dom: %{btc_dom:.1f}"
-            telegrama_gonder(msg)
-            
-            islem_ac(yon, hedef_coin, guncel, tp, sl, margin_override, guven_skoru_yuzde)
-
-    except ccxt.NetworkError as ne:
-        borsa_baglantisini_yenile(hata_mesaji="Network Error")
     except Exception as e:
-        if "ccxt" in str(e).lower() or "binance" in str(e).lower() or "timeout" in str(e).lower():
-            borsa_baglantisini_yenile(hata_mesaji="Bilinmeyen CCXT Hatası")
+        print(f"⚠️ Analiz Hatası ({hedef_coin}): {e}")
+        return None
+
+# ============================================================
+# 🏦 PORTFÖY ISI SINIRI (Portfolio Heat Limit)
+# Açık pozisyonların toplam büyüklüğü, toplam kasanın %80'ini geçemez.
+# ============================================================
+MAX_PORTFOY_ISI_YUZDESI = 0.95  # Kasanın max %95'i aynı anda risk altında olabilir (20+ Pozisyon Kapasitesi)
+
+def portfoy_isi_hesapla():
+    """Açık demo pozisyonların sayısına göre harcanan yaklaşık bütçeyi döndürür."""
+    # Testnet portföy kapasitesi her açılan pozisyon %4 bakiye yediği için:
+    if 'pozisyonlar' in _DEMO_CACHE:
+        demo_poz_sayisi = len([p for p in _DEMO_CACHE['pozisyonlar'] if 'DEMO' in p[0].get('Hesap_Tipi', '')])
+        return demo_poz_sayisi * (KASA_DURUM.get('DEMO_KASA', 1000) * 0.04)
+    return 0.0
 
 def surekli_tarama_ve_analiz():
     beyin = BeyinMotoru()
@@ -740,11 +939,20 @@ def surekli_tarama_ve_analiz():
             
             # Public (non-testnet) API ile TÜM Binance Futures USDT paritelerini çek
             tikler = scout_borsa.fetch_tickers()
+            if not tikler:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] ⚠️ SCOUT: Ticker verisi boş geldi, döngü atlanıyor.")
+                time.sleep(30)
+                continue
             
             # -------------------------------------------------------------
-            # LOKAL DEMO BİLGİ GÜNCELLEMESİ (Sadece referanslar temizlendi, asıl kontrol UI Loop'unda)
+            # LOKAL DEMO BİLGİ GÜNCELLEMESİ
             # -------------------------------------------------------------
-            acik_semboller = list(SANAL_KRIPTO_POZISYONLAR.keys())
+            acik_semboller = []
+            try:
+                # Cache pozisyonlarini acik kabul et
+                for p, a in _DEMO_CACHE.get('pozisyonlar', []):
+                    acik_semboller.append(p.get('symbol'))
+            except: pass
             try:
                 pozisyonlar = borsa_live.fetch_positions()
                 for p in pozisyonlar:
@@ -760,18 +968,18 @@ def surekli_tarama_ve_analiz():
                 hacim = float(veri.get('quoteVolume') or 0)
                 degisim = abs(float(veri.get('percentage') or 0))
                 if hacim > 15_000_000:
-                    # Futures formatı BTC/USDT:USDT -> Spot formatı BTC/USDT'ye çevir
                     temiz_sembol = sembol.replace(':USDT', '')
-                    # Spot API'de mevcut mu? (Analiz motoru Spot'tan veri çeker)
                     if SPOT_SEMBOLLER and temiz_sembol not in SPOT_SEMBOLLER:
                         continue
                     adaylar.append({'sembol': temiz_sembol, 'hacim': hacim, 'degisim': degisim})
             
             adaylar.sort(key=lambda x: x['degisim'], reverse=True)
-            sicak_coinler = [x['sembol'] for x in adaylar[:100]]
+            sicak_coinler = [x['sembol'] for x in adaylar[:100]] # Liste 100'e genisletildi (Agresif Tarama)
             
             # --- DURUM BİLGİSİ ---
-            if not ALIM_SATIM_TETIGI_ACIK:
+            if CANLI_DEVRE_KESICI_AKTIF:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] 🛑 [LIVE: DEVRE KESİCİ AKTİF - Uyanış Bekleniyor]")
+            elif not ALIM_SATIM_TETIGI_ACIK:
                 if PING_MODU:
                     print(f"[{datetime.now().strftime('%H:%M:%S')}] 🛡️ [SANAL: AÇIK] | [CANLI: PİNG MODU (Sadece FDUSD)]")
                 else:
@@ -779,20 +987,116 @@ def surekli_tarama_ve_analiz():
             else:
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔥 [LIVE: AKTİF] - GERÇEK PARA İŞLEM TETİĞİ ONAYLANDI!")
             
+            # --- Portföy Isı Durumu ---
+            mevcut_isi = portfoy_isi_hesapla()
+            demo_kasa = KASA_DURUM.get('DEMO_KASA', 1000)
+            mevcut_isi_yuzde = (mevcut_isi / demo_kasa * 100) if demo_kasa > 0 else 0
+            max_isi = demo_kasa * MAX_PORTFOY_ISI_YUZDESI
+            kalan_kapasite = max(0, max_isi - mevcut_isi)
+            print(f"🌡️  Portföy Isı: %{mevcut_isi_yuzde:.1f} / %{MAX_PORTFOY_ISI_YUZDESI*100:.0f} | Kullanılan: {mevcut_isi:.2f}$ | Kalan Kapasite: {kalan_kapasite:.2f}$")
+            
             print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔍 Dinamik Tarayıcı: Piyasadan seçilen en sıcak coinler:")
-            for i, coin in enumerate(sicak_coinler, 1):
+            for i, coin in enumerate(sicak_coinler[:20], 1):  # İlk 20'yi göster
                 aday = next((a for a in adaylar if a['sembol'] == coin), None)
                 if aday:
                     print(f"  {i:2d}. {coin:<12} | Hacim: ${aday['hacim']/1e6:.0f}M | Değişim: %{aday['degisim']:.1f}")
             
-            print(f"\n🎯 AŞAMA 2: SNIPER (Ağır Analiz) Başlıyor...")
-            for coin in sicak_coinler:
+            # ============================================================
+            # 🎯 AŞAMA 2: SNIPER — Sinyal Toplama (Signal Collection)
+            # Tüm coinleri analiz et, sinyalleri topla ama hemen işlem AÇMA.
+            # ============================================================
+            print(f"\n🎯 AŞAMA 2: SNIPER (Sinyal Toplama) Başlıyor... (Toplam {len(sicak_coinler)} coin)")
+            sinyal_havuzu = []    # Tüm geçerli sinyaller (Filtreleri geçenler)
+            tahmin_havuzu = []    # Tüm tahmin sonuçları (Debug Log için)
+            
+            for index, coin in enumerate(sicak_coinler, 1):
                 if coin in acik_semboller:
-                    print(f"  ⏭️ {coin} zaten açık pozisyonda, atlanıyor.")
                     continue
+                
+                # İlerleme Logu (Kullanıcı botun çalıştığını görsün)
+                print(f"  [{index}/{len(sicak_coinler)}] {coin} analiz ediliyor...", flush=True)
                     
-                analiz_motoru(coin, beyin)
-                time.sleep(3) 
+                rapor = analiz_motoru(coin, beyin)
+                if rapor is not None:
+                    tahmin_havuzu.append(rapor)
+                    if rapor.get('success'):
+                        sinyal_havuzu.append(rapor)
+                time.sleep(3)
+            
+            # ============================================================
+            # 🔍 DEBUG LOG: En Yüksek Tahmin Skorları
+            # Neden işlem açılmadığını anlamak için en iyi 3 skoru göster.
+            # ============================================================
+            if tahmin_havuzu:
+                tahmin_havuzu.sort(key=lambda x: x['guven_skoru'], reverse=True)
+                print(f"\n🔍 [DEBUG LOG] En Yüksek Sinyal Skorları (Top 3):")
+                for i, t in enumerate(tahmin_havuzu[:3], 1):
+                    esik = t.get('dinamik_esik', 55.0)
+                    skor = t.get('guven_skoru', 0.0)
+                    durum = "✅ EŞİK ÜSTÜ" if skor >= esik else "❌ YETERSİZ"
+                    print(f"  {i}. {t['coin']}: %{skor:.1f} (Eşik: %{esik:.1f}) -> {durum}")
+                
+                if not sinyal_havuzu:
+                    top_skor = tahmin_havuzu[0]['guven_skoru']
+                    top_esik = tahmin_havuzu[0]['dinamik_esik']
+                    if top_skor < top_esik:
+                        print(f"📢 Sinyal yetersiz, en yüksek skor %{top_skor:.1f} (Gereken: %{top_esik:.1f})")
+                    else:
+                        print(f"📢 Skorlar yeterli ama diğer filtreler (Hacim, RSI, TSL vb.) engelledi.")
+            else:
+                print(f"📢 Veri alınamadığı için tahmin yapılamadı.")
+            
+            # ============================================================
+            # 🏆 AŞAMA 3: RANK & SORT — Sinyal Sıralama (Signal Ranking)
+            # XGBoost Güven Skoruna göre en yüksekten en düşüğe sırala.
+            # ============================================================
+            if sinyal_havuzu:
+                sinyal_havuzu.sort(key=lambda x: x['guven_skoru'], reverse=True)
+                
+                print(f"\n" + "═"*70)
+                print(f"🏆 [{datetime.now().strftime('%H:%M:%S')}] AŞAMA 3: RANK & EXECUTE — {len(sinyal_havuzu)} Sinyal Sıralandı!")
+                print(f"{'SIRA':<5} | {'COİN':<12} | {'YÖN':<10} | {'GÜVEN':<8} | {'R/R':<6} | {'BÜTÇE':<8}")
+                print("-" * 70)
+                for i, s in enumerate(sinyal_havuzu, 1):
+                    print(f"  {i:<3} | {s['coin']:<12} | {s['yon']:<10} | %{s['guven_skoru']:<6.1f} | {s['rr']:<5.2f} | %{s['margin_override']*100:<6.1f}")
+                print("═"*70)
+                
+                # ============================================================
+                # 🏦 AŞAMA 4: AKILLI BÜTÇE DAĞITIMI (Smart Budget Dispatch)
+                # Her emirden önce Portföy Isısını kontrol et.
+                # Kasanın %80'ını aşarsa sıradaki işlemi iptal et.
+                # ============================================================
+                print(f"\n🏦 AŞAMA 4: Akıllı Bütçe Dağıtımı (Heat Limit: %{MAX_PORTFOY_ISI_YUZDESI*100:.0f})")
+                gonderilen_sinyal_sayisi = 0
+                
+                for sinyal in sinyal_havuzu:
+                    # Anlık ısı kontrolü (her emirden önce yeniden hesapla)
+                    mevcut_isi = portfoy_isi_hesapla()
+                    demo_kasa = KASA_DURUM.get('DEMO_KASA', 1000)
+                    max_isi = demo_kasa * MAX_PORTFOY_ISI_YUZDESI
+                    kalan_kapasite = max(0, max_isi - mevcut_isi)
+                    
+                    tahmini_marjin = demo_kasa * sinyal.get('margin_override_demo', 0.04)
+                    
+                    if tahmini_marjin > kalan_kapasite and sinyal.get('demo_ok'):
+                        print(f"  🛑 {sinyal['coin']} DEMO İPTAL: Portföy Isı Sınırı! (Gereken: {tahmini_marjin:.2f}$ > Kalan: {kalan_kapasite:.2f}$)")
+                        sinyal['demo_ok'] = False
+                        if not sinyal.get('live_ok'):
+                            continue # Hem demo kapandı, hem live yoksa iptal
+                    
+                    # İşlemi gönder
+                    islem_mesaji = f"  ✅ {sinyal['coin']} -> Güven: %{sinyal['guven_skoru']:.1f}"
+                    if sinyal.get('demo_ok'): islem_mesaji += f" | Demo Bütçe: {tahmini_marjin:.2f}$"
+                    if sinyal.get('live_ok'): islem_mesaji += f" | Live ONAYLI"
+                    print(islem_mesaji)
+                    
+                    islem_ac(sinyal)
+                    gonderilen_sinyal_sayisi += 1
+                    time.sleep(1)  # Rate limit koruması
+                
+                print(f"\n📊 Döngü Sonu: {len(sinyal_havuzu)} sinyal toplandı, {gonderilen_sinyal_sayisi} işlem açıldı.")
+            else:
+                print(f"\n⏳ [{datetime.now().strftime('%H:%M:%S')}] Filtrelerden geçen sinyal bulunamadı.")
                 
         except Exception as e:
             zaman = datetime.now().strftime('%H:%M:%S')
@@ -800,8 +1104,8 @@ def surekli_tarama_ve_analiz():
             borsa_baglantisini_yenile("Scout Hatası")
             time.sleep(10)
             
-        print(f"\n⏳ [{datetime.now().strftime('%H:%M:%S')}] Tarama döngüsü tamamlandı, 5 dakika bekleniyor...")
-        time.sleep(300)
+        print(f"\n⏳ [{datetime.now().strftime('%H:%M:%S')}] Tarama döngüsü tamamlandı, 60 saniye bekleniyor...")
+        time.sleep(60)  # 30s -> 60s (Agresif Demo Modu)
 
 def borsa_gerceklesen_pnl_getir(borsa_istemci, sembol, max_deneme=3):
     for _ in range(max_deneme):
@@ -853,11 +1157,14 @@ def _hesap_pozisyon_cek(borsa_istemci, hesap_tipi, mevcut_semboller, aktifler):
                 mevcut_semboller.add(f"{sembol}_{hesap_tipi}")
         return True # API Başarılı
     except Exception as e:
-        print(f"👁️‍🗨️ [KÖRLÜK KALKANI] API Hatası veya Gecikme: {e}. Pozisyonlar korundu ve açık varsayılacak!")
+        if hesap_tipi == 'LIVE':  # Sadece LIVE hataları göster, DEMO sessiz kalsın
+            print(f"⏳ [Bağlantı Bekleniyor...] {hesap_tipi} API geçici olarak ulaşılamıyor. (Detay: {e})")
         return False # API Hatası
 
 def pozisyon_takip_paneli():
-    global onceki_pozisyonlar, performans, SANAL_KRIPTO_KASA, SANAL_KRIPTO_POZISYONLAR, COOLDOWN_DICT
+    global onceki_pozisyonlar, performans, KASA_DURUM, COOLDOWN_DICT
+    global ALIM_SATIM_TETIGI_ACIK, CANLI_DEVRE_KESICI_AKTIF, LIVE_ARDISIK_ZARAR, DEMO_ARDISIK_KAR, SON_ISLEMLER_PNL_LIVE
+    global GUN_BASLANGIC_BAKIYESI, SON_RESET_TARIHI
     while True:
         try:
             aktifler = []
@@ -866,105 +1173,23 @@ def pozisyon_takip_paneli():
             # REST APİ Yerine WSS (WebSocket) Veri Nehrinden anlık çek
             tum_tikler = WSS_TICKERS
             
-            # --- DEMO: SANAL KRİPTO POZİSYONLARI ---
-            for sym, poz in list(SANAL_KRIPTO_POZISYONLAR.items()):
-                try: 
-                    # Güvenli Ticker Arama (WSS'den direkt)
-                    temiz_sym = sym.replace(':USDT', '')
-                    guncel = tum_tikler.get(f"{temiz_sym}/USDT") or tum_tikler.get(temiz_sym) 
-                    
-                    if not guncel:
-                        try: guncel = float(ui_borsa.fetch_ticker(f"{temiz_sym}/USDT")['last'])
-                        except:
-                            try: guncel = float(ui_borsa.fetch_ticker(temiz_sym)['last'])
-                            except: guncel = float(poz['giris'])
-                    else:
-                        guncel = float(guncel)
-                    
-                    # --- SANAL KRİPTO POZİSYON KONTROLÜ (UI Loop'una taşındı) ---
-                    kapanma_fiyati = 0
-                    sebep = ""
-                    anlik = guncel
-                    
-                    if poz['yon'] == 'LONG':
-                        if anlik > poz['tsl_guncel_en_iyi']: poz['tsl_guncel_en_iyi'] = anlik
-                        dinamik_tsl_rate = poz['tsl_rate'] / 2.0 if poz['scale_out_done'] else poz['tsl_rate']
-                        tsl_tetik = poz['tsl_guncel_en_iyi'] * (1.0 - dinamik_tsl_rate)
-                        if poz['scale_out_done']: tsl_tetik = max(tsl_tetik, poz['giris'] * 1.002) # Kârda kalma garantisi
-
-                        if not poz['scale_out_done'] and anlik >= poz['scale_out']:
-                            poz['scale_out_done'] = True
-                            kar_brut = (anlik - poz['giris']) * (poz['miktar'] / 2)
-                            SANAL_KRIPTO_KASA += kar_brut
-                            poz['miktar'] = poz['miktar'] / 2
-                            print(f"✨ [SCALE-OUT] {sym} %50 Kâr Alındı. Yeni Kasa: {SANAL_KRIPTO_KASA:.2f}$")
-                        
-                        if anlik >= poz['hedef']:
-                            kapanma_fiyati = poz['hedef']
-                            sebep = "TAKE PROFIT"
-                        elif anlik <= tsl_tetik or anlik <= poz['zayiat']:
-                            kapanma_fiyati = anlik
-                            sebep = "STOP/TSL"
-                    else: # SHORT
-                        if anlik < poz['tsl_guncel_en_iyi']: poz['tsl_guncel_en_iyi'] = anlik
-                        dinamik_tsl_rate = poz['tsl_rate'] / 2.0 if poz['scale_out_done'] else poz['tsl_rate']
-                        tsl_tetik = poz['tsl_guncel_en_iyi'] * (1.0 + dinamik_tsl_rate)
-                        if poz['scale_out_done']: tsl_tetik = min(tsl_tetik, poz['giris'] * 0.998)
-                        
-                        if not poz['scale_out_done'] and anlik <= poz['scale_out']:
-                            poz['scale_out_done'] = True
-                            kar_brut = (poz['giris'] - anlik) * (poz['miktar'] / 2)
-                            SANAL_KRIPTO_KASA += kar_brut
-                            poz['miktar'] = poz['miktar'] / 2
-                            print(f"✨ [SCALE-OUT] {sym} %50 Kâr Alındı. Yeni Kasa: {SANAL_KRIPTO_KASA:.2f}$")
-                            
-                        if anlik <= poz['hedef']:
-                            kapanma_fiyati = poz['hedef']
-                            sebep = "TAKE PROFIT"
-                        elif anlik >= tsl_tetik or anlik >= poz['zayiat']:
-                            kapanma_fiyati = anlik
-                            sebep = "STOP/TSL"
-
-                    if kapanma_fiyati > 0:
-                        kar_brut = (kapanma_fiyati - poz['giris']) * poz['miktar']
-                        kar = kar_brut if poz['yon'] == 'LONG' else -kar_brut
-                        
-                        # --- PNL FİZİKSEL SİGORTA KALKANI ---
-                        guncel_islem_butcesi = poz.get('margin', 11.5)
-                        if kar < -guncel_islem_butcesi:
-                            kar = -guncel_islem_butcesi
-                            sebep = f"LİKİDASYON (-{guncel_islem_butcesi}$ SİGORTASI)"
-                            
-                        SANAL_KRIPTO_KASA += kar
-                        sanal_crypto_kasa_kaydet()
-                        COOLDOWN_DICT[sym] = datetime.now() # Cooldown başlat
-                        if sym in SANAL_KRIPTO_POZISYONLAR: del SANAL_KRIPTO_POZISYONLAR[sym]
-                        
-                        if kar > 0: performans['kazanc'] += 1
-                        else: performans['kayip'] += 1
-                        islem_kaydet(sym, 'DEMO', poz['yon'], poz['giris'], kapanma_fiyati, kar, (kar/poz['margin'])*100, poz['guven_skoru'])
-                        print(f"[{datetime.now().strftime('%H:%M:%S')}] 🛑 KAPANIŞ [DEMO-SANAL]: {sym} | Sebep: {sebep} | K/Z: {kar:+.2f}$ | Yeni Kasa: {SANAL_KRIPTO_KASA:.2f}$")
-                        continue # Pozisyon kapandı, aktifler listesine ekleme.
-
-                except Exception as e: 
-                    guncel = float(poz['giris'])
-                
-                pnl = (guncel - poz['giris']) * poz['miktar'] if poz['yon'] == 'LONG' else (poz['giris'] - guncel) * poz['miktar']
-                p = {
-                    'symbol': sym,
-                    'markPrice': guncel,
-                    'info': {'positionAmt': poz['miktar'], 'entryPrice': poz['giris'], 'markPrice': str(guncel)},
-                    'unrealizedPnl': pnl,
-                    'contracts': poz['miktar'],
-                    'entryPrice': poz['giris'],
-                    'positionSide': poz['yon'],
-                    'Hesap_Tipi': 'DEMO'
-                }
-                aktifler.append((p, poz['miktar']))
-                mevcut_semboller.add(f"{sym}_DEMO")
-
             # --- LIVE: GERÇEK POZİSYONLARI ÇEK ---
             live_api_ok = _hesap_pozisyon_cek(borsa_live, "LIVE", mevcut_semboller, aktifler)
+            # --- TESTNET (DEMO): CACHE İLE POZİSYONLARİ ÇEK (5dk aralıkla) ---
+            simdi_ts = time.time()
+            if simdi_ts - _DEMO_CACHE['son_guncelleme'] > _DEMO_CACHE_SURESI:
+                demo_api_ok = _hesap_pozisyon_cek(borsa, "DEMO", mevcut_semboller, aktifler)
+                if demo_api_ok:
+                    # Cache'e kaydet
+                    _DEMO_CACHE['pozisyonlar'] = [(p, a) for p, a in aktifler if p.get('Hesap_Tipi') == 'DEMO' and p.get('symbol','') not in [s.replace('_DEMO','') for s in mevcut_semboller if s.endswith('_DEMO') and (p, a) not in aktifler]]
+                    _DEMO_CACHE['son_guncelleme'] = simdi_ts
+            else:
+                # Cache'den oku (API'ye dokunma)
+                for cp, ca in _DEMO_CACHE.get('pozisyonlar', []):
+                    sym = cp.get('symbol', '')
+                    if f"{sym}_DEMO" not in mevcut_semboller:
+                        aktifler.append((cp, ca))
+                        mevcut_semboller.add(f"{sym}_DEMO")
             
             # --- Kapanan Pozisyon Tespiti (Win/Loss Tracker) ---
             for eski_key, eski_pnl in list(onceki_pozisyonlar.items()):
@@ -985,10 +1210,36 @@ def pozisyon_takip_paneli():
                         
                     if gercek_pnl >= 0:
                         performans['kazanc'] += 1
+                        LIVE_ARDISIK_ZARAR = 0
                         print(f"✅ [{hesap_t}] {eski_sembol} KÂRLA KAPANDI! (Gerçekleşen Fatura: +{gercek_pnl:.2f} USDT)")
                     else:
                         performans['kayip'] += 1
+                        LIVE_ARDISIK_ZARAR += 1
                         print(f"❌ [{hesap_t}] {eski_sembol} ZARARLA KAPANDI! (Gerçekleşen Fatura: {gercek_pnl:.2f} USDT)")
+                        
+                    if LIVE_ARDISIK_ZARAR >= 3:
+                        ALIM_SATIM_TETIGI_ACIK = False
+                        CANLI_DEVRE_KESICI_AKTIF = True
+                        print("🛑 [DEVRE KESİCİ] 3 Ardışık Canlı Zarar! LIVE işlemler kilitlendi, uyanış için Demo kanıtı bekleniyor...")
+
+                    # --- ANLIK BEKLENTİ (EXPECTANCY) KONTROLÜ ---
+                    SON_ISLEMLER_PNL_LIVE.append(gercek_pnl)
+                    if len(SON_ISLEMLER_PNL_LIVE) > 10:
+                        SON_ISLEMLER_PNL_LIVE.pop(0)
+
+                    if len(SON_ISLEMLER_PNL_LIVE) == 10:
+                        _karlar = [p for p in SON_ISLEMLER_PNL_LIVE if p > 0]
+                        _zararlar = [p for p in SON_ISLEMLER_PNL_LIVE if p <= 0]
+                        _win_rate = len(_karlar) / 10.0
+                        _loss_rate = len(_zararlar) / 10.0
+                        _avg_kar = sum(_karlar) / len(_karlar) if _karlar else 0.0
+                        _avg_zarar = abs(sum(_zararlar) / len(_zararlar)) if _zararlar else 0.0
+                        _expectancy = (_win_rate * _avg_kar) - (_loss_rate * _avg_zarar)
+                        
+                        if _expectancy < -0.2 and not CANLI_DEVRE_KESICI_AKTIF:
+                            ALIM_SATIM_TETIGI_ACIK = False
+                            CANLI_DEVRE_KESICI_AKTIF = True
+                            print(f"🛑 [DEVRE KESİCİ] Matematiksel Beklenti Çöktü (E: {_expectancy:.2f}) HEDEF: > -0.2! LIVE işlemler kilitlendi...")
                         
                     # --- Trade Logger Kaydı ---
                     detay = aktif_islemler_detay.get(eski_key, {})
@@ -1008,26 +1259,81 @@ def pozisyon_takip_paneli():
                             pnl_yuzde = ((giris - cikis) / giris) * 100 if giris > 0 else 0
                         
                         islem_kaydet(eski_sembol, hesap_t, islem_yonu, round(giris, 6), round(cikis, 6), round(gercek_pnl, 2), round(pnl_yuzde, 2), round(ai_skoru, 2))
+                        
+                        if hesap_t == 'LIVE':
+                            try:
+                                borsa_live.cancel_all_orders(eski_sembol)
+                                print(f"🧹 [{eski_sembol}] Otonom Temizlik: Arkada kalan şarta bağlı (Stop/TP) emirler iptal edildi.")
+                            except: pass
+                            
                         try: del aktif_islemler_detay[eski_key]
                         except: pass
             
             # Mevcut pozisyonları güncelle
             yeni_pozisyonlar = {}
             
-            bakiye_demo = SANAL_KRIPTO_KASA
+            # --- BAKİYE GÜNCELLEME (CACHE + API) ---
+            simdi_ts2 = time.time()
+            if simdi_ts2 - _DEMO_CACHE['son_guncelleme'] < _DEMO_CACHE_SURESI and _DEMO_CACHE['bakiye'] > 0:
+                bakiye_demo = _DEMO_CACHE['bakiye']
+            else:
+                try:
+                    bakiye_demo = float(borsa.fetch_balance({'type': 'future'}).get('USDT', {}).get('total', 0.0)) if hasattr(borsa, 'apiKey') and borsa.apiKey else KASA_DURUM.get('DEMO_KASA', 0.0)
+                    KASA_DURUM['DEMO_KASA'] = bakiye_demo
+                    _DEMO_CACHE['bakiye'] = bakiye_demo
+                    _DEMO_CACHE['son_guncelleme'] = simdi_ts2
+                except:
+                    bakiye_demo = _DEMO_CACHE['bakiye'] if _DEMO_CACHE['bakiye'] > 0 else SANAL_KRIPTO_KASA
+
+            try:
+                bakiye_live = float(borsa_live.fetch_balance({'type': 'future'}).get('USDT', {}).get('total', 0.0)) if hasattr(borsa_live, 'apiKey') and borsa_live.apiKey else 0.0
+                KASA_DURUM['LIVE_KASA'] = bakiye_live
+            except:
+                bakiye_live = 0.0
             
-            try: bakiye_live = float(borsa_live.fetch_balance().get('USDT', {}).get('total', 0.0)) if hasattr(borsa_live, 'apiKey') and borsa_live.apiKey else 0.0
-            except: bakiye_live = 0.0
-            
+            # --- OTONOM RESET (GECE 00:00) VE DRAWDOWN (KANAMA) KONTROLÜ ---
+            bugun = datetime.now().date()
+            if bugun != SON_RESET_TARIHI:
+                SON_RESET_TARIHI = bugun
+                GUN_BASLANGIC_BAKIYESI = bakiye_live
+                LIVE_ARDISIK_ZARAR = 0
+                DEMO_ARDISIK_KAR = 0
+                SON_ISLEMLER_PNL_LIVE.clear()
+                ALIM_SATIM_TETIGI_ACIK = True
+                CANLI_DEVRE_KESICI_AKTIF = False
+                print(f"🌅 [YENİ GÜN] Sistem sayaçları sıfırlandı. Yeni Gün Başlangıç Bakiyesi: {GUN_BASLANGIC_BAKIYESI:.2f} USDT")
+                
+                # --- TELEGRAM GECE RAPORU ---
+                gunluk_rapor_gonder()
+                
+                try:
+                    import subprocess
+                    print("📊 [GECE YARISI OTOMASYONU] Müfettiş ve Dijital Analist otonom olarak tetikleniyor...")
+                    subprocess.Popen(["python", "mufettis.py"])
+                except:
+                    pass
+                
+            if GUN_BASLANGIC_BAKIYESI is None and bakiye_live > 0:
+                GUN_BASLANGIC_BAKIYESI = bakiye_live
+                
+            if GUN_BASLANGIC_BAKIYESI is not None and bakiye_live > 0:
+                drawdown_yuzde = ((GUN_BASLANGIC_BAKIYESI - bakiye_live) / GUN_BASLANGIC_BAKIYESI) * 100
+                if drawdown_yuzde >= 10.0 and ALIM_SATIM_TETIGI_ACIK:
+                    ALIM_SATIM_TETIGI_ACIK = False
+                    CANLI_DEVRE_KESICI_AKTIF = True
+                    print(f"🚨 [KRİTİK ZARAR EŞİĞİ] Günlük bakiye %{drawdown_yuzde:.2f} eridi (Limit: %10)! Sistem güvenlik için durduruldu.")
+                    
             print("\n" + "="*50)
-            if not aktifler and not SANAL_KRIPTO_POZISYONLAR:
+            
+            toplam_pnl_demo = 0
+            toplam_pnl_live = 0
+            
+            if not aktifler:
                 print(f"⏳ [{datetime.now().strftime('%H:%M:%S')}] Aktif İşlem Yok. Fırsatlar Taranıyor...")
             else:
                 print(f"📊 AÇIK POZİSYONLAR | {datetime.now().strftime('%H:%M:%S')}")
                 print("-" * 50)
                 
-                toplam_pnl_demo = 0
-                toplam_pnl_live = 0
                 for p, amt in aktifler:
                     sembol = p.get('symbol', 'Bilinmiyor').replace(':USDT', '')
                     hesap_t = p.get('Hesap_Tipi', 'Bilinmiyor')
@@ -1053,22 +1359,37 @@ def pozisyon_takip_paneli():
                                 tsl_seviye = guncel_fiyat * 1.015
                             print(f"  🛡️ TSL Güncellendi: [{hesap_t}] {sembol} | Yeni Stop ~{tsl_seviye:.2f}$ (Kâr büyüyor!)")
                     
-                    # Yön tespiti (Şık bir görsel için)
+                    # Yön tespiti
                     islem_yeri = p.get('positionSide', '').upper()
                     if islem_yeri == 'LONG':
                         yon_str = "🟢 LONG"
                     elif islem_yeri == 'SHORT':
                         yon_str = "🔴 SHORT"
-                    else: # Fallback for cases where side is derived from amount
+                    else:
                         yon_str = "🟢 LONG" if amt > 0 else "🔴 SHORT"
                         
                     print(f" [{hesap_t}] {sembol:<12} | {yon_str} | K/Z: {pnl:+.2f} USDT")
                 
                 print("-" * 50)
-                equity_demo = bakiye_demo + toplam_pnl_demo
-                equity_live = bakiye_live + toplam_pnl_live
-                print(f" 🏦 [DEMO] Kasa: {bakiye_demo:.2f} | K/Z: {toplam_pnl_demo:+.2f} | VARLIK: {equity_demo:.2f}")
-                print(f" 🏦 [LIVE] Kasa: {bakiye_live:.2f} | K/Z: {toplam_pnl_live:+.2f} | VARLIK: {equity_live:.2f}")
+
+            # --- KASA DURUMU (Her zaman basılır - Commander Header için) ---
+            # Binance ile birebir eşleşen GERÇEK Net P&L:
+            # Toplam Varlık (bakiye + açık pozisyon PnL) - Başlangıç Sermaye
+            equity_demo = bakiye_demo + toplam_pnl_demo
+            equity_live = bakiye_live + toplam_pnl_live
+            
+            # DEMO başlangıç sermayesi henüz ayarlanmadıysa, ilk okunan değeri kullan
+            global BASLANGIC_SERMAYE_DEMO
+            if BASLANGIC_SERMAYE_DEMO == 0.0 and bakiye_demo > 0:
+                BASLANGIC_SERMAYE_DEMO = bakiye_demo
+            
+            # Gerçek Net K/Z (Komisyon + Funding + Kapanmış işlemler DAHİL)
+            gercek_pnl_live = equity_live - BASLANGIC_SERMAYE_LIVE if equity_live > 0 else 0.0
+            gercek_pnl_demo = equity_demo - BASLANGIC_SERMAYE_DEMO if BASLANGIC_SERMAYE_DEMO > 0 else toplam_pnl_demo
+            
+            # Not: Commander Interceptor "$" işaretini ve "|" ayırıcıyı arar
+            print(f" 🏦 [DEMO] Kasa: ${equity_demo:.2f} | K/Z: ${gercek_pnl_demo:+.2f} | VARLIK: ${equity_demo:.2f}")
+            print(f" 🏦 [LIVE] Kasa: ${equity_live:.2f} | K/Z: ${gercek_pnl_live:+.2f} | VARLIK: ${equity_live:.2f}")
             
             # --- Performans Karnesi ---
             toplam_islem = performans['kazanc'] + performans['kayip']
@@ -1084,16 +1405,35 @@ def pozisyon_takip_paneli():
         time.sleep(30)
 
 if __name__ == "__main__":
-    print(f"\n🚀 SİSTEM BAŞLATILIYOR (V8 - Hybrid Execution Çift Hatlı)")
+    print("\n🧹 [SİSTEM BAKIMI] Otonom İmha Protokolü Başlatılıyor...")
+    eski_modeller = glob.glob("*.pkl")
+    silinen_sayisi = 0
+    for dosya in eski_modeller:
+        try:
+            os.remove(dosya)
+            silinen_sayisi += 1
+        except:
+            pass
+    print(f"✅ {silinen_sayisi} adet eski/bayat XGBoost modeli (pkl) kalıcı olarak silindi. Taze veriyle yeni beyinler inşa edilecek.")
+
+    try:
+        import subprocess
+        print("\n📊 [AÇILIŞ OTOMASYONU] Sistem Raporları (Müfettiş ve LLM) arka planda hazırlanıyor...")
+        subprocess.Popen(["python", "mufettis.py"])
+    except:
+        pass
+
+    print(f"\n🚀 SİSTEM BAŞLATILIYOR (Savaş Modu: V3 - Tam Otonom)")
     print(f"🔸 DEMO Bot: AKTİF")
-    print(f"🔸 LIVE Bot: {'AKTİF (Max 10 USDT Hard Limit)' if LIVE_API_KEY else 'KAPALI (LIVE API Bulunamadı)'}")
+    print(f"🔸 LIVE Bot: {'AKTİF (Agresif Mod - Max %95 Risk / 3x Kaldıraç)' if LIVE_API_KEY else 'KAPALI (LIVE API Bulunamadı)'}")
     
     # --- BAŞLANGIÇ CANLI (LIVE) API DR-RUN (BAĞLANTI DOĞRULAMA) ---
     if LIVE_API_KEY and hasattr(borsa_live, 'apiKey') and borsa_live.apiKey:
         print("\n⚙️ [API DRY-RUN] LIVE Cüzdan bağlantısı test ediliyor...")
         try:
-            bakiye_bilgisi = borsa_live.fetch_balance()
+            bakiye_bilgisi = borsa_live.fetch_balance({'type': 'future'})
             canli_bakiye = float(bakiye_bilgisi.get('USDT', {}).get('total', 0.0))
+            KASA_DURUM['LIVE_KASA'] = canli_bakiye
             print(f"   ✅ CANLI BAKİYE: {canli_bakiye:.2f} USDT - API BAĞLANTISI BAŞARILI!")
             time.sleep(5)
         except Exception as e:
@@ -1105,7 +1445,12 @@ if __name__ == "__main__":
     
     print(f"\n🎮 [BOOTCAMP] Yüksek hacimli 100 aktif (TRADING) coin için Ön-Eğitim başlatılıyor...")
     try:
-        scout_borsa.load_markets() # Statü kontrolü için şart
+        # Piyasaları yüklemek için 2 deneme (Rate limit koruması)
+        try: scout_borsa.load_markets()
+        except: 
+            time.sleep(2)
+            scout_borsa.load_markets()
+            
         tik_boot = scout_borsa.fetch_tickers()
         adaylar_boot = []
         for sembol, veri in tik_boot.items():
