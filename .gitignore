@@ -1,9 +1,11 @@
 # Güvenlik ve Şifreler
 .env
+*.pem
 
 # Çöp Dosyalar ve Önbellek
 __pycache__/
 .pytest_cache/
+.vs/
 
 # Sanal Ortam ve Kütüphaneler
 venv/
@@ -11,7 +13,16 @@ env/
 
 # Yapay Zeka Ağırlıkları (Boyutları çok büyük olduğu için)
 *.pkl
+*.keras
+
+# Veri tabanı ve büyük dosyalar
+*.db
+*.sqlite3
+*.csv
+*.xlsx
+*.zip
 
 # Log ve Sanal Kasa Dosyaları (Her sunucuda sıfırdan oluşmalı)
 *.json
 *.log
+*.txt
