@@ -1,28 +1,63 @@
-# Güvenlik ve Şifreler
+# ========== GÜVENLİK — API KEY, ŞİFRE, HASSAS VERİ ==========
 .env
 *.pem
+ayar.json
+QuantBot/ayar.json
+QuantBot/.env
+QuantBot/aktif_detay.json
+QuantBot/aktif_islemler.json
+QuantBot/performans.json
 
-# Çöp Dosyalar ve Önbellek
-__pycache__/
-.pytest_cache/
-.vs/
-
-# Sanal Ortam ve Kütüphaneler
-venv/
-env/
-
-# Yapay Zeka Ağırlıkları (Boyutları çok büyük olduğu için)
+# ========== YAPAY ZEKA MODELLERİ (Her sunucuda sıfırdan eğitilir) ==========
 *.pkl
-*.keras
+QuantBot/beyin_*
+QuantBot/stock_beyin_*
 
-# Veri tabanı ve büyük dosyalar
+# ========== VERİTABANI & VERİ DOSYALARI ==========
 *.db
 *.sqlite3
 *.csv
 *.xlsx
 *.zip
 
-# Log ve Sanal Kasa Dosyaları (Her sunucuda sıfırdan oluşmalı)
-*.json
+# ========== LOG DOSYALARI ==========
 *.log
-*.txt
+bot_rapor.txt
+nohup.out
+
+# ========== PYTHON CACHE ==========
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.vs/
+
+# ========== SANAL ORTAM ==========
+venv/
+env/
+.venv/
+
+# ========== IDE / OS ==========
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# ========== DEPLOYMENT SCRIPTS (Sunucu şifreleri içerir) ==========
+deploy_bot.py
+deploy_bot_resume.py
+deploy_fix.py
+deploy_phase2.py
+fix_remote.py
+fix_syntax_remote.py
+restart_bot.py
+restart_bot_fix.py
+kill_zombie.py
+diagnose_remote.py
+deep_diagnose.py
+verify_deploy.py
+mute_telegram.py
+
+# ========== SUNUCUDA OLUŞAN GEÇİCİ DOSYALAR ==========
+QuantBot/kill_zombie_helper.py
