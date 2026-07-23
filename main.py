@@ -1,3 +1,19 @@
+if __name__ == "__main__":
+    import os as _os
+    import runpy as _runpy
+    import sys as _sys
+
+    _BOT_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "QuantBot")
+    _BOT_MAIN = _os.path.join(_BOT_DIR, "main.py")
+    if not _os.path.exists(_BOT_MAIN):
+        raise FileNotFoundError(f"Kanonik bot girisi bulunamadi: {_BOT_MAIN}")
+
+    if _BOT_DIR not in _sys.path:
+        _sys.path.insert(0, _BOT_DIR)
+    _os.chdir(_BOT_DIR)
+    _runpy.run_path(_BOT_MAIN, run_name="__main__")
+    raise SystemExit
+
 import sys
 import os
 # Windows cp1254 Türkçe encoding emoji çökmelerini önle
@@ -257,7 +273,7 @@ except:
 # --- Performans Karnesi (Win/Loss Tracker) ---
 performans = {'kazanc': 0, 'kayip': 0}
 
-ALIM_SATIM_TETIGI_ACIK = True   # CANLI SİSTEM ATEŞLENDİ! 🚀🔥 (Max 1 LIVE Pozisyon Sınırı Aktif)
+ALIM_SATIM_TETIGI_ACIK = False  # Legacy kopyada da varsayilan guvenli mod: LIVE tetik kapali.
 CANLI_DEVRE_KESICI_AKTIF = False
 LIVE_ARDISIK_ZARAR = 0
 DEMO_ARDISIK_KAR = 0
@@ -390,7 +406,7 @@ def gunluk_rapor_gonder():
         # SQLite'dan bugünkü işlem detaylarını çek
         bugunun_islemleri = ""
         try:
-            conn = sqlite3.connect('trade_log.db')
+            conn = sqlite3.connect('trading_bot.db')
             cursor = conn.cursor()
             bugun_str = datetime.now().strftime('%Y-%m-%d')
             cursor.execute("SELECT Parite, Islem_Yonu, Net_PNL_USDT, PNL_Yuzde FROM closed_trades WHERE Tarih_Saat LIKE ?", (f"{bugun_str}%",))
@@ -612,7 +628,7 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
                         except Exception as tsl_error:
                             if "-4130" not in str(tsl_error): print(f"⚠️ [ZIRH UYARISI] Trailing Stop başarısız: {tsl_error}")
 
-                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: LONG | GİRİŞ: {gerceklesen_fiyat} | ZIRH: BÜTÜN KALKANLAR ONAYLI")
+                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: LONG | GİRİŞ: {gerceklesen_fiyat} | ZIRH: SABİT STOP ONAYLI")
                         break
                     except Exception as zirh_hata:
                         hata_msg = str(zirh_hata)
@@ -684,7 +700,7 @@ def _islem_ac_core(yon, sembol, anlik_fiyat, hesaplanan_tp, hesaplanan_sl, borsa
                         except Exception as tsl_error:
                             if "-4130" not in str(tsl_error): print(f"⚠️ [ZIRH UYARISI] Trailing Stop başarısız: {tsl_error}")
 
-                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: SHORT | GİRİŞ: {gerceklesen_fiyat} | ZIRH: BÜTÜN KALKANLAR ONAYLI")
+                        print(f"POZİSYON [{hesap_tipi}]: {sembol} | YÖN: SHORT | GİRİŞ: {gerceklesen_fiyat} | ZIRH: SABİT STOP ONAYLI")
                         break
                     except Exception as zirh_hata:
                         hata_msg = str(zirh_hata)
@@ -1299,7 +1315,7 @@ def pozisyon_takip_paneli():
                 LIVE_ARDISIK_ZARAR = 0
                 DEMO_ARDISIK_KAR = 0
                 SON_ISLEMLER_PNL_LIVE.clear()
-                ALIM_SATIM_TETIGI_ACIK = True
+                ALIM_SATIM_TETIGI_ACIK = False
                 CANLI_DEVRE_KESICI_AKTIF = False
                 print(f"🌅 [YENİ GÜN] Sistem sayaçları sıfırlandı. Yeni Gün Başlangıç Bakiyesi: {GUN_BASLANGIC_BAKIYESI:.2f} USDT")
                 
@@ -1309,7 +1325,7 @@ def pozisyon_takip_paneli():
                 try:
                     import subprocess
                     print("📊 [GECE YARISI OTOMASYONU] Müfettiş ve Dijital Analist otonom olarak tetikleniyor...")
-                    subprocess.Popen(["python", "mufettis.py"])
+                    subprocess.Popen([sys.executable, "mufettis.py"])
                 except:
                     pass
                 
@@ -1419,7 +1435,7 @@ if __name__ == "__main__":
     try:
         import subprocess
         print("\n📊 [AÇILIŞ OTOMASYONU] Sistem Raporları (Müfettiş ve LLM) arka planda hazırlanıyor...")
-        subprocess.Popen(["python", "mufettis.py"])
+        subprocess.Popen([sys.executable, "mufettis.py"])
     except:
         pass
 

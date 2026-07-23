@@ -1,0 +1,1081 @@
+{
+  "generated_at": "2026-07-16T09:38:17.221205+00:00",
+  "period": {
+    "start": "2021-07-16",
+    "end": "2026-07-16"
+  },
+  "universe_mode": "current_static",
+  "decision": {
+    "status": "ROBUSTNESS_PASS",
+    "all_top_n_beat_spy_in_validation": true,
+    "all_top_n_beat_equal_weight_in_validation": true,
+    "top12_cost25_beats_spy_in_validation": true,
+    "note": "This decision does not remove current-universe survivorship bias."
+  },
+  "variants": [
+    {
+      "name": "top8_cost10",
+      "config": {
+        "start_date": "2021-07-16",
+        "end_date": "2026-07-16",
+        "top_n": 8,
+        "min_positions": 5,
+        "sector_cap": 0.25,
+        "max_position_weight": 0.125,
+        "transaction_cost_bps": 10.0,
+        "min_avg_dollar_volume": 5000000.0,
+        "min_history_days": 252,
+        "benchmark_symbol": "SPY",
+        "strategy_mode": "full_factor",
+        "fundamental_mode": "point_in_time",
+        "universe_mode": "current_static",
+        "event_risk_mode": "not_modeled",
+        "selection_policy": "factor_rank",
+        "resolved_selection_policy": "factor_rank"
+      },
+      "validity": {
+        "classification": "DIAGNOSTIC_ONLY",
+        "production_valid": false,
+        "point_in_time_fundamentals": true,
+        "point_in_time_universe": false,
+        "point_in_time_event_calendar": false,
+        "warnings": [
+          "Bugunku sabit hisse havuzu survivorship bias icerir.",
+          "Tarihsel olarak bilinen bilanco takvimi modellenmedi."
+        ]
+      },
+      "full_period": {
+        "strategy": {
+          "periods": 59,
+          "cumulative_return": 1.6347456278641967,
+          "annualized_return": 0.21779439643363507,
+          "annualized_volatility": 0.15535174976895638,
+          "sharpe_zero_rf": 1.3540320221001025,
+          "max_drawdown": -0.14834289889335273,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "strategy_before_costs": {
+          "periods": 59,
+          "cumulative_return": 1.6752230504501626,
+          "annualized_return": 0.22157652277548956,
+          "annualized_volatility": 0.1554216952444264,
+          "sharpe_zero_rf": 1.373755439897356,
+          "max_drawdown": -0.1449677423075375,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "spy": {
+          "periods": 59,
+          "cumulative_return": 0.8102061218352734,
+          "annualized_return": 0.12828615803468346,
+          "annualized_volatility": 0.1546626631478684,
+          "sharpe_zero_rf": 0.8604527597565206,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6610169491525424
+        },
+        "equal_weight_universe": {
+          "periods": 59,
+          "cumulative_return": 1.0251278166666737,
+          "annualized_return": 0.15432821097134264,
+          "annualized_volatility": 0.14876518498962946,
+          "sharpe_zero_rf": 1.0436715587171124,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "comparison": {
+          "cumulative_excess_vs_spy": 0.45549481690679827,
+          "cumulative_excess_vs_equal_weight": 0.30102683207470027,
+          "period_win_rate_vs_spy": 0.6440677966101694,
+          "period_win_rate_vs_equal_weight": 0.6271186440677966,
+          "average_monthly_turnover": 0.2633462869708841,
+          "average_invested_weight": 0.923728813559322,
+          "empty_portfolio_periods": 0,
+          "total_transaction_cost_drag": 0.015537430931282159,
+          "compounded_cost_drag": 0.04047742258596587
+        },
+        "ranking_diagnostics": {
+          "periods": 59,
+          "average_rank_ic": 0.002582460721747929,
+          "median_rank_ic": 0.0015517871675013548,
+          "positive_rank_ic_rate": 0.5084745762711864,
+          "average_quartile_spread": -0.0005056646327845837
+        }
+      },
+      "development": {
+        "start": "2021-07-30",
+        "end": "2023-12-31",
+        "periods": 30,
+        "strategy": {
+          "periods": 30,
+          "cumulative_return": 0.40494230094963246,
+          "annualized_return": 0.1456801682004556,
+          "annualized_volatility": 0.1649469993897155,
+          "sharpe_zero_rf": 0.9080148842976106,
+          "max_drawdown": -0.14834289889335273,
+          "positive_period_rate": 0.5666666666666667
+        },
+        "spy": {
+          "periods": 30,
+          "cumulative_return": 0.14307458307539234,
+          "annualized_return": 0.05494502217460129,
+          "annualized_volatility": 0.182407013104792,
+          "sharpe_zero_rf": 0.38247361144607983,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6
+        },
+        "equal_weight": {
+          "periods": 30,
+          "cumulative_return": 0.2744158914971069,
+          "annualized_return": 0.10185506236859831,
+          "annualized_volatility": 0.18144938277038464,
+          "sharpe_zero_rf": 0.6243127672674057,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6
+        },
+        "relative_vs_spy": 0.2290906663060397,
+        "relative_vs_equal_weight": 0.10242057582881436
+      },
+      "validation": {
+        "start": "2024-01-01",
+        "end": "2026-05-29",
+        "periods": 29,
+        "strategy": {
+          "periods": 29,
+          "cumulative_return": 0.8753408065821011,
+          "annualized_return": 0.2971754030359093,
+          "annualized_volatility": 0.14541806943652152,
+          "sharpe_zero_rf": 1.8774628031054545,
+          "max_drawdown": -0.059782891526810045,
+          "positive_period_rate": 0.7931034482758621
+        },
+        "spy": {
+          "periods": 29,
+          "cumulative_return": 0.5836290550394299,
+          "annualized_return": 0.20952604713578382,
+          "annualized_volatility": 0.11983696245334659,
+          "sharpe_zero_rf": 1.6570613984896827,
+          "max_drawdown": -0.06959098293180932,
+          "positive_period_rate": 0.7241379310344828
+        },
+        "equal_weight": {
+          "periods": 29,
+          "cumulative_return": 0.5890635311269345,
+          "annualized_return": 0.2112418462497434,
+          "annualized_volatility": 0.10687881983815832,
+          "sharpe_zero_rf": 1.8590253309669715,
+          "max_drawdown": -0.06670316268970655,
+          "positive_period_rate": 0.7586206896551724
+        },
+        "relative_vs_spy": 0.18420459678634038,
+        "relative_vs_equal_weight": 0.18015470737796369
+      },
+      "annual_summary": [
+        {
+          "year": "2021",
+          "periods": 6,
+          "strategy_return": 0.00906047727825987,
+          "spy_return": 0.03036793045687647,
+          "equal_weight_return": 0.0538659842888789,
+          "average_invested_weight": 0.9583333333333334,
+          "average_positions": 8.0,
+          "win_rate_vs_spy": 0.3333333333333333
+        },
+        {
+          "year": "2022",
+          "periods": 12,
+          "strategy_return": 0.013789630681180665,
+          "spy_return": -0.08630548593590082,
+          "equal_weight_return": -0.0017591203250928444,
+          "average_invested_weight": 0.8229166666666666,
+          "average_positions": 8.0,
+          "win_rate_vs_spy": 0.75
+        },
+        {
+          "year": "2023",
+          "periods": 12,
+          "strategy_return": 0.3733886304259102,
+          "spy_return": 0.21417480755026497,
+          "equal_weight_return": 0.21140800828773343,
+          "average_invested_weight": 0.9479166666666666,
+          "average_positions": 8.0,
+          "win_rate_vs_spy": 0.75
+        },
+        {
+          "year": "2024",
+          "periods": 12,
+          "strategy_return": 0.3962625279627443,
+          "spy_return": 0.23861976216732428,
+          "equal_weight_return": 0.2067454672145972,
+          "average_invested_weight": 0.96875,
+          "average_positions": 8.0,
+          "win_rate_vs_spy": 0.75
+        },
+        {
+          "year": "2025",
+          "periods": 12,
+          "strategy_return": 0.13868051575249196,
+          "spy_return": 0.17717759617163664,
+          "equal_weight_return": 0.19551772716189975,
+          "average_invested_weight": 0.9166666666666666,
+          "average_positions": 8.0,
+          "win_rate_vs_spy": 0.5
+        },
+        {
+          "year": "2026",
+          "periods": 5,
+          "strategy_return": 0.17953608485436323,
+          "spy_return": 0.08610913941472731,
+          "equal_weight_return": 0.10146211557076201,
+          "average_invested_weight": 0.975,
+          "average_positions": 8.0,
+          "win_rate_vs_spy": 0.6
+        }
+      ],
+      "concentration": {
+        "unique_symbols": 38,
+        "total_selections": 472,
+        "top_5_selection_share": 0.3622881355932203,
+        "selection_hhi": 0.045200732548118336,
+        "most_selected": [
+          {
+            "symbol": "V",
+            "months": 39
+          },
+          {
+            "symbol": "PM",
+            "months": 37
+          },
+          {
+            "symbol": "MA",
+            "months": 37
+          },
+          {
+            "symbol": "BKNG",
+            "months": 33
+          },
+          {
+            "symbol": "KLAC",
+            "months": 25
+          },
+          {
+            "symbol": "META",
+            "months": 24
+          },
+          {
+            "symbol": "CMG",
+            "months": 18
+          },
+          {
+            "symbol": "EOG",
+            "months": 17
+          },
+          {
+            "symbol": "VRTX",
+            "months": 17
+          },
+          {
+            "symbol": "NFLX",
+            "months": 17
+          }
+        ]
+      }
+    },
+    {
+      "name": "top12_cost10",
+      "config": {
+        "start_date": "2021-07-16",
+        "end_date": "2026-07-16",
+        "top_n": 12,
+        "min_positions": 5,
+        "sector_cap": 0.25,
+        "max_position_weight": 0.08333333333333333,
+        "transaction_cost_bps": 10.0,
+        "min_avg_dollar_volume": 5000000.0,
+        "min_history_days": 252,
+        "benchmark_symbol": "SPY",
+        "strategy_mode": "full_factor",
+        "fundamental_mode": "point_in_time",
+        "universe_mode": "current_static",
+        "event_risk_mode": "not_modeled",
+        "selection_policy": "factor_rank",
+        "resolved_selection_policy": "factor_rank"
+      },
+      "validity": {
+        "classification": "DIAGNOSTIC_ONLY",
+        "production_valid": false,
+        "point_in_time_fundamentals": true,
+        "point_in_time_universe": false,
+        "point_in_time_event_calendar": false,
+        "warnings": [
+          "Bugunku sabit hisse havuzu survivorship bias icerir.",
+          "Tarihsel olarak bilinen bilanco takvimi modellenmedi."
+        ]
+      },
+      "full_period": {
+        "strategy": {
+          "periods": 59,
+          "cumulative_return": 1.397118275765465,
+          "annualized_return": 0.19460678073379833,
+          "annualized_volatility": 0.13741925670889815,
+          "sharpe_zero_rf": 1.3703061726399417,
+          "max_drawdown": -0.09551074692197659,
+          "positive_period_rate": 0.6949152542372882
+        },
+        "strategy_before_costs": {
+          "periods": 59,
+          "cumulative_return": 1.4346849442494825,
+          "annualized_return": 0.1983909744316601,
+          "annualized_volatility": 0.13750164523706546,
+          "sharpe_zero_rf": 1.3928990204618046,
+          "max_drawdown": -0.09472217605049549,
+          "positive_period_rate": 0.6949152542372882
+        },
+        "spy": {
+          "periods": 59,
+          "cumulative_return": 0.8102061218352734,
+          "annualized_return": 0.12828615803468346,
+          "annualized_volatility": 0.1546626631478684,
+          "sharpe_zero_rf": 0.8604527597565206,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6610169491525424
+        },
+        "equal_weight_universe": {
+          "periods": 59,
+          "cumulative_return": 1.0251278166666737,
+          "annualized_return": 0.15432821097134264,
+          "annualized_volatility": 0.14876518498962946,
+          "sharpe_zero_rf": 1.0436715587171124,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "comparison": {
+          "cumulative_excess_vs_spy": 0.32422393607593825,
+          "cumulative_excess_vs_equal_weight": 0.18368739791994027,
+          "period_win_rate_vs_spy": 0.576271186440678,
+          "period_win_rate_vs_equal_weight": 0.5932203389830508,
+          "average_monthly_turnover": 0.2682876045665969,
+          "average_invested_weight": 0.9477401129943503,
+          "empty_portfolio_periods": 0,
+          "total_transaction_cost_drag": 0.015828968669429216,
+          "compounded_cost_drag": 0.03756666848401746
+        },
+        "ranking_diagnostics": {
+          "periods": 59,
+          "average_rank_ic": 0.002582460721747929,
+          "median_rank_ic": 0.0015517871675013548,
+          "positive_rank_ic_rate": 0.5084745762711864,
+          "average_quartile_spread": -0.0005056646327845837
+        }
+      },
+      "development": {
+        "start": "2021-07-30",
+        "end": "2023-12-31",
+        "periods": 30,
+        "strategy": {
+          "periods": 30,
+          "cumulative_return": 0.47889823365009665,
+          "annualized_return": 0.169432922312158,
+          "annualized_volatility": 0.15095240345834005,
+          "sharpe_zero_rf": 1.1156991627781232,
+          "max_drawdown": -0.09551074692197659,
+          "positive_period_rate": 0.6333333333333333
+        },
+        "spy": {
+          "periods": 30,
+          "cumulative_return": 0.14307458307539234,
+          "annualized_return": 0.05494502217460129,
+          "annualized_volatility": 0.182407013104792,
+          "sharpe_zero_rf": 0.38247361144607983,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6
+        },
+        "equal_weight": {
+          "periods": 30,
+          "cumulative_return": 0.2744158914971069,
+          "annualized_return": 0.10185506236859831,
+          "annualized_volatility": 0.18144938277038464,
+          "sharpe_zero_rf": 0.6243127672674057,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6
+        },
+        "relative_vs_spy": 0.2937897977498418,
+        "relative_vs_equal_weight": 0.1604518144487168
+      },
+      "validation": {
+        "start": "2024-01-01",
+        "end": "2026-05-29",
+        "periods": 29,
+        "strategy": {
+          "periods": 29,
+          "cumulative_return": 0.6208811541069275,
+          "annualized_return": 0.22121910179957727,
+          "annualized_volatility": 0.12427659929531548,
+          "sharpe_zero_rf": 1.6807771497620978,
+          "max_drawdown": -0.0520605377580976,
+          "positive_period_rate": 0.7586206896551724
+        },
+        "spy": {
+          "periods": 29,
+          "cumulative_return": 0.5836290550394299,
+          "annualized_return": 0.20952604713578382,
+          "annualized_volatility": 0.11983696245334659,
+          "sharpe_zero_rf": 1.6570613984896827,
+          "max_drawdown": -0.06959098293180932,
+          "positive_period_rate": 0.7241379310344828
+        },
+        "equal_weight": {
+          "periods": 29,
+          "cumulative_return": 0.5890635311269345,
+          "annualized_return": 0.2112418462497434,
+          "annualized_volatility": 0.10687881983815832,
+          "sharpe_zero_rf": 1.8590253309669715,
+          "max_drawdown": -0.06670316268970655,
+          "positive_period_rate": 0.7586206896551724
+        },
+        "relative_vs_spy": 0.023523248041549705,
+        "relative_vs_equal_weight": 0.02002287659161639
+      },
+      "annual_summary": [
+        {
+          "year": "2021",
+          "periods": 6,
+          "strategy_return": 0.07076158729791548,
+          "spy_return": 0.03036793045687647,
+          "equal_weight_return": 0.0538659842888789,
+          "average_invested_weight": 0.9722222222222222,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.6666666666666666
+        },
+        {
+          "year": "2022",
+          "periods": 12,
+          "strategy_return": 0.08516456991518573,
+          "spy_return": -0.08630548593590082,
+          "equal_weight_return": -0.0017591203250928444,
+          "average_invested_weight": 0.888888888888889,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.6666666666666666
+        },
+        {
+          "year": "2023",
+          "periods": 12,
+          "strategy_return": 0.27276991623759583,
+          "spy_return": 0.21417480755026497,
+          "equal_weight_return": 0.21140800828773343,
+          "average_invested_weight": 0.9583333333333331,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.5833333333333334
+        },
+        {
+          "year": "2024",
+          "periods": 12,
+          "strategy_return": 0.3152660012162689,
+          "spy_return": 0.23861976216732428,
+          "equal_weight_return": 0.2067454672145972,
+          "average_invested_weight": 0.986111111111111,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.5
+        },
+        {
+          "year": "2025",
+          "periods": 12,
+          "strategy_return": 0.10110043297197913,
+          "spy_return": 0.17717759617163664,
+          "equal_weight_return": 0.19551772716189975,
+          "average_invested_weight": 0.9444444444444443,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.5
+        },
+        {
+          "year": "2026",
+          "periods": 5,
+          "strategy_return": 0.11920758648833796,
+          "spy_return": 0.08610913941472731,
+          "equal_weight_return": 0.10146211557076201,
+          "average_invested_weight": 0.95,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.6
+        }
+      ],
+      "concentration": {
+        "unique_symbols": 54,
+        "total_selections": 708,
+        "top_5_selection_share": 0.288135593220339,
+        "selection_hhi": 0.03397810335471928,
+        "most_selected": [
+          {
+            "symbol": "PM",
+            "months": 45
+          },
+          {
+            "symbol": "MA",
+            "months": 45
+          },
+          {
+            "symbol": "V",
+            "months": 43
+          },
+          {
+            "symbol": "KLAC",
+            "months": 36
+          },
+          {
+            "symbol": "BKNG",
+            "months": 35
+          },
+          {
+            "symbol": "META",
+            "months": 27
+          },
+          {
+            "symbol": "EOG",
+            "months": 27
+          },
+          {
+            "symbol": "JNJ",
+            "months": 25
+          },
+          {
+            "symbol": "UNP",
+            "months": 23
+          },
+          {
+            "symbol": "JPM",
+            "months": 22
+          }
+        ]
+      }
+    },
+    {
+      "name": "top20_cost10",
+      "config": {
+        "start_date": "2021-07-16",
+        "end_date": "2026-07-16",
+        "top_n": 20,
+        "min_positions": 5,
+        "sector_cap": 0.25,
+        "max_position_weight": 0.05,
+        "transaction_cost_bps": 10.0,
+        "min_avg_dollar_volume": 5000000.0,
+        "min_history_days": 252,
+        "benchmark_symbol": "SPY",
+        "strategy_mode": "full_factor",
+        "fundamental_mode": "point_in_time",
+        "universe_mode": "current_static",
+        "event_risk_mode": "not_modeled",
+        "selection_policy": "factor_rank",
+        "resolved_selection_policy": "factor_rank"
+      },
+      "validity": {
+        "classification": "DIAGNOSTIC_ONLY",
+        "production_valid": false,
+        "point_in_time_fundamentals": true,
+        "point_in_time_universe": false,
+        "point_in_time_event_calendar": false,
+        "warnings": [
+          "Bugunku sabit hisse havuzu survivorship bias icerir.",
+          "Tarihsel olarak bilinen bilanco takvimi modellenmedi."
+        ]
+      },
+      "full_period": {
+        "strategy": {
+          "periods": 59,
+          "cumulative_return": 1.2299363525678406,
+          "annualized_return": 0.17716989236031866,
+          "annualized_volatility": 0.13173491644653515,
+          "sharpe_zero_rf": 1.3110033166879183,
+          "max_drawdown": -0.1273114343910522,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "strategy_before_costs": {
+          "periods": 59,
+          "cumulative_return": 1.2596256900636624,
+          "annualized_return": 0.18034081397319346,
+          "annualized_volatility": 0.13173364609212687,
+          "sharpe_zero_rf": 1.33170416274635,
+          "max_drawdown": -0.12559205418552322,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "spy": {
+          "periods": 59,
+          "cumulative_return": 0.8102061218352734,
+          "annualized_return": 0.12828615803468346,
+          "annualized_volatility": 0.1546626631478684,
+          "sharpe_zero_rf": 0.8604527597565206,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6610169491525424
+        },
+        "equal_weight_universe": {
+          "periods": 59,
+          "cumulative_return": 1.0251278166666737,
+          "annualized_return": 0.15432821097134264,
+          "annualized_volatility": 0.14876518498962946,
+          "sharpe_zero_rf": 1.0436715587171124,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "comparison": {
+          "cumulative_excess_vs_spy": 0.23186875001120022,
+          "cumulative_excess_vs_equal_weight": 0.10113363424056776,
+          "period_win_rate_vs_spy": 0.576271186440678,
+          "period_win_rate_vs_equal_weight": 0.576271186440678,
+          "average_monthly_turnover": 0.22711104080220265,
+          "average_invested_weight": 0.9694915254237289,
+          "empty_portfolio_periods": 0,
+          "total_transaction_cost_drag": 0.013399551407329959,
+          "compounded_cost_drag": 0.02968933749582181
+        },
+        "ranking_diagnostics": {
+          "periods": 59,
+          "average_rank_ic": 0.002582460721747929,
+          "median_rank_ic": 0.0015517871675013548,
+          "positive_rank_ic_rate": 0.5084745762711864,
+          "average_quartile_spread": -0.0005056646327845837
+        }
+      },
+      "development": {
+        "start": "2021-07-30",
+        "end": "2023-12-31",
+        "periods": 30,
+        "strategy": {
+          "periods": 30,
+          "cumulative_return": 0.32650524869100317,
+          "annualized_return": 0.11965336352900469,
+          "annualized_volatility": 0.15111861736720789,
+          "sharpe_zero_rf": 0.823622167524382,
+          "max_drawdown": -0.1273114343910522,
+          "positive_period_rate": 0.6333333333333333
+        },
+        "spy": {
+          "periods": 30,
+          "cumulative_return": 0.14307458307539234,
+          "annualized_return": 0.05494502217460129,
+          "annualized_volatility": 0.182407013104792,
+          "sharpe_zero_rf": 0.38247361144607983,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6
+        },
+        "equal_weight": {
+          "periods": 30,
+          "cumulative_return": 0.2744158914971069,
+          "annualized_return": 0.10185506236859831,
+          "annualized_volatility": 0.18144938277038464,
+          "sharpe_zero_rf": 0.6243127672674057,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6
+        },
+        "relative_vs_spy": 0.1604713011132648,
+        "relative_vs_equal_weight": 0.04087312277054611
+      },
+      "validation": {
+        "start": "2024-01-01",
+        "end": "2026-05-29",
+        "periods": 29,
+        "strategy": {
+          "periods": 29,
+          "cumulative_return": 0.6810610849586489,
+          "annualized_return": 0.23978076591264808,
+          "annualized_volatility": 0.1089614324547308,
+          "sharpe_zero_rf": 2.043003970526162,
+          "max_drawdown": -0.05694639792636225,
+          "positive_period_rate": 0.7241379310344828
+        },
+        "spy": {
+          "periods": 29,
+          "cumulative_return": 0.5836290550394299,
+          "annualized_return": 0.20952604713578382,
+          "annualized_volatility": 0.11983696245334659,
+          "sharpe_zero_rf": 1.6570613984896827,
+          "max_drawdown": -0.06959098293180932,
+          "positive_period_rate": 0.7241379310344828
+        },
+        "equal_weight": {
+          "periods": 29,
+          "cumulative_return": 0.5890635311269345,
+          "annualized_return": 0.2112418462497434,
+          "annualized_volatility": 0.10687881983815832,
+          "sharpe_zero_rf": 1.8590253309669715,
+          "max_drawdown": -0.06670316268970655,
+          "positive_period_rate": 0.7586206896551724
+        },
+        "relative_vs_spy": 0.06152452786160412,
+        "relative_vs_equal_weight": 0.05789419493283021
+      },
+      "annual_summary": [
+        {
+          "year": "2021",
+          "periods": 6,
+          "strategy_return": 0.04682413892522197,
+          "spy_return": 0.03036793045687647,
+          "equal_weight_return": 0.0538659842888789,
+          "average_invested_weight": 0.9916666666666667,
+          "average_positions": 20.0,
+          "win_rate_vs_spy": 0.6666666666666666
+        },
+        {
+          "year": "2022",
+          "periods": 12,
+          "strategy_return": 0.03908299968549667,
+          "spy_return": -0.08630548593590082,
+          "equal_weight_return": -0.0017591203250928444,
+          "average_invested_weight": 0.9374999999999999,
+          "average_positions": 20.0,
+          "win_rate_vs_spy": 0.75
+        },
+        {
+          "year": "2023",
+          "periods": 12,
+          "strategy_return": 0.21950898585157663,
+          "spy_return": 0.21417480755026497,
+          "equal_weight_return": 0.21140800828773343,
+          "average_invested_weight": 0.9583333333333334,
+          "average_positions": 20.0,
+          "win_rate_vs_spy": 0.5
+        },
+        {
+          "year": "2024",
+          "periods": 12,
+          "strategy_return": 0.2518765785948962,
+          "spy_return": 0.23861976216732428,
+          "equal_weight_return": 0.2067454672145972,
+          "average_invested_weight": 0.975,
+          "average_positions": 20.0,
+          "win_rate_vs_spy": 0.5833333333333334
+        },
+        {
+          "year": "2025",
+          "periods": 12,
+          "strategy_return": 0.1941190154805903,
+          "spy_return": 0.17717759617163664,
+          "equal_weight_return": 0.19551772716189975,
+          "average_invested_weight": 0.9916666666666666,
+          "average_positions": 20.0,
+          "win_rate_vs_spy": 0.5
+        },
+        {
+          "year": "2026",
+          "periods": 5,
+          "strategy_return": 0.12453859736166373,
+          "spy_return": 0.08610913941472731,
+          "equal_weight_return": 0.10146211557076201,
+          "average_invested_weight": 0.9800000000000001,
+          "average_positions": 20.0,
+          "win_rate_vs_spy": 0.4
+        }
+      ],
+      "concentration": {
+        "unique_symbols": 73,
+        "total_selections": 1180,
+        "top_5_selection_share": 0.2076271186440678,
+        "selection_hhi": 0.024130996839988508,
+        "most_selected": [
+          {
+            "symbol": "PM",
+            "months": 56
+          },
+          {
+            "symbol": "MA",
+            "months": 52
+          },
+          {
+            "symbol": "V",
+            "months": 50
+          },
+          {
+            "symbol": "KLAC",
+            "months": 45
+          },
+          {
+            "symbol": "JNJ",
+            "months": 42
+          },
+          {
+            "symbol": "EOG",
+            "months": 38
+          },
+          {
+            "symbol": "BKNG",
+            "months": 37
+          },
+          {
+            "symbol": "JPM",
+            "months": 35
+          },
+          {
+            "symbol": "UNP",
+            "months": 34
+          },
+          {
+            "symbol": "KO",
+            "months": 34
+          }
+        ]
+      }
+    },
+    {
+      "name": "top12_cost25",
+      "config": {
+        "start_date": "2021-07-16",
+        "end_date": "2026-07-16",
+        "top_n": 12,
+        "min_positions": 5,
+        "sector_cap": 0.25,
+        "max_position_weight": 0.08333333333333333,
+        "transaction_cost_bps": 25.0,
+        "min_avg_dollar_volume": 5000000.0,
+        "min_history_days": 252,
+        "benchmark_symbol": "SPY",
+        "strategy_mode": "full_factor",
+        "fundamental_mode": "point_in_time",
+        "universe_mode": "current_static",
+        "event_risk_mode": "not_modeled",
+        "selection_policy": "factor_rank",
+        "resolved_selection_policy": "factor_rank"
+      },
+      "validity": {
+        "classification": "DIAGNOSTIC_ONLY",
+        "production_valid": false,
+        "point_in_time_fundamentals": true,
+        "point_in_time_universe": false,
+        "point_in_time_event_calendar": false,
+        "warnings": [
+          "Bugunku sabit hisse havuzu survivorship bias icerir.",
+          "Tarihsel olarak bilinen bilanco takvimi modellenmedi."
+        ]
+      },
+      "full_period": {
+        "strategy": {
+          "periods": 59,
+          "cumulative_return": 1.3418306721372142,
+          "annualized_return": 0.1889506494523041,
+          "annualized_volatility": 0.1372981129442503,
+          "sharpe_zero_rf": 1.336342320306309,
+          "max_drawdown": -0.09669267141540139,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "strategy_before_costs": {
+          "periods": 59,
+          "cumulative_return": 1.4346849442494825,
+          "annualized_return": 0.1983909744316601,
+          "annualized_volatility": 0.13750164523706546,
+          "sharpe_zero_rf": 1.3928990204618046,
+          "max_drawdown": -0.09472217605049549,
+          "positive_period_rate": 0.6949152542372882
+        },
+        "spy": {
+          "periods": 59,
+          "cumulative_return": 0.8102061218352734,
+          "annualized_return": 0.12828615803468346,
+          "annualized_volatility": 0.1546626631478684,
+          "sharpe_zero_rf": 0.8604527597565206,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6610169491525424
+        },
+        "equal_weight_universe": {
+          "periods": 59,
+          "cumulative_return": 1.0251278166666737,
+          "annualized_return": 0.15432821097134264,
+          "annualized_volatility": 0.14876518498962946,
+          "sharpe_zero_rf": 1.0436715587171124,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6779661016949152
+        },
+        "comparison": {
+          "cumulative_excess_vs_spy": 0.29368177683707897,
+          "cumulative_excess_vs_equal_weight": 0.15638660081803035,
+          "period_win_rate_vs_spy": 0.576271186440678,
+          "period_win_rate_vs_equal_weight": 0.576271186440678,
+          "average_monthly_turnover": 0.2682876045665969,
+          "average_invested_weight": 0.9477401129943503,
+          "empty_portfolio_periods": 0,
+          "total_transaction_cost_drag": 0.039572421673573034,
+          "compounded_cost_drag": 0.09285427211226827
+        },
+        "ranking_diagnostics": {
+          "periods": 59,
+          "average_rank_ic": 0.002582460721747929,
+          "median_rank_ic": 0.0015517871675013548,
+          "positive_rank_ic_rate": 0.5084745762711864,
+          "average_quartile_spread": -0.0005056646327845837
+        }
+      },
+      "development": {
+        "start": "2021-07-30",
+        "end": "2023-12-31",
+        "periods": 30,
+        "strategy": {
+          "periods": 30,
+          "cumulative_return": 0.46040679163961706,
+          "annualized_return": 0.16356202175143975,
+          "annualized_volatility": 0.1508502014931211,
+          "sharpe_zero_rf": 1.0825834199482,
+          "max_drawdown": -0.09669267141540139,
+          "positive_period_rate": 0.6333333333333333
+        },
+        "spy": {
+          "periods": 30,
+          "cumulative_return": 0.14307458307539234,
+          "annualized_return": 0.05494502217460129,
+          "annualized_volatility": 0.182407013104792,
+          "sharpe_zero_rf": 0.38247361144607983,
+          "max_drawdown": -0.23312901064774816,
+          "positive_period_rate": 0.6
+        },
+        "equal_weight": {
+          "periods": 30,
+          "cumulative_return": 0.2744158914971069,
+          "annualized_return": 0.10185506236859831,
+          "annualized_volatility": 0.18144938277038464,
+          "sharpe_zero_rf": 0.6243127672674057,
+          "max_drawdown": -0.19779997982981556,
+          "positive_period_rate": 0.6
+        },
+        "relative_vs_spy": 0.2776128638172115,
+        "relative_vs_equal_weight": 0.14594207541151993
+      },
+      "validation": {
+        "start": "2024-01-01",
+        "end": "2026-05-29",
+        "periods": 29,
+        "strategy": {
+          "periods": 29,
+          "cumulative_return": 0.6035468237640911,
+          "annualized_return": 0.21579784907393584,
+          "annualized_volatility": 0.12411946535790977,
+          "sharpe_zero_rf": 1.6463342387036652,
+          "max_drawdown": -0.05233245856183566,
+          "positive_period_rate": 0.7241379310344828
+        },
+        "spy": {
+          "periods": 29,
+          "cumulative_return": 0.5836290550394299,
+          "annualized_return": 0.20952604713578382,
+          "annualized_volatility": 0.11983696245334659,
+          "sharpe_zero_rf": 1.6570613984896827,
+          "max_drawdown": -0.06959098293180932,
+          "positive_period_rate": 0.7241379310344828
+        },
+        "equal_weight": {
+          "periods": 29,
+          "cumulative_return": 0.5890635311269345,
+          "annualized_return": 0.2112418462497434,
+          "annualized_volatility": 0.10687881983815832,
+          "sharpe_zero_rf": 1.8590253309669715,
+          "max_drawdown": -0.06670316268970655,
+          "positive_period_rate": 0.7586206896551724
+        },
+        "relative_vs_spy": 0.012577294323616206,
+        "relative_vs_equal_weight": 0.009114357200611822
+      },
+      "annual_summary": [
+        {
+          "year": "2021",
+          "periods": 6,
+          "strategy_return": 0.06673622786096112,
+          "spy_return": 0.03036793045687647,
+          "equal_weight_return": 0.0538659842888789,
+          "average_invested_weight": 0.9722222222222222,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.6666666666666666
+        },
+        {
+          "year": "2022",
+          "periods": 12,
+          "strategy_return": 0.08055849083351374,
+          "spy_return": -0.08630548593590082,
+          "equal_weight_return": -0.0017591203250928444,
+          "average_invested_weight": 0.888888888888889,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.6666666666666666
+        },
+        {
+          "year": "2023",
+          "periods": 12,
+          "strategy_return": 0.2669763817377002,
+          "spy_return": 0.21417480755026497,
+          "equal_weight_return": 0.21140800828773343,
+          "average_invested_weight": 0.9583333333333331,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.5833333333333334
+        },
+        {
+          "year": "2024",
+          "periods": 12,
+          "strategy_return": 0.310177800247051,
+          "spy_return": 0.23861976216732428,
+          "equal_weight_return": 0.2067454672145972,
+          "average_invested_weight": 0.986111111111111,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.5
+        },
+        {
+          "year": "2025",
+          "periods": 12,
+          "strategy_return": 0.09640732709633215,
+          "spy_return": 0.17717759617163664,
+          "equal_weight_return": 0.19551772716189975,
+          "average_invested_weight": 0.9444444444444443,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.5
+        },
+        {
+          "year": "2026",
+          "periods": 5,
+          "strategy_return": 0.11629628717779661,
+          "spy_return": 0.08610913941472731,
+          "equal_weight_return": 0.10146211557076201,
+          "average_invested_weight": 0.95,
+          "average_positions": 12.0,
+          "win_rate_vs_spy": 0.6
+        }
+      ],
+      "concentration": {
+        "unique_symbols": 54,
+        "total_selections": 708,
+        "top_5_selection_share": 0.288135593220339,
+        "selection_hhi": 0.03397810335471928,
+        "most_selected": [
+          {
+            "symbol": "PM",
+            "months": 45
+          },
+          {
+            "symbol": "MA",
+            "months": 45
+          },
+          {
+            "symbol": "V",
+            "months": 43
+          },
+          {
+            "symbol": "KLAC",
+            "months": 36
+          },
+          {
+            "symbol": "BKNG",
+            "months": 35
+          },
+          {
+            "symbol": "META",
+            "months": 27
+          },
+          {
+            "symbol": "EOG",
+            "months": 27
+          },
+          {
+            "symbol": "JNJ",
+            "months": 25
+          },
+          {
+            "symbol": "UNP",
+            "months": 23
+          },
+          {
+            "symbol": "JPM",
+            "months": 22
+          }
+        ]
+      }
+    }
+  ]
+}

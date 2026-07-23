@@ -3,6 +3,8 @@ import threading
 import time
 import sys
 import os
+import json
+from pathlib import Path
 from collections import deque
 
 # --- Hisse Sinyal Motoru (Canlı Veri) ---
@@ -13,22 +15,30 @@ def hisse_tarama_thread():
     """Arka planda stock_value_engine'i çalıştırarak sinyalleri günceller."""
     global hisse_sinyalleri, hisse_tarama_durumu
     try:
-        from stock_value_engine import tam_tarama_baslat
+        from stock_value_engine import son_tarama_durumu_oku, tam_tarama_baslat
         while True:
             try:
                 hisse_tarama_durumu = "Tarama çalışıyor..."
                 sonuclar = tam_tarama_baslat()
+                motor_durumu = son_tarama_durumu_oku()
                 if sonuclar:
                     hisse_sinyalleri = sonuclar[:10]  # Top 10 sinyal
-                    hisse_tarama_durumu = f"{len(sonuclar)} sinyal bulundu"
+                    hisse_tarama_durumu = f"{len(sonuclar)} faktor adayi bulundu"
                 else:
                     hisse_sinyalleri = []
-                    hisse_tarama_durumu = "Sinyal yok"
+                    hisse_tarama_durumu = (
+                        "Sinyal yok" if motor_durumu.get('status') == 'COMPLETE'
+                        else motor_durumu.get('message', 'Veri yetersiz')
+                    )
             except Exception as e:
                 hisse_tarama_durumu = f"Hata: {str(e)[:30]}"
-            # Her 4 saatte bir tekrar tara (günlük strateji)
+            # Daily bars only need one scan per day; restarts are deduplicated in SQLite.
             import time as _t
-            _t.sleep(14400)
+            try:
+                tarama_araligi = max(3600, int(os.getenv('STOCK_SCAN_INTERVAL_SECONDS', '86400')))
+            except (TypeError, ValueError):
+                tarama_araligi = 86400
+            _t.sleep(tarama_araligi)
     except ImportError:
         hisse_tarama_durumu = "stock_value_engine.py bulunamadı"
 
@@ -60,6 +70,25 @@ kasa_durum = {
 }
 
 import re as _re
+
+def _status_dosyasi():
+    base = Path(__file__).resolve().parent
+    adaylar = [base / "runtime_status.json", base / "QuantBot" / "runtime_status.json"]
+    for aday in adaylar:
+        if aday.exists():
+            return aday
+    return adaylar[0]
+
+def runtime_status_oku():
+    try:
+        with _status_dosyasi().open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _kisalt(deger, limit=46):
+    metin = str(deger or "—")
+    return metin if len(metin) <= limit else metin[:limit - 1] + "…"
 
 # Alt Süreç (Subprocess) Çalıştırıcısı
 def process_baslat(komut, log_queue, name):
@@ -174,32 +203,130 @@ def draw_header() -> Panel:
     return Panel(birlesik, border_style="bright_blue")
 
 def draw_crypto_table() -> Panel:
-    table = Table(expand=True, border_style="bright_blue", show_lines=True)
-    table.add_column("Sıra", justify="center", width=4)
-    table.add_column("Parite", style="bold bright_white")
-    table.add_column("Yön", justify="center")
-    table.add_column("AI Güven (XGBoost)", justify="left", ratio=2)
-    table.add_column("Bütçe (Kelly)", justify="center", style="bright_white")
-    table.add_column("Volatilite", justify="right", style="bright_white")
-    table.add_column("Net P&L", justify="right", style="bold")
+    status = runtime_status_oku()
+    table = Table(expand=True, border_style="bright_blue", show_lines=False)
+    table.add_column("Alan", style="bold bright_cyan", width=14)
+    table.add_column("Durum", style="bright_white")
 
-    def ai_bar(skor):
-        renk = "bright_green" if skor >= 75 else ("bright_yellow" if skor >= 55 else "bright_red")
-        dolu = int(skor / 10)
-        bos = 10 - dolu
-        return f"[{renk}]{'█' * dolu}[/][white]{'░' * bos}[/] %{skor}"
+    faz = status.get("faz", "bekleniyor")
+    bot_durumu = status.get("bot_durumu", "durum dosyası bekleniyor")
+    live = "AKTİF" if status.get("live_mod") else "KAPALI"
+    tetik = "AÇIK" if status.get("live_tetik") else "KAPALI"
+    table.add_row("Faz", f"[bold]{_kisalt(faz, 18)}[/] - {_kisalt(bot_durumu, 44)}")
+    table.add_row("LIVE", f"{live} | Tetik: {tetik} | Güncelleme: {_kisalt(status.get('guncelleme_zamani'), 22)}")
+    demo_profil = status.get("demo_profil", "LIVE_SHADOW")
+    demo_shadow = "ON" if status.get("demo_live_shadow", True) else "OFF"
+    short_kapi = "ON" if status.get("short_islem_aktif", False) else "OFF"
+    table.add_row("Demo Profil", f"{demo_profil} | Shadow: {demo_shadow} | Short: {short_kapi}")
 
-    table.add_row("1", "BTC/USDT", "[bold bright_green]LONG[/]", ai_bar(88), "%60 (10x)", "245.5$", "[bright_green]+$12.50[/]")
-    table.add_row("2", "SOL/USDT", "[bold bright_red]SHORT[/]", ai_bar(62), "%15 (5x)", "1.24$", "[bright_red]-$1.30[/]")
-    table.add_row("3", "ETH/USDT", "[bold bright_green]LONG[/]", ai_bar(71), "%40 (10x)", "45.2$", "[bright_green]+$4.20[/]")
-    table.add_row("4", "AVAX/USDT", "[bold white]NÖTR[/]", ai_bar(48), "-", "0.85$", "[white]0.00$[/]")
+    dongu = status.get("son_dongu", {}) or {}
+    dongu_metni = (
+        f"Aday: {dongu.get('aday_sayisi', '—')} | "
+        f"Tahmin: {dongu.get('tahmin_sayisi', '—')} | "
+        f"Sinyal: {dongu.get('sinyal_sayisi', '—')} | "
+        f"Gönderilen: {dongu.get('gonderilen_sinyal_sayisi', '—')}"
+    )
+    table.add_row("Son Döngü", dongu_metni)
 
-    return Panel(table, title="[bold bright_cyan]🛸 KRİPTO OPERASYONLARI (15M)[/]")
+    darbogaz = status.get("sinyal_darbogaz", {}) or {}
+    if darbogaz:
+        kategoriler = darbogaz.get("ret_kategorileri", {}) or {}
+        ilk_kategori = next(iter(kategoriler.items()), ("—", 0))
+        darbogaz_metni = (
+            f"Oran: %{darbogaz.get('sinyal_orani', 0)} | "
+            f"Ret: {darbogaz.get('ret_sayisi', 0)} | "
+            f"En çok: {_kisalt(ilk_kategori[0], 18)} ({ilk_kategori[1]})"
+        )
+        table.add_row("Darboğaz", darbogaz_metni)
+
+    demo_journal = status.get("demo_journal", {}) or {}
+    if demo_journal:
+        try:
+            net_pnl = float(demo_journal.get("net_pnl", 0.0))
+        except Exception:
+            net_pnl = 0.0
+        pf = demo_journal.get("profit_factor")
+        try:
+            pf_metni = "-" if pf is None else f"{float(pf):.2f}"
+        except Exception:
+            pf_metni = "-"
+        demo_metin = (
+            f"Sinyal: {demo_journal.get('sinyal', 0)} | "
+            f"Dispatch Ret: {demo_journal.get('dispatch_ret', 0)} | "
+            f"A/K: {demo_journal.get('acilis', 0)}/{demo_journal.get('kapanis', 0)} | "
+            f"Net: {net_pnl:+.2f}$ | PF: {pf_metni}"
+        )
+        table.add_row("Demo Gunluk", demo_metin)
+
+    demo_analiz = status.get("demo_analiz", {}) or {}
+    if demo_analiz:
+        perf = demo_analiz.get("degerlendirme_performansi", {}) or demo_analiz.get("performans", {}) or {}
+        outlier = demo_analiz.get("outlier_analizi", {}) or {}
+        try:
+            expectancy = float(perf.get("expectancy", 0.0))
+        except Exception:
+            expectancy = 0.0
+        try:
+            pf = float(perf.get("profit_factor", 0.0))
+        except Exception:
+            pf = 0.0
+        live_metni = "ADAY" if demo_analiz.get("live_adayi") else "BEKLE"
+        analiz_metin = (
+            f"{_kisalt(demo_analiz.get('karar'), 22)} | "
+            f"Islem: {perf.get('toplam_islem', 0)} | "
+            f"E: {expectancy:+.3f} | PF: {pf:.2f} | "
+            f"Out: {outlier.get('outlier_sayisi', 0)} | Live: {live_metni}"
+        )
+        table.add_row("Demo Analiz", analiz_metin)
+
+        karne = demo_analiz.get("model_kalite_karnesi", {}) or {}
+        if karne:
+            temiz_bolgeler = karne.get("temiz_bolge_metrikleri", {}) or {}
+
+            def _bolge_ozet(ad):
+                metrik = temiz_bolgeler.get(ad, {}) or {}
+                if not metrik:
+                    return f"{ad[:1].upper()}: -"
+                try:
+                    bolge_pf = float(metrik.get("profit_factor", 0.0))
+                except Exception:
+                    bolge_pf = 0.0
+                try:
+                    bolge_e = float(metrik.get("expectancy", 0.0))
+                except Exception:
+                    bolge_e = 0.0
+                return f"{ad[:1].upper()}: {metrik.get('toplam_islem', 0)} PF {bolge_pf:.2f} E {bolge_e:+.2f}"
+
+            karne_metin = (
+                f"Etiket: {karne.get('etiketli_kapanis', 0)}/{karne.get('kapanis_sayisi', 0)} | "
+                f"{_bolge_ozet('sari')} | {_bolge_ozet('yesil')}"
+            )
+            table.add_row("Model Karne", karne_metin)
+
+    son_ret = status.get("son_ret", {}) or {}
+    table.add_row("Son Ret", f"{son_ret.get('coin', '—')} | {_kisalt(son_ret.get('neden'), 52)}")
+
+    risk = status.get("son_risk_ret", {}) or {}
+    table.add_row("Risk Kapısı", f"{risk.get('sembol', '—')} | {_kisalt(risk.get('neden'), 52)}")
+
+    son_islem = status.get("son_islem", {}) or {}
+    islem_metni = f"{son_islem.get('hesap', '—')} {son_islem.get('sembol', '—')} {_kisalt(son_islem.get('yon'), 18)}"
+    table.add_row("Son İşlem", islem_metni)
+
+    hata = status.get("son_hata", {}) or {}
+    table.add_row("Son Hata", f"{hata.get('modul', '—')} | {_kisalt(hata.get('mesaj'), 52)}")
+
+    ret_ozeti = status.get("ret_ozeti", {}) or {}
+    if ret_ozeti:
+        ilkler = sorted(ret_ozeti.items(), key=lambda x: x[1], reverse=True)[:2]
+        table.add_row("Ret Özeti", " | ".join(f"{_kisalt(k, 22)}: {v}" for k, v in ilkler))
+
+    return Panel(table, title="[bold bright_cyan]🛸 KRİPTO OPERASYON DURUMU[/]")
 
 def draw_stock_table() -> Panel:
     table = Table(expand=True, border_style="bright_blue", show_lines=True)
     table.add_column("Hisse", style="bold bright_white", width=8)
-    table.add_column("Yön", justify="center", width=6)
+    table.add_column("Karar", justify="center", width=18)
     table.add_column("Skor", justify="left", ratio=2)
     table.add_column("RSI", justify="center", width=5)
     table.add_column("Sektör", justify="center", style="bright_white", width=14)
@@ -214,10 +341,24 @@ def draw_stock_table() -> Panel:
     if hisse_sinyalleri:
         for s in hisse_sinyalleri[:5]:  # UI'da max 5 satır
             gc_icon = "⭐" if s.get('golden_cross') else ""
+            skor = s.get('faktor_skor', s.get('teknik_skor', s.get('ai_skor', 0)))
+            karar = s.get('karar', 'IZLE')
+            karar_gosterim = {
+                'AL_ADAYI': 'AL ADAYI',
+                'BEKLE_GERI_CEKILME': 'GERI CEKILME',
+                'IZLE': 'IZLE',
+                'OLAY_RISKI': 'OLAY RISKI',
+            }.get(karar, karar[:16])
+            karar_renk = {
+                'AL_ADAYI': 'bright_green',
+                'BEKLE_GERI_CEKILME': 'bright_yellow',
+                'IZLE': 'bright_cyan',
+                'OLAY_RISKI': 'bright_magenta',
+            }.get(karar, 'white')
             table.add_row(
                 f"{s['sembol']}{gc_icon}",
-                "[bold bright_green]LONG[/]",
-                ai_bar(s['ai_skor']),
+                f"[bold {karar_renk}]{karar_gosterim}[/]",
+                ai_bar(skor),
                 f"{s['rsi']:.0f}",
                 s.get('sektor', 'N/A')[:14],
                 f"[bright_green]${s['tp']:.0f}[/] / [bright_red]${s['sl']:.0f}[/]"
@@ -225,7 +366,7 @@ def draw_stock_table() -> Panel:
     else:
         table.add_row("—", "—", f"[white]{hisse_tarama_durumu}[/]", "—", "—", "—")
 
-    return Panel(table, title=f"[bold bright_green]📈 BORSA SİNYALLERİ (Danışman)[/]")
+    return Panel(table, title=f"[bold bright_green]📈 BORSA FAKTÖR ADAYLARI (Danışman)[/]")
 
 def draw_logs() -> Panel:
     grid = Table.grid(expand=True)
@@ -258,7 +399,7 @@ if __name__ == "__main__":
     print("🚀 Komuta Merkezi Yükleniyor...")
     
     # Threadleri başlat
-    threading.Thread(target=process_baslat, args=(["python", "main.py"], kripto_log, "Kripto Botu"), daemon=True).start()
+    threading.Thread(target=process_baslat, args=([sys.executable, "main.py"], kripto_log, "Kripto Botu"), daemon=True).start()
     threading.Thread(target=hisse_tarama_thread, daemon=True, name="HisseTarama").start()
     borsa_log.append("[SYSTEM] Hisse Değer Motoru başlatıldı (Danışman Modu)...")
     

@@ -1,0 +1,74 @@
+{
+  "engine_version": "stock-shadow-paper-v1.0",
+  "created_at": "2026-07-22T11:15:00+03:00",
+  "status": "COLLECTING_GENUINELY_NEW_DATA",
+  "production_valid": false,
+  "execution_mode": "NO_ORDERS_RESEARCH_ONLY",
+  "cadence": "first successful completed-data scan per market month",
+  "selection": {
+    "top_n": 20,
+    "minimum_positions_to_record": 10,
+    "minimum_factor_coverage": 0.75,
+    "max_position_weight": 0.05,
+    "sector_cap": 0.25,
+    "portfolio": "equal weight with capped sector excess left in cash"
+  },
+  "models": [
+    {
+      "id": "paper_baseline",
+      "strategy_version": "3.1-paper-baseline-v1",
+      "weights": {
+        "quality": 0.35,
+        "value": 0.2,
+        "momentum": 0.3,
+        "risk": 0.15
+      }
+    },
+    {
+      "id": "paper_m00_r15",
+      "strategy_version": "3.1-paper-m00-r15-v1",
+      "weights": {
+        "quality": 0.35,
+        "value": 0.2,
+        "momentum": 0.0,
+        "risk": 0.15
+      }
+    }
+  ],
+  "decision_rule": {
+    "horizon_business_days": 20,
+    "minimum_paired_mature_cohorts": 3,
+    "minimum_names_per_mature_cohort": 10,
+    "minimum_challenger_excess_win_rate": 0.6666666666666666,
+    "maximum_average_mae_deterioration": 0.02,
+    "best_possible_status": "PAPER_REVIEW_PASS_RESEARCH_ONLY"
+  },
+  "warning": "This layer never sends orders or changes the active scanner. Even a pass requires human review and does not authorize production deployment.",
+  "latest_summary": {
+    "status": "COLLECTING_GENUINELY_NEW_DATA",
+    "production_valid": false,
+    "paired_mature_cohorts": 0,
+    "required_paired_mature_cohorts": 3,
+    "paired_months": [],
+    "models": {
+      "paper_baseline": {
+        "strategy_version": "3.1-paper-baseline-v1",
+        "mature_cohorts": 0,
+        "paired_mean_return": null,
+        "paired_median_return": null,
+        "paired_mean_excess_spy": null,
+        "paired_mean_mae": null
+      },
+      "paper_m00_r15": {
+        "strategy_version": "3.1-paper-m00-r15-v1",
+        "mature_cohorts": 0,
+        "paired_mean_return": null,
+        "paired_median_return": null,
+        "paired_mean_excess_spy": null,
+        "paired_mean_mae": null
+      }
+    },
+    "comparison": null
+  },
+  "last_checked_at": "2026-07-22T21:44:25.519093+00:00"
+}

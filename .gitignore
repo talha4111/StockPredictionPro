@@ -7,9 +7,18 @@ QuantBot/.env
 QuantBot/aktif_detay.json
 QuantBot/aktif_islemler.json
 QuantBot/performans.json
+runtime_status.json
+runtime_status_*.json
+QuantBot/runtime_status.json
+QuantBot/runtime_status_*.json
+QuantBot/forward_test_report.json
+QuantBot/demo_analysis_report.json
+demo_trade_journal*.jsonl
+QuantBot/demo_trade_journal*.jsonl
 
 # ========== YAPAY ZEKA MODELLERİ (Her sunucuda sıfırdan eğitilir) ==========
 *.pkl
+beyin_*_meta.json
 QuantBot/beyin_*
 QuantBot/stock_beyin_*
 
@@ -30,6 +39,7 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+.cache/
 .vs/
 
 # ========== SANAL ORTAM ==========
@@ -61,3 +71,19 @@ mute_telegram.py
 
 # ========== SUNUCUDA OLUŞAN GEÇİCİ DOSYALAR ==========
 QuantBot/kill_zombie_helper.py
+QuantBot/tmp*/
+QuantBot/gunluk_risk_durumu.json
+
+# ========== CODEX / CI GEÇİCİ ÇIKTI ==========
+.codex_doc_review/
+.codex_lo_profile_review/
+bg_cmd.*
+bg_probe.*
+window_validate_*.out
+window_validate_*.err
+
+# ========== BORSA VERİ ÖNBELLEĞİ ==========
+.cache/
+sektor_pe_cache.json
+sanal_kasa_*.json
+offline_cache/
