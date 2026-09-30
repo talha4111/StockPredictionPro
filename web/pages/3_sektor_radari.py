@@ -10,10 +10,13 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import sqlite3
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
+
+DB_PATH = os.path.join(PROJECT_ROOT, "trading_bot.db")
 
 try:
     from stock_value_engine import vix_oku, sektor_rotasyonu_radar
@@ -126,23 +129,98 @@ def sektor_scatter(df):
     )
     return fig
 
-@st.cache_data(ttl=900)
+COMPANY_NAMES = {
+    # Yarı İletken (Çip)
+    "NVDA": "NVIDIA Corp.", "AVGO": "Broadcom Inc.", "AMD": "Advanced Micro Devices",
+    "MU": "Micron Technology", "MRVL": "Marvell Technology", "QCOM": "Qualcomm Inc.",
+    "LRCX": "Lam Research", "AMAT": "Applied Materials",
+    # AI Power & Enerji
+    "BE": "Bloom Energy", "VST": "Vistra Corp", "CEG": "Constellation Energy",
+    "NRG": "NRG Energy", "FSLR": "First Solar", "NEE": "NextEra Energy",
+    # Veri Merkezi Altyapı
+    "DELL": "Dell Technologies", "HPE": "Hewlett Packard Enterprise", "SMCI": "Super Micro Computer",
+    "VRT": "Vertiv Holdings", "COHR": "Coherent Corp",
+    # Siber Güvenlik
+    "CRWD": "CrowdStrike Holdings", "PANW": "Palo Alto Networks", "FTNT": "Fortinet Inc.",
+    "ZS": "Zscaler Inc.", "S": "SentinelOne",
+    # Bulut & SaaS
+    "MSFT": "Microsoft Corp.", "AMZN": "Amazon.com Inc.", "GOOGL": "Alphabet Inc. (Google)",
+    "NOW": "ServiceNow Inc.", "SNOW": "Snowflake Inc.", "DDOG": "Datadog Inc."
+}
+
+@st.cache_data(ttl=300)
 def tematik_sepet_tablosu(basket_name, tickers):
-    """Tematik sepetteki hisseleri hızlı tarar (15 dk önbellekli)."""
-    results = []
-    for t in tickers:
+    """Tematik sepetteki hisseleri hızlı ve güvenilir şekilde tarar (5 dk önbellekli)."""
+    # 1. DB'den sistem karar ve skorlarını çek
+    db_data = {}
+    if os.path.exists(DB_PATH):
         try:
-            info = yf.Ticker(t).info
-            results.append({
-                "Sembol": t,
-                "Şirket": info.get('shortName', ''),
-                "Fiyat": f"${info.get('currentPrice', info.get('regularMarketPrice', 0)):.2f}",
-                "Forward P/E": round(info.get('forwardPE', 0), 1) if info.get('forwardPE') else 'N/A',
-                "Gelir Büyümesi": f"%{(info.get('revenueGrowth', 0) or 0) * 100:.1f}",
-                "Öneri": info.get('recommendationKey', 'N/A'),
-            })
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            placeholders = ','.join(['?'] * len(tickers))
+            c.execute(f"""
+                SELECT sembol, decision, ai_skor, fiyat
+                FROM hisse_sinyalleri
+                WHERE sembol IN ({placeholders})
+                GROUP BY sembol
+            """, tickers)
+            for r in c.fetchall():
+                db_data[r[0]] = {'decision': r[1], 'score': r[2], 'db_fiyat': r[3]}
+            conn.close()
         except Exception:
             pass
+
+    # 2. Canlı fiyatları fast_info / history ile çek
+    results = []
+    for t in tickers:
+        price = 0.0
+        change_pct = 0.0
+        try:
+            tk = yf.Ticker(t)
+            fast = getattr(tk, 'fast_info', {})
+            price = fast.get('lastPrice') or getattr(fast, 'last_price', None) or 0.0
+            prev = fast.get('previousClose') or getattr(fast, 'previous_close', None) or 0.0
+            
+            # Bulut ortamında fast_info boş gelirse history ile çek
+            if not price or price <= 0:
+                hist = tk.history(period="3d")
+                if not hist.empty:
+                    price = float(hist['Close'].iloc[-1])
+                    if len(hist) > 1:
+                        prev = float(hist['Close'].iloc[-2])
+            
+            if price and prev and prev > 0:
+                change_pct = ((price - prev) / prev) * 100
+        except Exception:
+            pass
+
+        db_item = db_data.get(t, {})
+        if (not price or price <= 0) and db_item.get('db_fiyat'):
+            price = db_item['db_fiyat']
+
+        decision = db_item.get('decision') or 'İZLE'
+        score = db_item.get('score')
+        score_str = f"%{score:.1f}" if score is not None else "—"
+
+        chg_emoji = "🟢" if change_pct >= 0 else "🔴"
+        
+        badge_map = {
+            'AL_ADAYI': '🟢 AL ADAYI',
+            'BEKLE': '🟡 BEKLE',
+            'IZLE': '🔵 İZLE',
+            'REDDET': '🔴 UZAK DUR',
+            'OLAY_RISKI': '🟣 BİLANÇO/RİSK',
+        }
+        dec_label = badge_map.get(decision, f"🔵 {decision}")
+
+        results.append({
+            "Sembol": t,
+            "Şirket": COMPANY_NAMES.get(t, t),
+            "Fiyat": f"${price:.2f}" if price > 0 else "N/A",
+            "Günlük Değişim": f"{chg_emoji} %{change_pct:+.2f}",
+            "Faktör Skoru": score_str,
+            "Sistem Kararı": dec_label,
+        })
     return pd.DataFrame(results)
 
 # ─── ANA İÇERİK ───
