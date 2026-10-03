@@ -1,0 +1,17 @@
+name: Keep Streamlit App Awake
+
+on:
+  schedule:
+    # Her 6 saatte bir sessizce bir HTTP ping gönderir
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping Streamlit Cloud App
+        run: |
+          curl -s -L --max-time 15 "https://stockpredictionpro-fejlhzqeqvphuetsafqnun.streamlit.app" > /dev/null || true
+          echo "Ping tamamlandi - Streamlit Cloud uyanik tutuldu."

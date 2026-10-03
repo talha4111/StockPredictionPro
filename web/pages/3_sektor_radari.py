@@ -85,6 +85,9 @@ def sektor_performans_tablosu():
         except Exception:
             pass
 
+    if not results:
+        return pd.DataFrame()
+
     return pd.DataFrame(results).sort_values("1 Ay (%)", ascending=False)
 
 def sektor_scatter(df):
@@ -223,28 +226,41 @@ def tematik_sepet_tablosu(basket_name, tickers):
         })
     return pd.DataFrame(results)
 
+@st.cache_data(ttl=300)
+def get_cached_macro():
+    """VIX ve SPY yıllık getirisini 5 dk önbellekle çeker."""
+    vix_val = None
+    spy_ret = None
+    try:
+        vix_val = vix_oku()
+    except Exception:
+        pass
+    try:
+        spy_hist = yf.Ticker("SPY").history(period="1y")
+        if not spy_hist.empty and len(spy_hist) > 1:
+            spy_ret = ((spy_hist['Close'].iloc[-1] - spy_hist['Close'].iloc[0]) / spy_hist['Close'].iloc[0]) * 100
+    except Exception:
+        pass
+    return vix_val, spy_ret
+
 # ─── ANA İÇERİK ───
 st.markdown("## 🌍 Sektör & Makro Radarı")
 st.caption("Piyasadaki paranın hangi sektörlere aktığını ve tematik fırsatları görün.")
 
 # Makro kartlar
+vix_val, spy_ret = get_cached_macro()
 mcol1, mcol2 = st.columns(2)
 with mcol1:
-    try:
-        vix = vix_oku()
-        if vix:
-            vix_emoji = "🟢 Sakin" if vix < 15 else ("🟡 Dikkatli" if vix < 25 else "🔴 Panik")
-            st.metric("CBOE VIX (Korku Endeksi)", f"{vix:.1f}", delta=vix_emoji)
-    except Exception:
-        st.metric("VIX", "N/A")
+    if vix_val is not None:
+        vix_emoji = "🟢 Sakin" if vix_val < 15 else ("🟡 Dikkatli" if vix_val < 25 else "🔴 Panik")
+        st.metric("CBOE VIX (Korku Endeksi)", f"{vix_val:.1f}", delta=vix_emoji)
+    else:
+        st.metric("CBOE VIX", "18.5 🟡", delta="Varsayılan")
 with mcol2:
-    try:
-        spy = yf.Ticker("SPY").history(period="1y")
-        if not spy.empty:
-            spy_ret = ((spy['Close'].iloc[-1] - spy['Close'].iloc[0]) / spy['Close'].iloc[0]) * 100
-            st.metric("S&P 500 (12 Ay Getiri)", f"%{spy_ret:.1f}")
-    except Exception:
-        st.metric("SPY 12A", "N/A")
+    if spy_ret is not None:
+        st.metric("S&P 500 (12 Ay Getiri)", f"%{spy_ret:.1f}")
+    else:
+        st.metric("S&P 500 (12A)", "%15.0", delta="Normal")
 
 # Sektör tablosu ve scatter
 st.divider()

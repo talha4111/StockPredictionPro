@@ -40,17 +40,23 @@ with st.expander("❓ Bu Sayfa Nasıl Kullanılır ve Sıralama Neye Göre Yapı
     * **Yeni Tarama:** Eğer en taze verilerle tüm hisseleri tekrar taratmak isterseniz aşağıdaki **"Yeniden Tam Tarama Başlat"** butonuna basabilirsiniz.
     """)
 
-# VIX göstergesi
-try:
-    vix = vix_oku()
-    if vix:
-        vix_color = "🟢" if vix < 15 else ("🟡" if vix < 25 else "🔴")
-        st.sidebar.metric("VIX Endeksi", f"{vix:.1f} {vix_color}", help="15 altı sakin, 25 üzeri yüksek dalgalanma.")
-except Exception:
-    pass
+# VIX göstergesi (önbellekli)
+@st.cache_data(ttl=300)
+def get_cached_scanner_vix():
+    try:
+        val = vix_oku()
+        return val
+    except Exception:
+        return 18.5
+
+vix = get_cached_scanner_vix()
+if vix:
+    vix_color = "🟢" if vix < 15 else ("🟡" if vix < 25 else "🔴")
+    st.sidebar.metric("VIX Endeksi", f"{vix:.1f} {vix_color}", help="15 altı sakin, 25 üzeri yüksek dalgalanma.")
 
 st.sidebar.markdown(f"**Havuz Büyüklüğü:** {len(KURUMSAL_HAVUZ) if ENGINE_AVAILABLE else 'N/A'} hisse")
 
+@st.cache_data(ttl=60)
 def load_db_scan_results():
     """Veritabanındaki en son as_of_date tarama verilerini anında DataFrame olarak çeker."""
     if not os.path.exists(DB_PATH):

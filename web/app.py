@@ -1,10 +1,10 @@
 """
 StockPredictionPro Web Dashboard — Ana Uygulama
-Streamlit multipage uygulaması (7 Modül, 3 Bölüm).
+Streamlit multipage uygulaması (8 Modül, Mobil Öncelikli).
 """
-import streamlit as st
-import sys
 import os
+import sys
+import streamlit as st
 
 # Proje kök dizinini Python path'ine ekle
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,9 +23,19 @@ st.set_page_config(
 st.markdown("""
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
-    /* ── Genel ── */
-    .block-container { padding-top: 1rem; }
+    /* ── Genel & Streamlit Süslerini Gizleme ── */
+    .block-container { 
+        padding-top: 1rem; 
+        padding-bottom: 3rem;
+    }
     [data-testid="stSidebar"] { background-color: #0a192f; }
+    #MainMenu { visibility: hidden; }
+    footer { visibility: hidden; }
+    header[data-testid="stHeader"] { 
+        background: transparent; 
+        z-index: 10;
+    }
+    .stDeployButton { display: none !important; }
 
     /* ── Metrik Kartları ── */
     .metric-card {
@@ -50,11 +60,11 @@ st.markdown("""
        📱 MOBİL UYUM (max-width: 768px)
        ══════════════════════════════════════════════════════ */
     @media (max-width: 768px) {
-        /* Padding azalt */
         .block-container {
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
+            padding-left: 0.6rem !important;
+            padding-right: 0.6rem !important;
             padding-top: 0.5rem !important;
+            padding-bottom: 5rem !important;
         }
 
         /* Sütunları 2'li grid yap */
@@ -71,17 +81,19 @@ st.markdown("""
         /* Metrik kartları küçült */
         .metric-card {
             padding: 0.7rem;
-            border-radius: 8px;
+            border-radius: 10px;
             min-height: 80px;
         }
         .metric-card h3 { font-size: 0.7rem; }
-        .metric-card h1 { font-size: 1.2rem; }
-        .metric-card span { font-size: 0.65rem !important; }
+        .metric-card h1 { font-size: 1.25rem; }
+        .metric-card span { font-size: 0.68rem !important; }
 
-        /* Butonları dokunmaya uygun büyüt */
+        /* Butonları dokunmaya uygun büyüt (parmak dostu) */
         .stButton > button {
-            min-height: 48px !important;
-            font-size: 0.9rem !important;
+            min-height: 46px !important;
+            font-size: 0.92rem !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
         }
 
         /* Dataframe yatay kaydır */
@@ -90,13 +102,12 @@ st.markdown("""
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Sidebar varsayılan daralt */
+        /* Sidebar genişliği */
         [data-testid="stSidebar"][aria-expanded="true"] {
-            min-width: 240px !important;
-            max-width: 240px !important;
+            min-width: 250px !important;
+            max-width: 250px !important;
         }
 
-        /* Expander başlıkları küçült */
         .streamlit-expanderHeader { font-size: 0.85rem !important; }
     }
 
@@ -107,13 +118,14 @@ st.markdown("""
             min-width: 100% !important;
             max-width: 100% !important;
         }
-        .metric-card h1 { font-size: 1.1rem; }
+        .metric-card h1 { font-size: 1.15rem; }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── 7 Sayfa Tanımları ───
-tek_hisse = st.Page("pages/2_tek_hisse_analiz.py", title="Tek Hisse Analiz", icon="🔍", default=True)
+# ─── 8 Sayfa Tanımları (Ana Sayfa Varsayılan) ───
+ana_sayfa = st.Page("pages/0_ana_sayfa.py", title="Ana Sayfa", icon="📱", default=True)
+tek_hisse = st.Page("pages/2_tek_hisse_analiz.py", title="Tek Hisse Analiz", icon="🔍")
 piyasa_tarayici = st.Page("pages/1_piyasa_tarayici.py", title="Piyasa Tarayıcı", icon="📊")
 sektor_radari = st.Page("pages/3_sektor_radari.py", title="Sektör & Makro Radarı", icon="🌍")
 
@@ -123,17 +135,38 @@ faktor_optimizasyonu = st.Page("pages/5_faktor_optimizasyonu.py", title="Faktör
 shadow_test = st.Page("pages/6_shadow_test.py", title="Shadow Test & Model Terfi", icon="🧪")
 performans = st.Page("pages/7_performans.py", title="Performans & Sinyal Takibi", icon="📋")
 
-# ─── Navigasyon Menüsü (3 Mantıksal Bölüm) ───
+# ─── Navigasyon Menüsü ───
 pg = st.navigation({
+    "📱 Mobil & Hızlı Erişim": [ana_sayfa],
     "🔍 Analiz & Tarama": [tek_hisse, piyasa_tarayici, sektor_radari],
     "📐 Strateji & Backtest": [walkforward_lab, faktor_optimizasyonu],
     "🛡️ Model Denetimi & Performans": [shadow_test, performans],
 })
 
-# ─── Sidebar Branding ───
+# ─── Sidebar Branding & Hızlı Geçiş ───
 with st.sidebar:
     st.markdown("### 🏦 StockPredictionPro")
     st.caption("Factor Research & Equity Engine v3.1")
     st.divider()
+    st.markdown("**Hızlı Menü**")
+    st.page_link("pages/0_ana_sayfa.py", label="Ana Sayfa (Portföy)", icon="📱")
+    st.page_link("pages/2_tek_hisse_analiz.py", label="Tek Hisse Analiz", icon="🔍")
+    st.page_link("pages/1_piyasa_tarayici.py", label="Piyasa Tarayıcı", icon="📊")
+    st.page_link("pages/3_sektor_radari.py", label="Sektör Radarı", icon="🌍")
+    st.divider()
 
-pg.run()
+# ─── Güvenli Çalıştırma & Hata Kalkanı ───
+try:
+    pg.run()
+except Exception as e:
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #1f1220 0%, #2e1622 100%); border: 1px solid #ef5350; border-radius: 12px; padding: 1.5rem; text-align: center; margin: 1.5rem 0;">
+        <h3 style="color: #ef5350; margin: 0;">⚠️ Geçici Bağlantı / Veri Uyarısı</h3>
+        <p style="color: #ccd6f6; margin: 0.8rem 0; font-size: 0.95rem;">
+            Piyasa veri sağlayıcısı geçici olarak meşgul veya ağ yanıt vermedi.<br>
+            Lütfen birkaç saniye sonra tekrar deneyin.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("🔄 Sayfayı Yeniden Yükle", type="primary", use_container_width=True):
+        st.rerun()

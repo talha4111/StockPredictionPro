@@ -51,8 +51,9 @@ def karar_badge(karar):
     label, css_class = badge_map.get(karar, (karar, "badge-izle"))
     return f'<span class="{css_class}">{label}</span>'
 
+@st.cache_data(ttl=60)
 def get_live_quote(sembol):
-    """En güncel anlık fiyatı ve günlük değişimi çeker."""
+    """En güncel anlık fiyatı ve günlük değişimi çeker (60 sn önbellekli)."""
     try:
         t = yf.Ticker(sembol)
         fast = getattr(t, 'fast_info', {})
@@ -287,6 +288,7 @@ def radar_chart(kalite, deger, momentum, risk):
     )
     return fig
 
+@st.cache_data(ttl=300)
 def fiyat_grafigi(sembol):
     try:
         t = yf.Ticker(sembol)
@@ -308,7 +310,7 @@ def fiyat_grafigi(sembol):
         fig.add_trace(go.Scatter(x=data.index, y=data['SMA50'], name='SMA 50', line=dict(color='#2196f3', width=1.5)))
         fig.add_trace(go.Scatter(x=data.index, y=data['SMA200'], name='SMA 200', line=dict(color='#9c27b0', width=2)))
         fig.update_layout(
-            height=450,
+            height=350,
             xaxis_rangeslider_visible=False,
             template='plotly_dark',
             margin=dict(l=10, r=10, t=10, b=10),
@@ -330,18 +332,22 @@ with st.expander("❓ 4 Faktör Sütunu (Kalite, Değer, Momentum, Risk) Ne Anla
     * **Risk Dayanımı (%15 Ağırlık):** Hissenin dalgalanması (volatilitesi) ve geçmiş düşüş derinliği. Yüksek puan = Sert düşüşlere karşı korunaklı, az sarsan hisse.
     """)
 
+incoming_symbol = st.session_state.pop("selected_symbol", "")
+auto_analyze = st.session_state.pop("auto_analyze", False)
+
 col_input, col_btn = st.columns([3, 1])
 with col_input:
     sembol_input = st.text_input(
         "Hisse Sembolü",
+        value=incoming_symbol,
         placeholder="Örn: AVGO, MU, AAPL, BE, NVDA, TSLA, EOG",
         label_visibility="collapsed",
     )
 with col_btn:
     analiz_btn = st.button("🚀 Canlı Analiz Et", type="primary", use_container_width=True)
 
-if analiz_btn and sembol_input:
-    sembol = sembol_input.upper().strip()
+if (analiz_btn and sembol_input) or (auto_analyze and incoming_symbol):
+    sembol = (sembol_input or incoming_symbol).upper().strip()
 
     with st.spinner(f"🔄 {sembol} için canlı piyasa ve faktör verileri çekiliyor..."):
         quote = get_live_quote(sembol)
@@ -421,23 +427,29 @@ if analiz_btn and sembol_input:
     
     h1, h2, h3, h4, h5 = st.columns(5)
     with h1:
+        q_price = quote.get('price') or 0.0
+        q_change = quote.get('change') or 0.0
+        q_pct = quote.get('change_pct') or 0.0
         st.markdown(f"""<div class="metric-card">
-            <h3>Canlı Fiyat ({quote['timestamp']})</h3>
-            <h1>${quote['price']:.2f}</h1>
-            <span style="color: {'#00c853' if quote['change']>=0 else '#f44336'}; font-weight: bold;">
-                {chg_sign}{quote['change']:.2f} ({chg_sign}{quote['change_pct']:.2f}%)
+            <h3>Canlı Fiyat ({quote.get('timestamp', '')})</h3>
+            <h1>${q_price:.2f}</h1>
+            <span style="color: {'#00c853' if q_change>=0 else '#f44336'}; font-weight: bold;">
+                {chg_sign}{q_change:.2f} ({chg_sign}{q_pct:.2f}%)
             </span>
         </div>""", unsafe_allow_html=True)
     with h2:
-        sma200 = raw_result.get('sma_200', 0)
-        trend_status = "Üstünde 🟢" if quote['price'] >= sma200 else "Altında 🔴"
+        raw_sma200 = raw_result.get('sma_200')
+        sma200 = float(raw_sma200) if (raw_sma200 is not None and not pd.isna(raw_sma200)) else 0.0
+        trend_status = "Üstünde 🟢" if (sma200 > 0 and q_price >= sma200) else ("Altında 🔴" if sma200 > 0 else "N/A")
+        sma200_str = f"${sma200:.2f}" if sma200 > 0 else "N/A"
         st.markdown(f"""<div class="metric-card">
             <h3>SMA 200 ({trend_status})</h3>
-            <h1>${sma200:.2f}</h1>
+            <h1>{sma200_str}</h1>
             <span style="color: #8892b0;">Uzun Vade Trend</span>
         </div>""", unsafe_allow_html=True)
     with h3:
-        rsi_val = raw_result.get('rsi', 50.0)
+        raw_rsi = raw_result.get('rsi')
+        rsi_val = float(raw_rsi) if (raw_rsi is not None and not pd.isna(raw_rsi)) else 50.0
         rsi_state = "Aşırı Satım 🔥" if rsi_val < 35 else ("Aşırı Alım ⚠️" if rsi_val > 70 else "Nötr ⚖️")
         st.markdown(f"""<div class="metric-card">
             <h3>RSI (14)</h3>
@@ -445,9 +457,10 @@ if analiz_btn and sembol_input:
             <span style="color: #8892b0;">{rsi_state}</span>
         </div>""", unsafe_allow_html=True)
     with h4:
+        f_skor_val = float(f_skor) if (f_skor is not None and not pd.isna(f_skor)) else 50.0
         st.markdown(f"""<div class="metric-card">
             <h3>Faktör Skoru</h3>
-            <h1>%{f_skor:.1f}</h1>
+            <h1>%{f_skor_val:.1f}</h1>
             <span style="color: #64ffda;">{score_source}</span>
         </div>""", unsafe_allow_html=True)
     with h5:
