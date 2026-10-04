@@ -1,0 +1,57 @@
+[
+  {
+    "id": "mu_lot1",
+    "tarih": "2026-03-15",
+    "sembol": "MU",
+    "islem_tipi": "ALIS",
+    "adet": 1.0,
+    "fiyat_usd": 450.0,
+    "komisyon_usd": 1.5,
+    "usdtry_kuru": 38.5,
+    "notlar": "1. Kademe Giriş"
+  },
+  {
+    "id": "mu_lot2",
+    "tarih": "2026-05-10",
+    "sembol": "MU",
+    "islem_tipi": "ALIS",
+    "adet": 1.0,
+    "fiyat_usd": 780.0,
+    "komisyon_usd": 1.5,
+    "usdtry_kuru": 42.1,
+    "notlar": "2. Kademe Giriş"
+  },
+  {
+    "id": "mu_lot3",
+    "tarih": "2026-07-20",
+    "sembol": "MU",
+    "islem_tipi": "ALIS",
+    "adet": 1.0,
+    "fiyat_usd": 956.0,
+    "komisyon_usd": 1.5,
+    "usdtry_kuru": 45.2,
+    "notlar": "3. Kademe Giriş"
+  },
+  {
+    "id": "mu_lot4",
+    "tarih": "2026-08-25",
+    "sembol": "MU",
+    "islem_tipi": "ALIS",
+    "adet": 1.0,
+    "fiyat_usd": 1014.0,
+    "komisyon_usd": 1.5,
+    "usdtry_kuru": 47.8,
+    "notlar": "4. Kademe Giriş"
+  },
+  {
+    "id": "mu_lot5",
+    "tarih": "2026-09-18",
+    "sembol": "MU",
+    "islem_tipi": "ALIS",
+    "adet": 1.0,
+    "fiyat_usd": 1080.0,
+    "komisyon_usd": 1.5,
+    "usdtry_kuru": 48.9,
+    "notlar": "5. Kademe Giriş"
+  }
+]

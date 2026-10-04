@@ -123,8 +123,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ─── 8 Sayfa Tanımları (Ana Sayfa Varsayılan) ───
+# ─── 9 Sayfa Tanımları (Ana Sayfa Varsayılan) ───
 ana_sayfa = st.Page("pages/0_ana_sayfa.py", title="Ana Sayfa", icon="📱", default=True)
+portfoy_defteri = st.Page("pages/8_portfoy_defteri.py", title="Portföy & FIFO Defteri", icon="💼")
 tek_hisse = st.Page("pages/2_tek_hisse_analiz.py", title="Tek Hisse Analiz", icon="🔍")
 piyasa_tarayici = st.Page("pages/1_piyasa_tarayici.py", title="Piyasa Tarayıcı", icon="📊")
 sektor_radari = st.Page("pages/3_sektor_radari.py", title="Sektör & Makro Radarı", icon="🌍")
@@ -137,7 +138,7 @@ performans = st.Page("pages/7_performans.py", title="Performans & Sinyal Takibi"
 
 # ─── Navigasyon Menüsü ───
 pg = st.navigation({
-    "📱 Mobil & Hızlı Erişim": [ana_sayfa],
+    "📱 Mobil & Hızlı Erişim": [ana_sayfa, portfoy_defteri],
     "🔍 Analiz & Tarama": [tek_hisse, piyasa_tarayici, sektor_radari],
     "📐 Strateji & Backtest": [walkforward_lab, faktor_optimizasyonu],
     "🛡️ Model Denetimi & Performans": [shadow_test, performans],
@@ -149,7 +150,8 @@ with st.sidebar:
     st.caption("Factor Research & Equity Engine v3.1")
     st.divider()
     st.markdown("**Hızlı Menü**")
-    st.page_link("pages/0_ana_sayfa.py", label="Ana Sayfa (Portföy)", icon="📱")
+    st.page_link("pages/0_ana_sayfa.py", label="Ana Sayfa", icon="📱")
+    st.page_link("pages/8_portfoy_defteri.py", label="Portföy Defteri (FIFO)", icon="💼")
     st.page_link("pages/2_tek_hisse_analiz.py", label="Tek Hisse Analiz", icon="🔍")
     st.page_link("pages/1_piyasa_tarayici.py", label="Piyasa Tarayıcı", icon="📊")
     st.page_link("pages/3_sektor_radari.py", label="Sektör Radarı", icon="🌍")
