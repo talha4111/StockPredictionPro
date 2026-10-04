@@ -1,10 +1,10 @@
 {
-  "son_guncelleme": "2026-09-28T19:49:50.449334",
-  "lider": "Challenger (m00_r15)",
-  "vix": 14.869999885559082,
-  "baseline_return": 0.032936948619884554,
-  "challenger_return": 0.0415440272618377,
+  "son_guncelleme": "2026-10-04T22:12:31.175730",
+  "lider": "Baseline (v3.1)",
+  "vix": 15.3100004196167,
+  "baseline_return": 0.003329773630247843,
+  "challenger_return": -0.0012937194592831033,
   "status": "COLLECTING_GENUINELY_NEW_DATA",
-  "mature_cohorts": 1,
+  "mature_cohorts": 2,
   "required_cohorts": 3
 }
