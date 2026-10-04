@@ -144,8 +144,14 @@ pg = st.navigation({
     "🛡️ Model Denetimi & Performans": [shadow_test, performans],
 })
 
+from web.components.auth import render_login_gate, render_sidebar_user_profile
+
+# ─── SİBER GÜVENLİK KAPISI (AUTHENTICATION GATE) ───
+render_login_gate()
+
 # ─── Sidebar Branding & Hızlı Geçiş ───
 with st.sidebar:
+    render_sidebar_user_profile()
     st.markdown("### 🏦 StockPredictionPro")
     st.caption("Factor Research & Equity Engine v3.1")
     st.divider()

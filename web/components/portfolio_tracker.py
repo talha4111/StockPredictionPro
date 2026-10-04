@@ -32,12 +32,25 @@ def get_current_usdtry():
     return 49.15
 
 
+def get_current_user_name():
+    """Oturum açmış güncel kullanıcının adını döndürür."""
+    try:
+        import streamlit as st
+        user = st.session_state.get("user")
+        if user and isinstance(user, dict):
+            return user.get("username", "talha")
+    except Exception:
+        pass
+    return "talha"
+
+
 # ─── DEPOLAMA KATMANI (Google Sheets + Yerel Fallback) ───
-def load_transactions():
+def load_transactions(target_user: str = None, filter_by_user: bool = True):
     """
-    İşlemleri önce Google Sheets'ten, yapılandırılmamışsa
-    yerel JSON dosyasından okur.
+    İşlemleri okur ve çok kullanıcılı izolasyon kuralına göre
+    sadece ilgili kullanıcının işlemlerini döndürür.
     """
+    raw_tx = []
     # 1. Google Sheets bağlantısını dene (Streamlit Secrets varsa)
     try:
         import streamlit as st
@@ -46,12 +59,11 @@ def load_transactions():
             df = conn.read(worksheet="Islemler", ttl=5)
             if df is not None and not df.empty:
                 records = df.to_dict(orient="records")
-                # Kolon formatlama ve temizlik
-                clean = []
                 for r in records:
                     if r.get("sembol"):
-                        clean.append({
+                        raw_tx.append({
                             "id": str(r.get("id") or uuid.uuid4().hex[:8]),
+                            "user": str(r.get("user") or "talha").lower(),
                             "tarih": str(r.get("tarih") or datetime.now().strftime("%Y-%m-%d")),
                             "sembol": str(r.get("sembol")).upper().strip(),
                             "islem_tipi": str(r.get("islem_tipi") or "ALIS").upper(),
@@ -61,24 +73,28 @@ def load_transactions():
                             "usdtry_kuru": float(r.get("usdtry_kuru") or get_current_usdtry()),
                             "notlar": str(r.get("notlar") or ""),
                         })
-                return clean
     except Exception:
         pass
 
     # 2. Yerel dosya fallback
-    if os.path.exists(LOCAL_FILE):
+    if not raw_tx and os.path.exists(LOCAL_FILE):
         try:
             with open(LOCAL_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list):
-                    return data
+                    raw_tx = data
         except Exception:
             pass
 
-    return []
+    # Kullanıcı Bazlı İzolasyon (Multi-Tenant Isolation)
+    if filter_by_user:
+        active_u = (target_user or get_current_user_name()).lower()
+        return [t for t in raw_tx if t.get("user", "talha").lower() == active_u]
+
+    return raw_tx
 
 
-def save_transactions(transactions):
+def save_transactions(transactions, merge_all_users: bool = True):
     """İşlemleri hem yerel JSON'a hem de bağlıysa Google Sheets'e kaydeder."""
     os.makedirs(LOCAL_DATA_DIR, exist_ok=True)
     
@@ -100,16 +116,19 @@ def save_transactions(transactions):
     except Exception:
         pass
 
-    return True, "Yerel Belleğe Kaydedildi (Google Sheets bağlı değilse ayarlar sayfasından bağlayabilirsiniz)"
+    return True, "Yerel Belleğe Kaydedildi"
 
 
 def add_transaction(tarih, sembol, islem_tipi, adet, fiyat_usd, komisyon_usd=1.50, usdtry_kuru=None, notlar=""):
-    """Yeni bir alış veya satış işlemi ekler."""
+    """Yeni bir alış veya satış işlemi ekler (Oturum açan kullanıcıya zimmetler)."""
     if not usdtry_kuru:
         usdtry_kuru = get_current_usdtry()
 
+    current_u = get_current_user_name()
+
     tx = {
         "id": uuid.uuid4().hex[:8],
+        "user": current_u.lower(),
         "tarih": str(tarih),
         "sembol": sembol.upper().strip(),
         "islem_tipi": islem_tipi.upper(),
@@ -120,7 +139,7 @@ def add_transaction(tarih, sembol, islem_tipi, adet, fiyat_usd, komisyon_usd=1.5
         "notlar": str(notlar),
     }
 
-    all_tx = load_transactions()
+    all_tx = load_transactions(filter_by_user=False)
     all_tx.append(tx)
     success, msg = save_transactions(all_tx)
     return success, msg, tx
@@ -128,7 +147,7 @@ def add_transaction(tarih, sembol, islem_tipi, adet, fiyat_usd, komisyon_usd=1.5
 
 def delete_transaction(tx_id):
     """Bir işlemi kimliğine (id) göre siler."""
-    all_tx = load_transactions()
+    all_tx = load_transactions(filter_by_user=False)
     filtered = [t for t in all_tx if t.get("id") != tx_id]
     save_transactions(filtered)
     return True
