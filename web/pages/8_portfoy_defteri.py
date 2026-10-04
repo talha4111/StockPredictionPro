@@ -13,6 +13,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+import plotly.express as px
 from web.components.portfolio_tracker import (
     add_transaction,
     calculate_fifo_portfolio,
@@ -21,6 +22,7 @@ from web.components.portfolio_tracker import (
     load_transactions,
 )
 from web.components.mobile import get_cached_quotes
+from web.components.stress_test import calculate_portfolio_metrics, run_stress_scenarios
 
 # ─── SAYFA BAŞLIĞI ───
 st.markdown("## 💼 Gerçek Portföy Defteri (FIFO & Vergi)")
@@ -66,8 +68,9 @@ with m4:
 st.divider()
 
 # ─── SEKMELER ───
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab_stres, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Açık Pozisyonlar & Lotlar",
+    "⚠️ Yoğunlaşma & Stres Testi",
     "➕ Yeni İşlem Ekle",
     "💰 Kapanan İşlemler (FIFO)",
     "📜 Vergi Taslağı",
@@ -126,7 +129,77 @@ with tab1:
                     })
                 st.dataframe(pd.DataFrame(lot_rows), use_container_width=True, hide_index=True)
 
-# ─── TAB 2: YENİ İŞLEM EKLE ───
+# ─── TAB 2 (STRES): YOĞUNLAŞMA & STRES TESTİ ───
+with tab_stres:
+    if not open_positions:
+        st.info("Stres testi için henüz açık pozisyonunuz bulunmuyor.")
+    else:
+        st.markdown("### ⚠️ Portföy Yoğunlaşma & Stres Testi")
+        st.caption("Piyasa krizlerinde portföyünüzün ne kadar dayanıklı olduğunu ve hisselerinizin birbirini taklit edip etmediğini test edin.")
+
+        with st.spinner("Tarihsel beta, korelasyon ve şok senaryoları hesaplanıyor..."):
+            stress_metrics = calculate_portfolio_metrics(open_positions, live_quotes)
+
+        if stress_metrics:
+            p_beta = stress_metrics["portfolio_beta"]
+            p_val = stress_metrics["total_value_usd"]
+            weights = stress_metrics["weights"]
+            betas = stress_metrics["betas"]
+            corr_mat = stress_metrics["correlation_matrix"]
+
+            # Beta değerlendirmesi
+            beta_renk = "🟢 Düşük Risk" if p_beta < 1.0 else ("🟡 Piyasa Paralel" if p_beta < 1.35 else "🔴 Yüksek Oynaklık")
+
+            b_col1, b_col2 = st.columns(2)
+            with b_col1:
+                st.metric("Ağırlıklı Portföy Betası", f"{p_beta:.2f}", delta=beta_renk)
+                st.caption("S&P 500 (Beta=1.00)'e göre duyarlılık. 1.50 beta, piyasa %10 düştüğünde portföyün yaklaşık %15 düşeceğini gösterir.")
+            with b_col2:
+                max_sym = max(weights, key=weights.get)
+                max_pct = weights[max_sym] * 100
+                st.metric(f"En Büyük Pozisyon: {max_sym}", f"%{max_pct:.1f}", delta="Yüksek Yoğunlaşma" if max_pct > 40 else "Dengeli", delta_color="inverse" if max_pct > 40 else "normal")
+                st.caption(f"Portföyünüzün %{max_pct:.1f}'i tek bir hisseye ({max_sym}) bağlıdır.")
+
+            # Hisselerin Portföy Payları (Bar grafiği)
+            st.divider()
+            st.markdown("#### 🥧 Portföy Ağırlık Dağılımı")
+            w_df = pd.DataFrame([
+                {"Hisse": s, "Ağırlık (%)": round(w * 100, 1), "Bireysel Beta": betas.get(s, 1.2)}
+                for s, w in weights.items()
+            ]).sort_values("Ağırlık (%)", ascending=False)
+
+            fig_w = px.bar(
+                w_df, x="Hisse", y="Ağırlık (%)", text="Ağırlık (%)",
+                color="Ağırlık (%)", color_continuous_scale="Viridis",
+                template="plotly_dark", height=280
+            )
+            fig_w.update_layout(margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
+            st.plotly_chart(fig_w, use_container_width=True)
+
+            # Korelasyon Isı Haritası
+            if not corr_mat.empty and len(corr_mat) >= 2:
+                st.divider()
+                st.markdown("#### 🔥 Hisseler Arası Korelasyon Isı Haritası")
+                st.caption("1.00 = Kusursuz paralel hareket (biri düşerse diğeri de düşer). 0.00 = Birbirinden tamamen bağımsız.")
+                fig_corr = px.imshow(
+                    corr_mat, text_auto=True, aspect="auto",
+                    color_continuous_scale="RdBu_r", zmin=-1, zmax=1,
+                    template="plotly_dark", height=320
+                )
+                fig_corr.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+                st.plotly_chart(fig_corr, use_container_width=True)
+            elif len(weights) < 2:
+                st.info("ℹ️ Korelasyon matrisi için portföyünüzde en az 2 farklı hisse bulunmalıdır.")
+
+            # Kriz Simülasyonu
+            st.divider()
+            st.markdown("#### ⚡ Tarihsel Kriz & Şok Simülasyonları")
+            st.caption("Büyük piyasa şokları tekrar yaşanırsa mevcut portföyünüzün tahmini dolar ve TL kaybı:")
+
+            sc_results = run_stress_scenarios(p_val, p_beta, usdtry)
+            st.dataframe(pd.DataFrame(sc_results), use_container_width=True, hide_index=True)
+
+# ─── TAB 3: YENİ İŞLEM EKLE ───
 with tab2:
     st.markdown("### ➕ Alış veya Satış İşlemi Kaydet")
     with st.form("yeni_islem_formu", clear_on_submit=True):
