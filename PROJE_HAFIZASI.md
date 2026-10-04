@@ -65,7 +65,8 @@ Proje, kurumsal seviyede bir **Factor Research & Equity Engine (v3.1)** ve bunun
 * `web/components/mobile.py`: Mobil önbellekli veri çekici (`get_cached_quotes`, `badge_info`, `get_top_opportunities`, `get_vix_status`).
 * `web/components/portfolio_tracker.py`: FIFO lot eşleştirme ve vergi motoru.
 * `web/components/stress_test.py`: Beta, korelasyon matrisi ve kriz şok simülasyon motoru.
-* `web/components/auth.py`: Siber güvenlik ve kimlik doğrulama katmanı (NIST PBKDF2-SHA256, brute-force kalkanı, login gate).
+* `web/components/auth.py`: Siber güvenlik ve kimlik doğrulama katmanı (NIST PBKDF2-SHA256, RFC 6238 TOTP 2FA, brute-force kalkanı, login gate).
+* `web/components/security_shield.py`: Uygulama katmanı WAF & Siber Savunma Kalkanı (Rate limiter, anti-scraping bot filtresi, query sanitization, audit log).
 * `web/scripts/haftalik_guncelle.py`: Windows Görev Zamanlayıcısı (Pazar 21:00) tarafından çalıştırılan model yarış betiği.
 
 ---
@@ -76,20 +77,26 @@ Proje, kurumsal seviyede bir **Factor Research & Equity Engine (v3.1)** ve bunun
 3. **Gerçek Portföy & FIFO Defteri Kuruldu:** Talha'nın Midas MU girişleri yüklendi, lot eritme ve TL kâr hesabı eklendi.
 4. **Yoğunlaşma & Stres Testi Eklendi:** Portföy betası ve tarihsel şok testleri tamamlandı.
 5. **Haftalık Model Nabzı:** Pazar gecesi 22:12'de otomatik çalıştı. Sonuç: **Baseline (v3.1) Lider**, VIX 15.31, Olgunlaşan Kohort 2/3.
-6. **Siber Güvenlik Katmanı 1 (Kimlik Doğrulama & Veri İzolasyonu):**
+6. **Siber Güvenlik Katmanı 1 (Kimlik & İki Adımlı Doğrulama - 2FA):**
    * NIST standardında tuzlanmış PBKDF2-SHA256 parola hashleme.
-   * Brute-Force saldırı kalkanı (5 hatalı denemede 5 dakika kilit).
-   * Yetkisiz erişimleri engelleyen terminal Login Gate (`web/components/auth.py`).
-   * Çok kullanıcılı portföy veri izolasyonu (`portfolio_tracker.py` user filtresi).
-7. **Git Senkronizasyonu:** Tüm kodlar commitleşti ve `talha4111/StockPredictionPro` reposuyla senkronize edildi.
+   * RFC 6238 TOTP standardında Google Authenticator / Microsoft Authenticator entegrasyonu (`pyotp` ve `qrcode`).
+   * Dinamik QR kod üretimi ve gizli anahtar doğrulama.
+   * İki aşamalı giriş kapısı (`render_login_gate`) ve Brute-Force kalkanı (5 hatalı denemede 5 dakika kilit).
+   * Kullanıcı ve yönetici profilinden 2FA açma/kapama yönetimi.
+7. **Siber Güvenlik Katmanı 3 (Uygulama İçi WAF & Tehdit Kalkanı):**
+   * **Kayan Pencere Hız Sınırlayıcı (Rate Limiter):** Dakika başına 40 istek, 3 saniyede 10 istek (Burst koruması) ile Yahoo Finance kota tüketimini ve DoS saldırılarını engelleme.
+   * **Anti-Scraping & Bot Savunması:** Kötü niyetli otomatik güvenlik tarayıcısı ve kazıyıcı (Scraper) imzalarını yakalayıp 403 Forbidden ile engelleme.
+   * **Girdi Sanitizasyonu (Anti-SQLi & Anti-XSS):** URL parametrelerindeki enjeksiyon girişimlerini temizleme ve güvenliğe alma.
+   * **Güvenlik Başlıkları:** X-Content-Type-Options, X-Frame-Options (Clickjacking önleme), Referrer-Policy enjeksiyonu.
+   * **Güvenlik Denetim Günlüğü (Audit Log):** SQLite `security_audit_log` tablosunda tüm olayların kaydı ve Yönetici (Admin) canlı izleme widget'ı.
+8. **Git Senkronizasyonu:** Kodlar hazırlandı.
 
 ---
 
 ## 🚀 5. Gelecek Yol Haritası & Masadaki Fikirler
-Wall Street kıdemli analisti perspektifiyle değerlendirilen ve ileride eklenebilecek geliştirmeler:
-1. **Siber Güvenlik Katmanı 2:** Model & Fikri Mülkiyet Koruması (FastAPI backend ile faktör formüllerini kapalı kutu yapma).
-2. **Siber Güvenlik Katmanı 3:** Cloudflare WAF (DDoS kalkanı, SSL ve Bot engelleme).
-3. **Siber Güvenlik Katmanı 4:** Redis merkezi önbellek (kullanıcılar arttığında Yahoo rate limitini önleme).
+1. **Siber Güvenlik Katmanı 2 (Sırada / Beklemede):** Model & Fikri Mülkiyet Koruması (FastAPI backend ile faktör formüllerini kapalı kutu yapma).
+2. **Resmi Veri Sağlayıcı (İleride):** Yahoo Finance yerine Polygon.io / FMP API geçişi (Site yayına alınıp domain bağlandığında).
+3. **Özel Domain & Cloudflare DNS WAF (İleride):** Özel domain satın alındığında tam kapsamlı Cloudflare Edge WAF ve SSL aktivasyonu.
 4. **Telegram / Webhook Anlık Alarm Botu:** Ekrana bakmaya gerek kalmadan kritik destek temaslarında (örn: MU 50 SMA teması) cep telefonuna anlık bildirim düşmesi.
 5. **Volatilite Bazlı Lot/Risk Boyutlandırma Hesaplayıcısı (Risk Parity Sizing):** Midas bütçesine ve stop-loss mesafesine göre tam kaç lot alınması gerektiğini söyleyen hesaplayıcı.
 3. **Analist Revizyon Trendi (Earnings Revision Momentum):** Büyük bankaların son 30-90 gündeki EPS tahmin revizyonlarının takibi.

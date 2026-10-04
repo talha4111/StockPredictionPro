@@ -1,14 +1,19 @@
 """
 StockPredictionPro — Siber Güvenlik & Kimlik Doğrulama Katmanı
 NIST standardında Salted PBKDF2-SHA256 parola hashleme,
+RFC 6238 TOTP İki Adımlı Doğrulama (Google / Microsoft Authenticator),
 Brute-Force (kaba kuvvet) saldırı kalkanı ve çok kullanıcılı yetkilendirme.
 """
+import base64
 import hashlib
+import io
 import os
 import secrets
 import sqlite3
 import time
 from datetime import datetime
+import pyotp
+import qrcode
 import streamlit as st
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,7 +25,7 @@ LOCKOUT_DURATION_SEC = 300  # 5 dakika
 
 
 def init_user_db():
-    """Kullanıcılar tablosunu oluşturur (eğer yoksa)."""
+    """Kullanıcılar tablosunu oluşturur ve 2FA sütunlarını güvenle ekler (migration)."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("""
@@ -30,10 +35,18 @@ def init_user_db():
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
             role TEXT NOT NULL DEFAULT 'user',
+            totp_secret TEXT,
+            is_2fa_enabled INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP NOT NULL,
             last_login TIMESTAMP
         )
     """)
+    # Var olan tablolarda sütun eksikse ekle
+    cols = [col[1] for col in c.execute("PRAGMA table_info(users)").fetchall()]
+    if "totp_secret" not in cols:
+        c.execute("ALTER TABLE users ADD COLUMN totp_secret TEXT")
+    if "is_2fa_enabled" not in cols:
+        c.execute("ALTER TABLE users ADD COLUMN is_2fa_enabled INTEGER NOT NULL DEFAULT 0")
     conn.commit()
     conn.close()
 
@@ -51,6 +64,77 @@ def verify_password(password: str, stored_hash: str, salt_hex: str) -> bool:
     salt = bytes.fromhex(salt_hex)
     pwd_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100000)
     return secrets.compare_digest(pwd_hash.hex(), stored_hash)
+
+
+# ════════════════════════════════════════════════════════════════
+# 🔑 İKİ ADIMLI DOĞRULAMA (TOTP / GOOGLE AUTHENTICATOR) FONKSİYONLARI
+# ════════════════════════════════════════════════════════════════
+
+def generate_totp_secret() -> str:
+    """RFC 6238 uyumlu rastgele Base32 TOTP gizli anahtarı üretir."""
+    return pyotp.random_base32()
+
+
+def get_totp_uri(username: str, secret: str) -> str:
+    """Google Authenticator / Microsoft Authenticator için standart otpauth URI üretir."""
+    return pyotp.totp.TOTP(secret).provisioning_uri(
+        name=username,
+        issuer_name="StockPredictionPro"
+    )
+
+
+def generate_qr_code_bytes(totp_uri: str) -> bytes:
+    """OTPAuth URI için PNG formatında QR kod görsel verisi üretir."""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=6,
+        border=2,
+    )
+    qr.add_data(totp_uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="#0a192f", back_color="#ffffff")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def verify_totp_code(secret: str, code: str) -> bool:
+    """
+    Kullanıcının girdiği 6 haneli TOTP kodunu doğrular.
+    valid_window=1 ile saat kaymalarına karşı +/- 30 saniye tolerans tanır.
+    """
+    if not secret or not code:
+        return False
+    clean_code = str(code).strip().replace(" ", "").replace("-", "")
+    totp = pyotp.TOTP(secret)
+    return bool(totp.verify(clean_code, valid_window=1))
+
+
+def enable_user_2fa(user_id: int, secret: str) -> tuple[bool, str]:
+    """Kullanıcının 2FA durumunu veritabanında aktif eder."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("UPDATE users SET totp_secret = ?, is_2fa_enabled = 1 WHERE id = ?", (secret, user_id))
+        conn.commit()
+        conn.close()
+        return True, "İki Adımlı Doğrulama (2FA) başarıyla aktif edildi."
+    except Exception as e:
+        return False, f"Veritabanı hatası: {e}"
+
+
+def disable_user_2fa(user_id: int) -> tuple[bool, str]:
+    """Kullanıcının 2FA durumunu pasife alır."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("UPDATE users SET is_2fa_enabled = 0 WHERE id = ?", (user_id,))
+        conn.commit()
+        conn.close()
+        return True, "İki Adımlı Doğrulama (2FA) devre dışı bırakıldı."
+    except Exception as e:
+        return False, f"Veritabanı hatası: {e}"
 
 
 def get_user_count() -> int:
@@ -109,7 +193,10 @@ def authenticate_user(username: str, password: str) -> tuple[bool, dict | None, 
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT id, username, password_hash, salt, role FROM users WHERE username = ?", (username,))
+    c.execute("""
+        SELECT id, username, password_hash, salt, role, totp_secret, is_2fa_enabled 
+        FROM users WHERE username = ?
+    """, (username,))
     row = c.fetchone()
 
     if not row:
@@ -119,12 +206,9 @@ def authenticate_user(username: str, password: str) -> tuple[bool, dict | None, 
             st.session_state["auth_lockout_until"] = now + LOCKOUT_DURATION_SEC
         return False, None, "Hatalı kullanıcı adı veya parola."
 
-    user_id, u_name, stored_hash, salt_hex, role = row
+    user_id, u_name, stored_hash, salt_hex, role, totp_secret, is_2fa_enabled = row
 
     if verify_password(password, stored_hash, salt_hex):
-        # Başarılı giriş: Hatalı denemeleri sıfırla, son giriş tarihini güncelle
-        st.session_state["auth_failed_attempts"] = 0
-        st.session_state["auth_lockout_until"] = 0
         c.execute("UPDATE users SET last_login = ? WHERE id = ?", (datetime.now().isoformat(), user_id))
         conn.commit()
         conn.close()
@@ -132,6 +216,8 @@ def authenticate_user(username: str, password: str) -> tuple[bool, dict | None, 
             "id": user_id,
             "username": u_name,
             "role": role,
+            "is_2fa_enabled": bool(is_2fa_enabled),
+            "totp_secret": totp_secret or "",
         }
         return True, user_info, "Giriş başarılı."
     else:
@@ -141,20 +227,20 @@ def authenticate_user(username: str, password: str) -> tuple[bool, dict | None, 
             st.session_state["auth_lockout_until"] = now + LOCKOUT_DURATION_SEC
             return False, None, "⚠️ Çok fazla hatalı deneme! Güvenlik nedeniyle hesap 5 dakika kilitlendi."
         kalan = MAX_FAILED_ATTEMPTS - st.session_state["auth_failed_attempts"]
-        return False, None, f"Hatalı parola! Kalan hak: {kalan}"
+        return False, None, f"Hatalı parola! Kalan deneme hakkı: {kalan}"
 
 
 def render_login_gate():
     """
-    Kullanıcı oturumu açılmamışsa Bloomberg/Fintech tarzı
-    güvenli giriş kapısını çizer. Oturum açılmadan diğer sayfalar kilitlidir.
+    Kullanıcı oturumu açılmamışsa kurumsal düzeyde 2FA destekli
+    güvenli giriş kapısını çizer. Oturum açılmadan diğer sayfalar çalıştırılmaz.
     """
     if st.session_state.get("authenticated", False):
         return True  # Zaten oturum açık
 
     user_count = get_user_count()
 
-    # Ortalanmış Giriş Kutusu
+    # Ortalanmış Giriş Kartı
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         st.markdown("""
@@ -167,7 +253,7 @@ def render_login_gate():
                 Institutional Factor Engine & Secure Terminal
             </p>
             <div style="display: inline-block; background: rgba(100, 255, 218, 0.1); border: 1px solid rgba(100, 255, 218, 0.3); border-radius: 20px; padding: 4px 14px; font-size: 0.75rem; color: #64ffda; font-weight: 600;">
-                🔒 256-Bit Salted SHA Güvenlik Kalkanı
+                🔒 PBKDF2-SHA256 & RFC 6238 TOTP (2FA) Korumalı
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -187,10 +273,59 @@ def render_login_gate():
                     else:
                         ok, msg = create_user(admin_user, admin_pwd, role="admin")
                         if ok:
-                            st.success(f"🎉 Yönetici hesabı oluşturuldu! Lütfen giriş yapın.")
+                            st.success("🎉 Yönetici hesabı oluşturuldu! Lütfen giriş yapın.")
                             st.rerun()
                         else:
                             st.error(msg)
+            st.stop()
+
+        # ── 2FA ONAY EKRANI (İLK AŞAMA GEÇİLDİKTEN SONRA) ──
+        if st.session_state.get("2fa_pending"):
+            pending = st.session_state["2fa_pending"]
+            user_info = pending["user"]
+            totp_secret = pending["secret"]
+
+            st.markdown(f"""
+            <div style="background: rgba(100, 255, 218, 0.05); border: 1px solid rgba(100, 255, 218, 0.25); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.2rem; text-align: center;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📲</div>
+                <div style="font-weight: 700; color: #ffffff; font-size: 1.05rem;">İki Adımlı Doğrulama (2FA)</div>
+                <div style="color: #8892b0; font-size: 0.85rem; margin-top: 4px;">
+                    <b>{user_info['username'].title()}</b> hesabı Google Authenticator ile korunmaktadır.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            with st.form("totp_verification_form"):
+                totp_input = st.text_input(
+                    "6 Haneli Doğrulama Kodu",
+                    max_chars=6,
+                    placeholder="Örn: 123456",
+                    help="Google Authenticator veya Microsoft Authenticator uygulamanızdaki 6 haneli kodu girin."
+                )
+                c_sub, c_can = st.columns([1, 1])
+                with c_sub:
+                    verify_btn = st.form_submit_button("✅ Kodu Doğrula", type="primary", use_container_width=True)
+                with c_can:
+                    cancel_btn = st.form_submit_button("⬅️ İptal / Geri Dön", use_container_width=True)
+
+                if cancel_btn:
+                    del st.session_state["2fa_pending"]
+                    st.rerun()
+
+                if verify_btn:
+                    if verify_totp_code(totp_secret, totp_input):
+                        st.session_state["authenticated"] = True
+                        st.session_state["user"] = user_info
+                        st.session_state["auth_failed_attempts"] = 0
+                        st.session_state["auth_lockout_until"] = 0
+                        del st.session_state["2fa_pending"]
+                        st.success("✅ 2FA Doğrulandı! Terminale giriş yapılıyor...")
+                        st.rerun()
+                    else:
+                        st.session_state["auth_failed_attempts"] = st.session_state.get("auth_failed_attempts", 0) + 1
+                        st.error("❌ Hatalı veya süresi dolmuş 2FA kodu! Lütfen tekrar deneyin.")
+
+            st.caption("ℹ️ *Kod her 30 saniyede bir otomatik yenilenir.*")
             st.stop()
 
         # ── STANDART GİRİŞ EKRANI ──
@@ -205,10 +340,21 @@ def render_login_gate():
                 else:
                     success, user_dict, msg = authenticate_user(username_input, password_input)
                     if success:
-                        st.session_state["authenticated"] = True
-                        st.session_state["user"] = user_dict
-                        st.success("Giriş başarılı! Yönlendiriliyorsunuz...")
-                        st.rerun()
+                        # 2FA Aktif mi kontrol et
+                        if user_dict.get("is_2fa_enabled") and user_dict.get("totp_secret"):
+                            st.session_state["2fa_pending"] = {
+                                "user": user_dict,
+                                "secret": user_dict["totp_secret"],
+                            }
+                            st.rerun()
+                        else:
+                            # 2FA yoksa doğrudan oturum aç
+                            st.session_state["authenticated"] = True
+                            st.session_state["user"] = user_dict
+                            st.session_state["auth_failed_attempts"] = 0
+                            st.session_state["auth_lockout_until"] = 0
+                            st.success("Giriş başarılı! Yönlendiriliyorsunuz...")
+                            st.rerun()
                     else:
                         st.error(msg)
 
@@ -218,25 +364,81 @@ def render_login_gate():
 
 
 def render_sidebar_user_profile():
-    """Giriş yapmış kullanıcının profil rozetini ve Güvenli Çıkış butonunu çizer."""
+    """Giriş yapmış kullanıcının profil rozetini, 2FA ayarlarını ve Güvenli Çıkış butonunu çizer."""
     if not st.session_state.get("authenticated", False):
         return
 
     user = st.session_state.get("user", {})
+    user_id = user.get("id")
     username = user.get("username", "Kullanıcı")
     role = user.get("role", "user")
+    is_2fa_enabled = user.get("is_2fa_enabled", False)
     role_badge = "👑 Yönetici" if role == "admin" else "👤 Üye"
+    fa_badge = "🟢 2FA Aktif" if is_2fa_enabled else "⚪ 2FA Kapalı"
 
     st.sidebar.markdown(f"""
-    <div style="background: rgba(100, 255, 218, 0.08); border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 10px; padding: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="background: rgba(100, 255, 218, 0.08); border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
         <div>
             <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">{username.title()}</div>
-            <div style="font-size: 0.72rem; color: #64ffda;">{role_badge}</div>
+            <div style="font-size: 0.72rem; color: #64ffda; margin-top: 2px;">{role_badge} &nbsp;|&nbsp; {fa_badge}</div>
         </div>
         <div style="font-size: 1.2rem;">🛡️</div>
     </div>
     """, unsafe_allow_html=True)
 
+    # ── 2FA GÜVENLİK AYARLARI GENİŞLETİCİ ──
+    with st.sidebar.expander("🔐 2FA Güvenlik Ayarları"):
+        if is_2fa_enabled:
+            st.success("✅ Google Authenticator 2FA aktif.")
+            st.caption("Hesabınız her girişte 6 haneli dinamik kod ile doğrulanır.")
+            if st.button("❌ 2FA'yı Devre Dışı Bırak", key="btn_disable_2fa", use_container_width=True):
+                ok, msg = disable_user_2fa(user_id)
+                if ok:
+                    st.session_state["user"]["is_2fa_enabled"] = False
+                    st.warning("2FA devre dışı bırakıldı.")
+                    st.rerun()
+                else:
+                    st.error(msg)
+        else:
+            st.info("📲 İki Adımlı Doğrulama (2FA) kurarak hesabınızı banka düzeyinde koruyun.")
+            
+            # Kurulum durumu
+            if "setup_totp_secret" not in st.session_state:
+                if st.button("🚀 Google Authenticator Kur", key="btn_start_2fa_setup", type="primary", use_container_width=True):
+                    st.session_state["setup_totp_secret"] = generate_totp_secret()
+                    st.rerun()
+            else:
+                setup_secret = st.session_state["setup_totp_secret"]
+                totp_uri = get_totp_uri(username, setup_secret)
+                qr_bytes = generate_qr_code_bytes(totp_uri)
+
+                st.write("**1. QR Kodu Tarayın:**")
+                st.image(qr_bytes, caption="Google Authenticator ile Okutun", use_container_width=True)
+                st.caption(f"Manuel Kurulum Anahtarı: `{setup_secret}`")
+
+                st.write("**2. 6 Haneli Kodu Doğrulayın:**")
+                verify_code_input = st.text_input("Uygulamadaki Kodu Girin", max_chars=6, key="input_verify_setup_2fa")
+                c_ok, c_cancel = st.columns([1, 1])
+                with c_ok:
+                    if st.button("Aktif Et", key="btn_confirm_enable_2fa", type="primary", use_container_width=True):
+                        if verify_totp_code(setup_secret, verify_code_input):
+                            ok, msg = enable_user_2fa(user_id, setup_secret)
+                            if ok:
+                                st.session_state["user"]["is_2fa_enabled"] = True
+                                st.session_state["user"]["totp_secret"] = setup_secret
+                                del st.session_state["setup_totp_secret"]
+                                st.success("🎉 2FA Başarıyla Aktif Edildi!")
+                                st.rerun()
+                            else:
+                                st.error(msg)
+                        else:
+                            st.error("Hatalı kod! Lütfen telefonunuzdaki güncel kodu girin.")
+                with c_cancel:
+                    if st.button("İptal", key="btn_cancel_setup_2fa", use_container_width=True):
+                        del st.session_state["setup_totp_secret"]
+                        st.rerun()
+
+    # Çıkış Butonu
     if st.sidebar.button("🚪 Güvenli Çıkış Yap", use_container_width=True):
         st.session_state.clear()
         st.rerun()

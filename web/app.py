@@ -144,14 +144,24 @@ pg = st.navigation({
     "🛡️ Model Denetimi & Performans": [shadow_test, performans],
 })
 
+from web.components.security_shield import apply_security_shield, render_security_shield_widget
 from web.components.auth import render_login_gate, render_sidebar_user_profile
 
-# ─── SİBER GÜVENLİK KAPISI (AUTHENTICATION GATE) ───
+# ─── SİBER GÜVENLİK KALKANI & WAF SAVUNMASI (LAYER 3) ───
+apply_security_shield()
+
+# ─── KİMLİK DOĞRULAMA & 2FA KAPISI (LAYER 1) ───
 render_login_gate()
 
 # ─── Sidebar Branding & Hızlı Geçiş ───
 with st.sidebar:
     render_sidebar_user_profile()
+    
+    # Yönetici (Admin) ise Güvenlik Kalkanı Denetim Widget'ını Göster
+    user_session = st.session_state.get("user", {})
+    if user_session.get("role") == "admin":
+        render_security_shield_widget()
+
     st.markdown("### 🏦 StockPredictionPro")
     st.caption("Factor Research & Equity Engine v3.1")
     st.divider()
