@@ -4,6 +4,7 @@ NIST standardında Salted PBKDF2-SHA256 parola hashleme,
 RFC 6238 TOTP İki Adımlı Doğrulama (Google / Microsoft Authenticator),
 Brute-Force (kaba kuvvet) saldırı kalkanı ve çok kullanıcılı yetkilendirme.
 """
+import json
 import base64
 import hashlib
 import io
@@ -18,10 +19,110 @@ import streamlit as st
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DB_PATH = os.path.join(PROJECT_ROOT, "trading_bot.db")
+USERS_JSON_PATH = os.path.join(PROJECT_ROOT, "web", "data", "users.json")
 
 # Brute-force koruma limitleri
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_DURATION_SEC = 300  # 5 dakika
+
+
+def sync_users_to_json():
+    """Kullanıcı hesaplarını Streamlit Cloud konteyner sıfırlamalarına karşı web/data/users.json dosyasına yedekler."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT id, username, password_hash, salt, role, totp_secret, is_2fa_enabled, created_at, last_login FROM users")
+        rows = c.fetchall()
+        conn.close()
+
+        users_list = []
+        for r in rows:
+            users_list.append({
+                "id": r[0],
+                "username": r[1],
+                "password_hash": r[2],
+                "salt": r[3],
+                "role": r[4],
+                "totp_secret": r[5],
+                "is_2fa_enabled": r[6],
+                "created_at": r[7],
+                "last_login": r[8],
+            })
+
+        os.makedirs(os.path.dirname(USERS_JSON_PATH), exist_ok=True)
+        with open(USERS_JSON_PATH, "w", encoding="utf-8") as f:
+            json.dump(users_list, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+def restore_users_from_json_or_secrets():
+    """
+    Streamlit Cloud yeniden başladığında SQLite sıfırlanırsa:
+    1. web/data/users.json dosyasından kullanıcıları geri yükler.
+    2. Veya st.secrets içerisindeki admin ayarlarından hesabı otomatik oluşturur.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM users")
+        count = c.fetchone()[0]
+
+        if count == 0:
+            # 1. users.json dosyasından geri yükle
+            if os.path.exists(USERS_JSON_PATH):
+                try:
+                    with open(USERS_JSON_PATH, "r", encoding="utf-8") as f:
+                        users_list = json.load(f)
+                    if users_list and isinstance(users_list, list):
+                        for u in users_list:
+                            c.execute("""
+                                INSERT OR REPLACE INTO users 
+                                (id, username, password_hash, salt, role, totp_secret, is_2fa_enabled, created_at, last_login)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                u.get("id"),
+                                u.get("username"),
+                                u.get("password_hash"),
+                                u.get("salt"),
+                                u.get("role", "user"),
+                                u.get("totp_secret"),
+                                u.get("is_2fa_enabled", 0),
+                                u.get("created_at", datetime.now().isoformat()),
+                                u.get("last_login")
+                            ))
+                        conn.commit()
+                except Exception:
+                    pass
+
+            # 2. Hala kullanıcı yoksa st.secrets kontrol et
+            c.execute("SELECT COUNT(*) FROM users")
+            if c.fetchone()[0] == 0:
+                try:
+                    sec_user = None
+                    sec_pwd = None
+                    if hasattr(st, "secrets"):
+                        if "auth" in st.secrets:
+                            sec_user = st.secrets["auth"].get("admin_username")
+                            sec_pwd = st.secrets["auth"].get("admin_password")
+                        elif "admin_username" in st.secrets:
+                            sec_user = st.secrets.get("admin_username")
+                            sec_pwd = st.secrets.get("admin_password")
+
+                    if sec_user and sec_pwd:
+                        pwd_hash, salt = hash_password(str(sec_pwd))
+                        c.execute("""
+                            INSERT INTO users (username, password_hash, salt, role, created_at)
+                            VALUES (?, ?, ?, 'admin', ?)
+                        """, (str(sec_user).strip().lower(), pwd_hash, salt, datetime.now().isoformat()))
+                        conn.commit()
+                        sync_users_to_json()
+                except Exception:
+                    pass
+
+        conn.close()
+    except Exception:
+        pass
 
 
 def init_user_db():
@@ -49,6 +150,9 @@ def init_user_db():
         c.execute("ALTER TABLE users ADD COLUMN is_2fa_enabled INTEGER NOT NULL DEFAULT 0")
     conn.commit()
     conn.close()
+
+    # Bulut konteyner sıfırlanmışsa users.json veya st.secrets'tan otomatik kurtar
+    restore_users_from_json_or_secrets()
 
 
 def hash_password(password: str, salt: bytes = None) -> tuple[str, str]:
@@ -119,6 +223,7 @@ def enable_user_2fa(user_id: int, secret: str) -> tuple[bool, str]:
         c.execute("UPDATE users SET totp_secret = ?, is_2fa_enabled = 1 WHERE id = ?", (secret, user_id))
         conn.commit()
         conn.close()
+        sync_users_to_json()
         return True, "İki Adımlı Doğrulama (2FA) başarıyla aktif edildi."
     except Exception as e:
         return False, f"Veritabanı hatası: {e}"
@@ -132,6 +237,7 @@ def disable_user_2fa(user_id: int) -> tuple[bool, str]:
         c.execute("UPDATE users SET is_2fa_enabled = 0 WHERE id = ?", (user_id,))
         conn.commit()
         conn.close()
+        sync_users_to_json()
         return True, "İki Adımlı Doğrulama (2FA) devre dışı bırakıldı."
     except Exception as e:
         return False, f"Veritabanı hatası: {e}"
@@ -167,6 +273,7 @@ def create_user(username: str, password: str, role: str = "user") -> tuple[bool,
         """, (username, pwd_hash, salt, role, datetime.now().isoformat()))
         conn.commit()
         conn.close()
+        sync_users_to_json()
         return True, "Kullanıcı başarıyla oluşturuldu."
     except sqlite3.IntegrityError:
         return False, "Bu kullanıcı adı zaten mevcut."

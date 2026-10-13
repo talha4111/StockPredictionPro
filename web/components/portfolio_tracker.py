@@ -38,10 +38,10 @@ def get_current_user_name():
         import streamlit as st
         user = st.session_state.get("user")
         if user and isinstance(user, dict):
-            return user.get("username", "talha")
+            return user.get("username", "talha6641")
     except Exception:
         pass
-    return "talha"
+    return "talha6641"
 
 
 # ─── DEPOLAMA KATMANI (Google Sheets + Yerel Fallback) ───
@@ -63,7 +63,7 @@ def load_transactions(target_user: str = None, filter_by_user: bool = True):
                     if r.get("sembol"):
                         raw_tx.append({
                             "id": str(r.get("id") or uuid.uuid4().hex[:8]),
-                            "user": str(r.get("user") or "talha").lower(),
+                            "user": str(r.get("user") or "talha6641").lower(),
                             "tarih": str(r.get("tarih") or datetime.now().strftime("%Y-%m-%d")),
                             "sembol": str(r.get("sembol")).upper().strip(),
                             "islem_tipi": str(r.get("islem_tipi") or "ALIS").upper(),
@@ -89,7 +89,11 @@ def load_transactions(target_user: str = None, filter_by_user: bool = True):
     # Kullanıcı Bazlı İzolasyon (Multi-Tenant Isolation)
     if filter_by_user:
         active_u = (target_user or get_current_user_name()).lower()
-        return [t for t in raw_tx if t.get("user", "talha").lower() == active_u]
+        return [
+            t for t in raw_tx 
+            if t.get("user", "talha6641").lower() == active_u 
+            or (active_u in ("talha", "talha6641") and t.get("user", "talha6641").lower() in ("talha", "talha6641"))
+        ]
 
     return raw_tx
 

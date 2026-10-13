@@ -8,7 +8,8 @@
     "fiyat_usd": 450.0,
     "komisyon_usd": 1.5,
     "usdtry_kuru": 38.5,
-    "notlar": "1. Kademe Giriş"
+    "notlar": "1. Kademe Giriş",
+    "user": "talha6641"
   },
   {
     "id": "mu_lot2",
@@ -19,7 +20,8 @@
     "fiyat_usd": 780.0,
     "komisyon_usd": 1.5,
     "usdtry_kuru": 42.1,
-    "notlar": "2. Kademe Giriş"
+    "notlar": "2. Kademe Giriş",
+    "user": "talha6641"
   },
   {
     "id": "mu_lot3",
@@ -30,7 +32,8 @@
     "fiyat_usd": 956.0,
     "komisyon_usd": 1.5,
     "usdtry_kuru": 45.2,
-    "notlar": "3. Kademe Giriş"
+    "notlar": "3. Kademe Giriş",
+    "user": "talha6641"
   },
   {
     "id": "mu_lot4",
@@ -41,7 +44,8 @@
     "fiyat_usd": 1014.0,
     "komisyon_usd": 1.5,
     "usdtry_kuru": 47.8,
-    "notlar": "4. Kademe Giriş"
+    "notlar": "4. Kademe Giriş",
+    "user": "talha6641"
   },
   {
     "id": "mu_lot5",
@@ -52,6 +56,7 @@
     "fiyat_usd": 1080.0,
     "komisyon_usd": 1.5,
     "usdtry_kuru": 48.9,
-    "notlar": "5. Kademe Giriş"
+    "notlar": "5. Kademe Giriş",
+    "user": "talha6641"
   }
 ]
