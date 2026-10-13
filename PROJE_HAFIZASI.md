@@ -89,7 +89,11 @@ Proje, kurumsal seviyede bir **Factor Research & Equity Engine (v3.1)** ve bunun
    * **Girdi Sanitizasyonu (Anti-SQLi & Anti-XSS):** URL parametrelerindeki enjeksiyon girişimlerini temizleme ve güvenliğe alma.
    * **Güvenlik Başlıkları:** X-Content-Type-Options, X-Frame-Options (Clickjacking önleme), Referrer-Policy enjeksiyonu.
    * **Güvenlik Denetim Günlüğü (Audit Log):** SQLite `security_audit_log` tablosunda tüm olayların kaydı ve Yönetici (Admin) canlı izleme widget'ı.
-8. **Git Senkronizasyonu:** Kodlar hazırlandı.
+8. **Kalıcı Kimlik & Otomatik Kurtarma Motoru (14 Ekim 2026):**
+   * Streamlit Cloud geçici konteyner uyku-uyanış döngüsünde kullanıcıların sıfırlanması engellendi.
+   * `web/data/users.json` ve `st.secrets` çift katmanlı otomatik kurtarma eklendi.
+   * Yönetici hesabı (`talha6641`) kalıcı olarak PBKDF2 hash ile kaydedildi; Midas portföy işlemleriyle ilişkilendirildi.
+9. **Git Senkronizasyonu:** Tüm güncellemeler commitleşti.
 
 ---
 
