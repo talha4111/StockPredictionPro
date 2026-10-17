@@ -125,7 +125,7 @@ st.markdown("""
 
 # ─── 10 Sayfa Tanımları (Ana Sayfa Varsayılan) ───
 ana_sayfa = st.Page("pages/0_ana_sayfa.py", title="Ana Sayfa", icon="📱", default=True)
-alim_avcisi = st.Page("pages/9_alim_avcisi.py", title="Alım Noktası & Alarm Avcısı", icon="🎯")
+alim_avcisi = st.Page("pages/9_alim_avcisi.py", title="Alım & Satış Avcısı (Alarm)", icon="🎯")
 portfoy_defteri = st.Page("pages/8_portfoy_defteri.py", title="Portföy & FIFO Defteri", icon="💼")
 tek_hisse = st.Page("pages/2_tek_hisse_analiz.py", title="Tek Hisse Analiz", icon="🔍")
 piyasa_tarayici = st.Page("pages/1_piyasa_tarayici.py", title="Piyasa Tarayıcı", icon="📊")
@@ -168,7 +168,7 @@ with st.sidebar:
     st.divider()
     st.markdown("**Hızlı Menü**")
     st.page_link("pages/0_ana_sayfa.py", label="Ana Sayfa", icon="📱")
-    st.page_link("pages/9_alim_avcisi.py", label="Alım Noktası & Alarm Avcısı", icon="🎯")
+    st.page_link("pages/9_alim_avcisi.py", label="Alım & Satış Avcısı (Alarm)", icon="🎯")
     st.page_link("pages/8_portfoy_defteri.py", label="Portföy Defteri (FIFO)", icon="💼")
     st.page_link("pages/2_tek_hisse_analiz.py", label="Tek Hisse Analiz", icon="🔍")
     st.page_link("pages/1_piyasa_tarayici.py", label="Piyasa Tarayıcı", icon="📊")

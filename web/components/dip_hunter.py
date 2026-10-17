@@ -367,6 +367,358 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
         return None
 
 
+def _get_days_to_earnings(tk: yf.Ticker) -> tuple[int | None, str | None]:
+    """Hissenin bir sonraki bilanço (karne) gününe kaç gün kaldığını bulur."""
+    try:
+        cal = tk.calendar
+        if not cal:
+            return None, None
+        edates = None
+        if isinstance(cal, dict):
+            edates = cal.get("Earnings Date") or cal.get("Earnings High")
+        elif isinstance(cal, pd.DataFrame) and "Earnings Date" in cal.index:
+            edates = cal.loc["Earnings Date"].values
+        if edates:
+            first_dt = edates[0] if isinstance(edates, (list, tuple, np.ndarray)) else edates
+            if hasattr(first_dt, "date"):
+                target_d = first_dt.date()
+            else:
+                target_d = pd.to_datetime(str(first_dt)).date()
+            today_d = datetime.now().date()
+            diff = (target_d - today_d).days
+            if -1 <= diff <= 90:
+                return int(diff), target_d.strftime("%d.%m.%Y")
+    except Exception:
+        pass
+    return None, None
+
+
+def analyze_stock_exit(symbol: str, user_pos: dict | None = None) -> dict | None:
+    """
+    Hissenin NE ZAMAN SATILMASI GEREKTİĞİNİ (Satış & Kâr Koruma Avcısı) analiz eder.
+    - Bilanço (karne) günü tuzağı uyarısı
+    - 1. Kâr Alma Yeri ve 2. Aşırı Şişme Tepesi
+    - Kâr Koruma Çizgisi (iz süren stop - kârı geri vermeme sınırı)
+    - Dipte panik satışı engelleme koruması
+    - Midas FIFO lot röntgeni (ilk hangi lot satılır, kaç lot kârda)
+    """
+    symbol = symbol.strip().upper()
+    try:
+        tk = yf.Ticker(symbol)
+        df_daily = tk.history(period="6mo", interval="1d")
+        if df_daily is None or len(df_daily) < 25:
+            return None
+
+        try:
+            df_intra = tk.history(period="5d", interval="15m")
+        except Exception:
+            df_intra = pd.DataFrame()
+
+        close_d = df_daily["Close"]
+        high_d = df_daily["High"]
+        low_d = df_daily["Low"]
+
+        current_price = float(close_d.iloc[-1])
+        prev_close = float(close_d.iloc[-2]) if len(close_d) >= 2 else current_price
+        daily_change_pct = ((current_price - prev_close) / prev_close) * 100.0
+
+        # Teknik arka plan (kullanıcıya sade tercüme edilecek)
+        sma20 = float(close_d.rolling(20).mean().iloc[-1])
+        sma50 = float(close_d.rolling(50).mean().iloc[-1]) if len(close_d) >= 50 else sma20
+        atr_d = _calc_atr(df_daily, 14)
+
+        rsi_d_series = _calc_rsi(close_d, 14)
+        rsi_daily = float(rsi_d_series.iloc[-1]) if not np.isnan(rsi_d_series.iloc[-1]) else 50.0
+
+        # Son 10 ve 35 günlük zirveler / dipler
+        recent_10d_high = float(high_d.tail(10).max())
+        recent_35d_high = float(high_d.tail(35).max())
+        recent_20d_low = float(low_d.tail(20).min())
+
+        # Gün içi yorulma / tepeden satış baskısı kontrolü
+        intra_exhaustion = False
+        rsi_intra = rsi_daily
+        if df_intra is not None and len(df_intra) >= 15:
+            c_in = df_intra["Close"]
+            o_in = df_intra["Open"]
+            h_in = df_intra["High"]
+            rsi_in_s = _calc_rsi(c_in, 14)
+            if not np.isnan(rsi_in_s.iloc[-1]):
+                rsi_intra = float(rsi_in_s.iloc[-1])
+            # Son 3 mumda üstten sert satış (üst fitil) veya tepe sonrası kırmızı mumlar
+            last3_high = float(h_in.tail(4).max())
+            pullback_from_intra_high = ((last3_high - current_price) / last3_high) * 100.0 if last3_high > 0 else 0.0
+            red_candles = int(c_in.iloc[-1] < o_in.iloc[-1]) + int(c_in.iloc[-2] < o_in.iloc[-2])
+            if (rsi_intra >= 68 or rsi_daily >= 68) and (pullback_from_intra_high >= 1.2 or red_candles >= 2):
+                intra_exhaustion = True
+
+        # ─── SATIŞ VE KÂR KORUMA SEVİYELERİ ───
+        # Eğer hisse ortalamasının (SMA20) altındaysa:
+        # 1. Kâr Alma Yeri = İlk güçlü tepki / denge noktası (SMA20 civarı)
+        # 2. Aşırı Şişme Tepesi = Son 35 günlük ana zirve bölgesi
+        if current_price < sma20:
+            take_profit_1 = round(max(sma20, current_price + 1.8 * atr_d), 2)
+            take_profit_2 = round(max(recent_35d_high * 0.98, sma20 + 1.5 * atr_d, take_profit_1 * 1.05), 2)
+            # Dipteyken kâr koruma / ana destek kırılım çizgisi
+            profit_shield_line = round(min(recent_20d_low * 0.985, current_price - 1.3 * atr_d), 2)
+        else:
+            # Hisse yükseliş trendindeyse:
+            take_profit_1 = round(max(sma20 + 1.2 * atr_d, recent_10d_high * 1.01, current_price * 1.03), 2)
+            take_profit_2 = round(max(recent_35d_high * 1.02, sma20 + 2.4 * atr_d, take_profit_1 * 1.05), 2)
+            # Yükselişteyken İz Süren Kâr Koruma Çizgisi (Trailing Stop)
+            profit_shield_line = round(max(recent_10d_high - 1.5 * atr_d, sma20 - 0.5 * atr_d), 2)
+
+        emergency_floor = round(min(recent_20d_low * 0.985, current_price - 1.5 * atr_d), 2)
+
+        # Bilanço (Karne) Günü Kontrolü
+        days_to_earnings, earnings_date_str = _get_days_to_earnings(tk)
+
+        # ─── KULLANICININ MİDAS (FIFO) POZİSYON RÖNTGENİ ───
+        has_position = bool(user_pos and user_pos.get("toplam_adet", 0) > 0)
+        avg_cost = float(user_pos["ortalama_fiyat_usd"]) if has_position else 0.0
+        total_qty = float(user_pos["toplam_adet"]) if has_position else 0.0
+        lots = user_pos.get("lotlar", []) if has_position else []
+
+        pnl_usd = (current_price - avg_cost) * total_qty if has_position else 0.0
+        pnl_pct = ((current_price - avg_cost) / avg_cost) * 100.0 if (has_position and avg_cost > 0) else 0.0
+
+        first_fifo_lot_price = float(lots[0]["fiyat_usd"]) if lots else 0.0
+        first_fifo_lot_qty = float(lots[0]["adet_kalan"]) if lots else 0.0
+        first_fifo_pnl_pct = (
+            ((current_price - first_fifo_lot_price) / first_fifo_lot_price) * 100.0
+            if first_fifo_lot_price > 0 else 0.0
+        )
+        profitable_lots_count = sum(1 for l in lots if current_price > float(l.get("fiyat_usd", 0)))
+
+        # ─── KARAR MOTORU (SADE VE ANLAŞILIR TÜRKÇE) ───
+        drop_from_35d_peak_pct = ((current_price - recent_35d_high) / recent_35d_high) * 100.0
+        rally_from_20d_low_pct = ((current_price - recent_20d_low) / recent_20d_low) * 100.0
+
+        # Durum 1: Bilanço Kumarı Uyarısı (Bilançoya 0-5 gün kaldıysa)
+        if days_to_earnings is not None and 0 <= days_to_earnings <= 5:
+            exit_code = "BILANCO_UYARISI"
+            exit_badge = f"📅 BİLANÇO KUMARINA DİKKAT ({days_to_earnings} Gün Kaldı)"
+            exit_color = "#ff9100"
+            headline = (
+                f"{symbol} için {earnings_date_str} tarihinde bilanço (şirket karnesi) açıklanacak! "
+                f"Bilanço günü hisseler yazı-tura gibidir; iyi gelse bile 'beklenti bitti' diye sert satabilirler."
+            )
+            if has_position and pnl_pct > 2.0:
+                action_advice = (
+                    f"⚠️ **Tavsiye (Kârı Cebe Koy):** Şu an ortalamana göre **+%{pnl_pct:.1f} (${pnl_usd:,.0f})** kârdasın. "
+                    f"Micron'da yaşadığın gibi bilanço sonrası kârın erimesini istemiyorsan, bilanço açıklanmadan önce "
+                    f"elindeki lotların **en az 3'te 1'ini veya yarısını satıp kârı garantilemek** en profesyonel hamledir."
+                )
+            else:
+                action_advice = (
+                    f"⚠️ **Tavsiye (Risk Yönetimi):** Bilançoya sadece **{days_to_earnings} gün** kaldı ({earnings_date_str}). "
+                    f"Eğer yüksek kârda olan ilk FIFO lotun varsa (${first_fifo_lot_price:.2f} maliyetli lotun şu an %{first_fifo_pnl_pct:+.1f} durumda), "
+                    f"bilanço kumarına tüm paranla girmemek için bir kısmını nakde çevirebilirsin."
+                )
+
+        # Durum 2: Şimdi Kâr Al / Zirvede Yorulma Var
+        elif (rsi_daily >= 70 or rsi_intra >= 73) or (
+            rally_from_20d_low_pct >= 14.0 and (current_price >= recent_35d_high * 0.96 or intra_exhaustion)
+        ):
+            exit_code = "SIMDI_KAR_AL"
+            exit_badge = "💰 ŞİMDİ KÂR AL — HİSSE FAZLA ŞİŞTİ"
+            exit_color = "#00e676"
+            headline = (
+                f"{symbol} son dipten **+%{rally_from_20d_low_pct:.1f}** yükseldi ve artık alıcılar yorulmaya başladı. "
+                f"Herkesin coşkuya kapıldığı bu yerler, büyük oyuncuların mal sattığı yerlerdir."
+            )
+            if has_position:
+                action_advice = (
+                    f"💰 **Tavsiye (Kademeli Satış Zamanı):** Elindeki **{total_qty:g} adet** hissenin tamamını bir anda satma ama "
+                    f"şu an **${current_price:.2f}** seviyesinden **1 veya 2 lot satarak** kârı cebine koy! "
+                    f"(Midas'ta ilk satılacak lotunun maliyeti **${first_fifo_lot_price:.2f}**, bu lottan **%{first_fifo_pnl_pct:+.1f}** kazanıyorsun). "
+                    f"Kalan lotların için de **${profit_shield_line:.2f}** seviyesini Kâr Koruma Çizgisi yap."
+                )
+            else:
+                action_advice = (
+                    f"💰 **Tavsiye (Satış / Kâr Realizasyonu):** Hisse kısa vadede çok hızlı koştu ve yorulma sinyali veriyor. "
+                    f"Elinde bulunduranlar için **${current_price:.2f} – ${take_profit_1:.2f}** aralığı kârın yarısını cebine koyma yeridir."
+                )
+
+        # Durum 3: Hisse Yükselişte ama Henüz Zirvede Değil -> Kârı Koru, Acele Etme
+        elif current_price > sma20 and drop_from_35d_peak_pct > -8.0 and (not has_position or pnl_pct >= 0):
+            exit_code = "KARI_KORU_TUT"
+            exit_badge = "🛡️ ARKANA YASLAN — KÂRI KORUYARAK TUT"
+            exit_color = "#29b6f6"
+            headline = (
+                f"{symbol} sağlıklı yükseliş trendinde ilerliyor. Erken satıp arkasından bakmamak için hisseyi tutmaya devam et, "
+                f"sadece kâr koruma sınırını takip et."
+            )
+            if has_position:
+                action_advice = (
+                    f"🛡️ **Tavsiye (Kârı Büyüt):** Şu an toplam **${pnl_usd:+,.0f} (%{pnl_pct:+.1f})** durumdasın ve **{profitable_lots_count}/{len(lots)} lotun** kârda. "
+                    f"Hisse **${profit_shield_line:.2f}** (Kâr Koruma Çizgisi) üzerinde kaldığı sürece **SATMA**, bırak kârın büyüsün! "
+                    f"İlk parça kâr satışını **${take_profit_1:.2f}** seviyesine gelince yapacağız."
+                )
+            else:
+                action_advice = (
+                    f"🛡️ **Tavsiye (Trendi Sürmeye Devam):** Yükseliş gücü devam ediyor. "
+                    f"**${profit_shield_line:.2f}** altına kırılmadıkça erken satış yapmaya gerek yok. "
+                    f"İlk kâr alma hedefimiz **${take_profit_1:.2f}**, ana tepe hedefimiz **${take_profit_2:.2f}**."
+                )
+
+        # Durum 4: Hisse Zaten Çok Düşmüş / Ucuzluk Bölgesinde -> Dipte Panik Satışı Yapma!
+        else:
+            exit_code = "DIPTE_SATILMAZ"
+            exit_badge = "⏳ DİPTE SATILMAZ — TOPARLANMAYI BEKLE"
+            exit_color = "#ab47bc"
+            headline = (
+                f"{symbol} son zirvesinden **%{abs(drop_from_35d_peak_pct):.1f}** düşmüş durumda (${recent_35d_high:.2f} -> ${current_price:.2f}). "
+                f"Fiyat zaten ucuzlamışken buradan satmak, malı en dipten başkasına kaptırmak olur."
+            )
+            if has_position:
+                action_advice = (
+                    f"⏳ **Tavsiye (Sakın Dipten Satma!):** Elinde ortalama **${avg_cost:.2f}** maliyetli **{total_qty:g} lot** var "
+                    f"(İlk aldığın lot **${first_fifo_lot_price:.2f}** maliyetli ve hâlâ **%{first_fifo_pnl_pct:+.1f}** kârda!). "
+                    f"Şu an hisse yorgun ve ucuz bölgede; burası satış yeri değil, sabır yeridir. "
+                    f"Satış düşünmek için fiyatın en azından **${take_profit_1:.2f}** toparlanma hedefine çıkmasını bekle."
+                )
+            else:
+                action_advice = (
+                    f"⏳ **Tavsiye (Satış İçin Doğru Zaman Değil):** Hisse şu an tepe noktasından oldukça uzakta. "
+                    f"Elinde olanların panikle satmaması, satış için **${take_profit_1:.2f} – ${take_profit_2:.2f}** tepki yükselişini beklemesi gerekir."
+                )
+
+        # 4'lü Satış Kontrol Listesi (Sade Türkçe)
+        c1_overbought = bool(rsi_daily >= 68 or rsi_intra >= 70)
+        c2_near_peak = bool(current_price >= recent_35d_high * 0.95 or current_price >= take_profit_1 * 0.98)
+        c3_exhaustion = bool(intra_exhaustion)
+        c4_earnings_safe = bool(days_to_earnings is None or days_to_earnings > 5)
+
+        exit_checklist = [
+            {
+                "kriter": "Fiyat aşırı şişti mi? (Kâr alma olgunluğu)",
+                "ok": c1_overbought,
+                "detay": (
+                    f"Evet, alıcılar aşırı doygunluğa ulaştı (Yorulma skoru: {max(rsi_daily, rsi_intra):.0f}/100)"
+                    if c1_overbought
+                    else f"Hayır, fiyat henüz aşırı şişkin değil ({rsi_daily:.0f}/100)"
+                ),
+            },
+            {
+                "kriter": "Satıcıların pusuda beklediği tepe bölgesine geldi mi?",
+                "ok": c2_near_peak,
+                "detay": (
+                    f"Evet, ${recent_35d_high:.2f} zirvesine çok yakın (${current_price:.2f})"
+                    if c2_near_peak
+                    else f"Henüz ${take_profit_1:.2f} ilk satış hedefine ulaşmadı"
+                ),
+            },
+            {
+                "kriter": "Gün içinde (15 dk) yükseliş gücü kesildi mi?",
+                "ok": c3_exhaustion,
+                "detay": (
+                    "Evet, tepeden satıcılar gelmeye başladı (Kâr alma sinyali)"
+                    if c3_exhaustion
+                    else "Hayır, gün içi sert bir satış baskısı henüz yok"
+                ),
+            },
+            {
+                "kriter": "Yakında bilanço (karne) sürprizi riski var mı?",
+                "ok": not c4_earnings_safe,
+                "detay": (
+                    f"DİKKAT! Bilançoya {days_to_earnings} gün kaldı ({earnings_date_str})"
+                    if not c4_earnings_safe
+                    else (
+                        f"Bilanço tarihi: {earnings_date_str} ({days_to_earnings} gün var, yakın tehlike yok)"
+                        if earnings_date_str
+                        else "Yakın günlerde bilanço tehlikesi görünmüyor"
+                    )
+                ),
+            },
+        ]
+
+        return {
+            "symbol": symbol,
+            "current_price": current_price,
+            "daily_change_pct": round(daily_change_pct, 2),
+            "recent_peak": round(recent_35d_high, 2),
+            "drop_from_peak_pct": round(drop_from_35d_peak_pct, 1),
+            "rally_from_low_pct": round(rally_from_20d_low_pct, 1),
+            "take_profit_1": take_profit_1,
+            "take_profit_2": take_profit_2,
+            "profit_shield_line": profit_shield_line,
+            "emergency_floor": emergency_floor,
+            "days_to_earnings": days_to_earnings,
+            "earnings_date_str": earnings_date_str,
+            "exit_code": exit_code,
+            "exit_badge": exit_badge,
+            "exit_color": exit_color,
+            "headline": headline,
+            "action_advice": action_advice,
+            "exit_checklist": exit_checklist,
+            "has_position": has_position,
+            "total_qty": total_qty,
+            "avg_cost": round(avg_cost, 2),
+            "pnl_usd": round(pnl_usd, 2),
+            "pnl_pct": round(pnl_pct, 2),
+            "first_fifo_lot_price": round(first_fifo_lot_price, 2),
+            "first_fifo_lot_qty": first_fifo_lot_qty,
+            "first_fifo_pnl_pct": round(first_fifo_pnl_pct, 1),
+            "profitable_lots_count": profitable_lots_count,
+            "total_lots_count": len(lots),
+            "updated_at": datetime.now().strftime("%H:%M:%S"),
+        }
+    except Exception:
+        return None
+
+
+def format_plain_exit_telegram_message(res: dict) -> str:
+    """
+    Satış & Kâr Koruma analizini hiçbir karmaşık terim kullanmadan,
+    tamamen sohbet dilinde Telegram mesajına çevirir.
+    """
+    sym = res["symbol"]
+    price = res["current_price"]
+    chg = res["daily_change_pct"]
+    chg_sign = "+" if chg >= 0 else ""
+
+    if res["exit_code"] == "SIMDI_KAR_AL":
+        header = f"💰 *ŞİMDİ KÂR ALMA ZAMANI: {sym}*"
+    elif res["exit_code"] == "BILANCO_UYARISI":
+        header = f"📅 *BİLANÇO KUMARINA DİKKAT: {sym}*"
+    elif res["exit_code"] == "KARI_KORU_TUT":
+        header = f"🛡️ *KÂRI KORUYARAK TUT: {sym}*"
+    else:
+        header = f"⏳ *DİPTE SATILMAZ (SABIR): {sym}*"
+
+    pos_block = ""
+    if res.get("has_position"):
+        pnl_sign = "+" if res["pnl_usd"] >= 0 else ""
+        pos_block = (
+            f"\n💼 *Senin Midas Pozisyonun:*\n"
+            f"• *Toplam Adet / Ortalama:* {res['total_qty']:g} Lot (Ort: ${res['avg_cost']:.2f})\n"
+            f"• *Genel Kâr/Zarar:* {pnl_sign}${res['pnl_usd']:,.0f} ({pnl_sign}%{res['pnl_pct']:.1f})\n"
+            f"• *İlk Satılacak (FIFO) Lotun:* ${res['first_fifo_lot_price']:.2f} maliyetli ({res['first_fifo_pnl_pct']:+.1f}%)\n"
+            f"• *Kârda Olan Lot Sayısı:* {res['profitable_lots_count']} / {res['total_lots_count']} lot\n"
+        )
+
+    earnings_line = (
+        f"• *Bilanço (Karne) Günü:* {res['earnings_date_str']} ({res['days_to_earnings']} gün kaldı)\n"
+        if res.get("earnings_date_str")
+        else "• *Bilanço Riski:* Yakın tarihte görünmüyor\n"
+    )
+
+    msg = (
+        f"{header}\n\n"
+        f"💵 *Anlık Fiyat:* ${price:.2f} ({chg_sign}%{chg:.1f})\n"
+        f"{pos_block}\n"
+        f"🗣️ *Durum Özeti:*\n{res['headline'].replace('**', '*')}\n\n"
+        f"🎯 *Satış & Kâr Koruma Planı:*\n"
+        f"• *1. Kâr Alma Yeri (İlk Satış):* ${res['take_profit_1']:.2f}\n"
+        f"• *2. Aşırı Şişme Tepesi (Ana Satış):* ${res['take_profit_2']:.2f}\n"
+        f"• *Kâr Koruma Çizgisi (Altına İnerse Kârı Al):* ${res['profit_shield_line']:.2f}\n"
+        f"{earnings_line}\n"
+        f"💡 *Tavsiye:* {res['action_advice'].replace('**', '*')}"
+    )
+    return msg
+
+
 def format_plain_telegram_message(res: dict) -> str:
     """
     Analiz sonucunu hiçbir karmaşık teknik terim kullanmadan,
@@ -445,8 +797,9 @@ def send_telegram_message(bot_token: str, chat_id: str, text: str) -> tuple[bool
 def scan_and_notify_all(force_notify: bool = False) -> list[dict]:
     """
     Takip listesindeki tüm hisseleri tarar.
-    Durumu değişen (örn. ALIM_FIRSATI, PUSUDA_IZLE veya TEHLIKE olan) hisseler için
-    Telegram'a sade Türkçe bildirim gönderir.
+    1) Alım Avcısı: ALIM_FIRSATI, PUSUDA_IZLE veya TEHLIKE durumuna geçenleri bildirir.
+    2) Satış & Kâr Koruma Avcısı: Portföyde açık olan veya takip edilen hisselerde
+       SIMDI_KAR_AL veya BILANCO_UYARISI oluştuğunda Telegram'a sade Türkçe bildirim gönderir.
     """
     cfg = load_dip_config()
     symbols = cfg.get("symbols", DEFAULT_SYMBOLS)
@@ -458,6 +811,14 @@ def scan_and_notify_all(force_notify: bool = False) -> list[dict]:
     new_state = prev_state.copy()
     results = []
 
+    # Portföydeki açık pozisyonları yükle (FIFO)
+    open_positions = {}
+    try:
+        from web.components.portfolio_tracker import calculate_fifo_portfolio
+        open_positions, _ = calculate_fifo_portfolio()
+    except Exception:
+        open_positions = {}
+
     # VIX kontrolü
     vix_val = 18.0
     try:
@@ -467,7 +828,10 @@ def scan_and_notify_all(force_notify: bool = False) -> list[dict]:
     except Exception:
         pass
 
-    for sym in symbols:
+    # Portföyde olup takip listesinde olmayan hisseleri de taramaya dahil et
+    all_symbols = list(dict.fromkeys(list(symbols) + list(open_positions.keys())))
+
+    for sym in all_symbols:
         res = analyze_stock_dip(sym, vix_value=vix_val)
         if not res:
             continue
@@ -476,23 +840,46 @@ def scan_and_notify_all(force_notify: bool = False) -> list[dict]:
         curr_code = res["state_code"]
         last_recorded = prev_state.get(sym, {}).get("state_code")
 
-        # Bildirim gerektiren durumlar: durum değiştiyse ve önemli bir durumsa
-        should_send = False
+        should_send_dip = False
         if force_notify:
-            should_send = True
+            should_send_dip = True
         elif notify_on and bot_token and chat_id:
             if curr_code in ("ALIM_FIRSATI", "PUSUDA_IZLE", "TEHLIKE") and curr_code != last_recorded:
-                should_send = True
+                should_send_dip = True
 
-        if should_send and bot_token and chat_id:
+        if should_send_dip and bot_token and chat_id:
             msg = format_plain_telegram_message(res)
             ok, _ = send_telegram_message(bot_token, chat_id, msg)
             if ok:
                 new_state[sym] = {
                     "state_code": curr_code,
+                    "exit_code": prev_state.get(sym, {}).get("exit_code"),
                     "price": res["current_price"],
                     "timestamp": datetime.now().isoformat(),
                 }
 
+        # Satış & Kâr Koruma taraması (özellikle elde tutulan hisseler ve kâr alma noktaları için)
+        exit_res = analyze_stock_exit(sym, user_pos=open_positions.get(sym))
+        if exit_res:
+            curr_exit = exit_res["exit_code"]
+            last_exit = prev_state.get(sym, {}).get("exit_code")
+            should_send_exit = False
+            if force_notify and sym in open_positions:
+                should_send_exit = True
+            elif notify_on and bot_token and chat_id:
+                if curr_exit in ("SIMDI_KAR_AL", "BILANCO_UYARISI") and curr_exit != last_exit:
+                    should_send_exit = True
+
+            if should_send_exit and bot_token and chat_id:
+                exit_msg = format_plain_exit_telegram_message(exit_res)
+                ok_ex, _ = send_telegram_message(bot_token, chat_id, exit_msg)
+                if ok_ex:
+                    entry = new_state.get(sym, prev_state.get(sym, {})).copy()
+                    entry["exit_code"] = curr_exit
+                    entry["price"] = exit_res["current_price"]
+                    entry["timestamp"] = datetime.now().isoformat()
+                    new_state[sym] = entry
+
     save_alert_state(new_state)
     return results
+
