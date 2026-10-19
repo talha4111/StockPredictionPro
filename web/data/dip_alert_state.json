@@ -20,9 +20,10 @@
     "timestamp": "2026-10-17T00:53:00.322066"
   },
   "VST": {
-    "state_code": "PUSUDA_IZLE",
-    "price": 152.02,
-    "timestamp": "2026-10-17T00:53:01.158936"
+    "state_code": "ALIM_FIRSATI",
+    "exit_code": null,
+    "price": 149.69,
+    "timestamp": "2026-10-20T01:28:15.501162"
   },
   "AVGO": {
     "state_code": "PUSUDA_IZLE",

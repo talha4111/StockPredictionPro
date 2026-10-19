@@ -20,6 +20,7 @@ from web.components.dip_hunter import (
     format_plain_telegram_message,
     format_plain_exit_telegram_message,
     send_telegram_message,
+    sync_and_notify_from_ui,
 )
 from web.components.mobile import get_vix_status
 from web.components.portfolio_tracker import calculate_fifo_portfolio
@@ -143,6 +144,10 @@ tab_buy, tab_sell = st.tabs([
 with tab_buy:
     with st.spinner("Hisselerin gün içi (15 dk) ve günlük alım bölgeleri hesaplanıyor..."):
         results = _cached_dip_analyses(tuple(symbols), float(vix_val))
+
+    auto_sent_buy = sync_and_notify_from_ui(dip_results=results)
+    if auto_sent_buy:
+        st.success(f"📲 Yeni fırsat algılandı ve Telegram'a otomatik bildirim gönderildi: {', '.join(auto_sent_buy)}")
 
     cnt_buy = sum(1 for r in results if r["state_code"] == "ALIM_FIRSATI")
     cnt_watch = sum(1 for r in results if r["state_code"] == "PUSUDA_IZLE")
@@ -317,6 +322,10 @@ with tab_sell:
 
     with st.spinner("Midas lotların, bilanço tarihlerin ve kâr alma/koruma noktaların hesaplanıyor..."):
         exit_results = _cached_exit_analyses(tuple(all_exit_syms), _json.dumps(open_positions))
+
+    auto_sent_sell = sync_and_notify_from_ui(exit_results=exit_results)
+    if auto_sent_sell:
+        st.success(f"📲 Yeni satış/kâr koruma uyarısı algılandı ve Telegram'a otomatik gönderildi: {', '.join(auto_sent_sell)}")
 
     cnt_take_profit = sum(1 for r in exit_results if r["exit_code"] == "SIMDI_KAR_AL")
     cnt_earnings = sum(1 for r in exit_results if r["exit_code"] == "BILANCO_UYARISI")
