@@ -15,15 +15,16 @@
     "timestamp": "2026-10-17T00:52:59.561573"
   },
   "RKLB": {
-    "state_code": "PUSUDA_IZLE",
-    "price": 50.84,
-    "timestamp": "2026-10-17T00:53:00.322066"
-  },
-  "VST": {
     "state_code": "ALIM_FIRSATI",
     "exit_code": null,
-    "price": 149.69,
-    "timestamp": "2026-10-20T01:28:15.501162"
+    "price": 51.5,
+    "timestamp": "2026-10-20T17:46:35.975003"
+  },
+  "VST": {
+    "state_code": "PUSUDA_IZLE",
+    "exit_code": null,
+    "price": 149.71,
+    "timestamp": "2026-10-20T17:46:36.714155"
   },
   "AVGO": {
     "state_code": "PUSUDA_IZLE",
