@@ -22,13 +22,14 @@
   },
   "VST": {
     "state_code": "PUSUDA_IZLE",
-    "exit_code": null,
-    "price": 149.71,
-    "timestamp": "2026-10-20T17:46:36.714155"
+    "exit_code": "SIMDI_KAR_AL",
+    "price": 157.86000061035156,
+    "timestamp": "2026-10-21T17:54:29.404359"
   },
   "AVGO": {
     "state_code": "PUSUDA_IZLE",
-    "price": 328.81,
-    "timestamp": "2026-10-17T00:53:01.965806"
+    "price": 338.6449890136719,
+    "timestamp": "2026-10-21T17:54:30.314483",
+    "exit_code": "SIMDI_KAR_AL"
   }
 }
