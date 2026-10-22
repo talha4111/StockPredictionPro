@@ -124,12 +124,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ─── 10 Sayfa Tanımları (Ana Sayfa Varsayılan) ───
-ana_sayfa = st.Page("pages/0_ana_sayfa.py", title="Ana Sayfa", icon="📱", default=True)
+ana_sayfa = st.Page("pages/0_ana_sayfa.py", title="Ana Sayfa & Özet", icon="📱", default=True)
 alim_avcisi = st.Page("pages/9_alim_avcisi.py", title="Alım & Satış Avcısı (Alarm)", icon="🎯")
-portfoy_defteri = st.Page("pages/8_portfoy_defteri.py", title="Portföy & FIFO Defteri", icon="💼")
-tek_hisse = st.Page("pages/2_tek_hisse_analiz.py", title="Tek Hisse Analiz", icon="🔍")
+portfoy_defteri = st.Page("pages/8_portfoy_defteri.py", title="Portföy, Risk & Stres Merkezi", icon="💼")
+tek_hisse = st.Page("pages/2_tek_hisse_analiz.py", title="Tek Hisse & Yatırım Komitesi", icon="🏛️")
 piyasa_tarayici = st.Page("pages/1_piyasa_tarayici.py", title="Piyasa Tarayıcı", icon="📊")
-sektor_radari = st.Page("pages/3_sektor_radari.py", title="Sektör & Makro Radarı", icon="🌍")
+sektor_radari = st.Page("pages/3_sektor_radari.py", title="Piyasa Rejimi & Sektör Radarı", icon="🌍")
 
 walkforward_lab = st.Page("pages/4_walkforward_lab.py", title="Walk-Forward Lab", icon="📈")
 faktor_optimizasyonu = st.Page("pages/5_faktor_optimizasyonu.py", title="Faktör Optimizasyonu", icon="⚖️")
@@ -137,12 +137,13 @@ faktor_optimizasyonu = st.Page("pages/5_faktor_optimizasyonu.py", title="Faktör
 shadow_test = st.Page("pages/6_shadow_test.py", title="Shadow Test & Model Terfi", icon="🧪")
 performans = st.Page("pages/7_performans.py", title="Performans & Sinyal Takibi", icon="📋")
 
-# ─── Navigasyon Menüsü ───
+# ─── Navigasyon Menüsü (Karar Sırasına Göre 5 Grup) ───
 pg = st.navigation({
-    "📱 Mobil & Hızlı Erişim": [ana_sayfa, alim_avcisi, portfoy_defteri],
-    "🔍 Analiz & Tarama": [tek_hisse, piyasa_tarayici, sektor_radari],
-    "📐 Strateji & Backtest": [walkforward_lab, faktor_optimizasyonu],
-    "🛡️ Model Denetimi & Performans": [shadow_test, performans],
+    "01 — Komuta Merkezi": [ana_sayfa, alim_avcisi],
+    "02 — Araştırma & Bilanço": [tek_hisse, piyasa_tarayici, sektor_radari],
+    "03 — Portföy & Risk Merkezi": [portfoy_defteri],
+    "04 — Nicel Lab & Strateji": [walkforward_lab, faktor_optimizasyonu],
+    "05 — Performans & Denetim": [shadow_test, performans],
 })
 
 from web.components.security_shield import apply_security_shield, render_security_shield_widget
@@ -164,15 +165,15 @@ with st.sidebar:
         render_security_shield_widget()
 
     st.markdown("### 🏦 StockPredictionPro")
-    st.caption("Factor Research & Equity Engine v3.1")
+    st.caption("Factor Research & Equity Engine v3.2")
     st.divider()
     st.markdown("**Hızlı Menü**")
-    st.page_link("pages/0_ana_sayfa.py", label="Ana Sayfa", icon="📱")
+    st.page_link("pages/0_ana_sayfa.py", label="Ana Sayfa & Özet", icon="📱")
     st.page_link("pages/9_alim_avcisi.py", label="Alım & Satış Avcısı (Alarm)", icon="🎯")
-    st.page_link("pages/8_portfoy_defteri.py", label="Portföy Defteri (FIFO)", icon="💼")
-    st.page_link("pages/2_tek_hisse_analiz.py", label="Tek Hisse Analiz", icon="🔍")
+    st.page_link("pages/2_tek_hisse_analiz.py", label="Tek Hisse & Yatırım Komitesi", icon="🏛️")
+    st.page_link("pages/8_portfoy_defteri.py", label="Portföy, Risk & Stres Merkezi", icon="💼")
+    st.page_link("pages/3_sektor_radari.py", label="Piyasa Rejimi & Sektör Radarı", icon="🌍")
     st.page_link("pages/1_piyasa_tarayici.py", label="Piyasa Tarayıcı", icon="📊")
-    st.page_link("pages/3_sektor_radari.py", label="Sektör Radarı", icon="🌍")
     st.divider()
 
 # ─── Güvenli Çalıştırma & Hata Kalkanı ───

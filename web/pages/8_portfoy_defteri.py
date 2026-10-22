@@ -129,16 +129,60 @@ with tab1:
                     })
                 st.dataframe(pd.DataFrame(lot_rows), use_container_width=True, hide_index=True)
 
-# ─── TAB 2 (STRES): YOĞUNLAŞMA & STRES TESTİ ───
+        # ─── MOD #6 & #12: YATIRIM TEZİ & OTOMATİK HEDEF TAKİBİ (THESIS MONITOR) ───
+        st.divider()
+        st.markdown("### 🎯 Yatırım Tezi & Otomatik Hedef Takibi (Thesis Monitor)")
+        st.caption("Elindeki hisselerin kâr koruma sınırını, ilk satış hedefini ve yatırım tezinin bozulup bozulmadığını canlı izler.")
+
+        from web.components.dip_hunter import analyze_stock_exit, load_dip_config
+        for sym, p in open_positions.items():
+            ex_info = analyze_stock_exit(sym, user_pos=p)
+            if ex_info:
+                # Son alış notlarını birleştir
+                sym_notes = [
+                    t.get("notlar", "").strip()
+                    for t in transactions
+                    if t.get("sembol") == sym and t.get("islem_tipi") == "ALIS" and t.get("notlar", "").strip()
+                ]
+                note_text = sym_notes[-1] if sym_notes else "Kademeli büyüme & değerleme tezi"
+                b_col = ex_info["exit_color"]
+                st.markdown(f"""
+                <div style="background:#0d1b2a; border-left:5px solid {b_col}; border:1px solid #233554;
+                            border-radius:10px; padding:12px 15px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:1.1rem; font-weight:800; color:#fff;">{sym} — Tez Durumu</span>
+                        <span style="background:{b_col}22; border:1px solid {b_col}; color:{b_col};
+                                     padding:4px 12px; border-radius:16px; font-size:0.8rem; font-weight:700;">
+                            {ex_info['exit_badge']}
+                        </span>
+                    </div>
+                    <div style="color:#8892b0; font-size:0.84rem; margin-top:6px;">
+                        📓 <b>Kayıtlı Alım Notun / Tezin:</b> <i>"{note_text}"</i>
+                    </div>
+                    <div style="color:#ccd6f6; font-size:0.9rem; margin-top:6px;">
+                        {ex_info['action_advice']}
+                    </div>
+                    <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:8px; font-size:0.84rem; color:#64ffda;">
+                        <span>💰 <b>1. Kâr Hedefi:</b> ${ex_info['take_profit_1']:.2f}</span>
+                        <span>🔥 <b>2. Ana Zirve Hedefi:</b> ${ex_info['take_profit_2']:.2f}</span>
+                        <span>🛡️ <b>Kâr Koruma / Destek Sınırı:</b> ${ex_info['profit_shield_line']:.2f}</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+# ─── TAB 2 (STRES): RİSK KOMUTA MERKEZİ, YOĞUNLAŞMA & STRES TESTİ ───
 with tab_stres:
     if not open_positions:
-        st.info("Stres testi için henüz açık pozisyonunuz bulunmuyor.")
+        st.info("Risk ve stres testi için henüz açık pozisyonunuz bulunmuyor.")
     else:
-        st.markdown("### ⚠️ Portföy Yoğunlaşma & Stres Testi")
-        st.caption("Piyasa krizlerinde portföyünüzün ne kadar dayanıklı olduğunu ve hisselerinizin birbirini taklit edip etmediğini test edin.")
+        st.markdown("### 🛡️ Portföy Risk Komuta Merkezi & Stres Testi")
+        st.caption("Portföyünüzün günlük maksimum kayıp riskini (VaR), takip listenizle olan ikiz hareket (korelasyon) tehlikesini ve kriz senaryolarını inceleyin.")
 
-        with st.spinner("Tarihsel beta, korelasyon ve şok senaryoları hesaplanıyor..."):
-            stress_metrics = calculate_portfolio_metrics(open_positions, live_quotes)
+        from web.components.dip_hunter import load_dip_config
+        wl_syms = load_dip_config().get("symbols", ["MU", "COHR", "MRVL", "RKLB", "VST", "AVGO"])
+
+        with st.spinner("VaR, beklenen kayıp, korelasyon ve pozisyon büyüklükleri hesaplanıyor..."):
+            stress_metrics = calculate_portfolio_metrics(open_positions, live_quotes, watchlist_symbols=wl_syms)
 
         if stress_metrics:
             p_beta = stress_metrics["portfolio_beta"]
@@ -147,54 +191,67 @@ with tab_stres:
             betas = stress_metrics["betas"]
             corr_mat = stress_metrics["correlation_matrix"]
 
-            # Beta değerlendirmesi
             beta_renk = "🟢 Düşük Risk" if p_beta < 1.0 else ("🟡 Piyasa Paralel" if p_beta < 1.35 else "🔴 Yüksek Oynaklık")
 
-            b_col1, b_col2 = st.columns(2)
-            with b_col1:
-                st.metric("Ağırlıklı Portföy Betası", f"{p_beta:.2f}", delta=beta_renk)
-                st.caption("S&P 500 (Beta=1.00)'e göre duyarlılık. 1.50 beta, piyasa %10 düştüğünde portföyün yaklaşık %15 düşeceğini gösterir.")
-            with b_col2:
-                max_sym = max(weights, key=weights.get)
-                max_pct = weights[max_sym] * 100
-                st.metric(f"En Büyük Pozisyon: {max_sym}", f"%{max_pct:.1f}", delta="Yüksek Yoğunlaşma" if max_pct > 40 else "Dengeli", delta_color="inverse" if max_pct > 40 else "normal")
-                st.caption(f"Portföyünüzün %{max_pct:.1f}'i tek bir hisseye ({max_sym}) bağlıdır.")
+            r1, r2, r3, r4 = st.columns(4)
+            with r1:
+                st.metric("Portföy Betası (S&P 500)", f"{p_beta:.2f}x", delta=beta_renk)
+            with r2:
+                st.metric(
+                    "Günlük VaR (%95 Güven)",
+                    f"-${stress_metrics['var_95_usd']:,.0f}",
+                    delta=f"{stress_metrics['var_95_pct']:.1f}% (Normal Kötü Gün)",
+                    delta_color="inverse",
+                )
+            with r3:
+                st.metric(
+                    "Kuyruk Riski (Expected Shortfall)",
+                    f"-${stress_metrics['cvar_95_usd']:,.0f}",
+                    delta=f"{stress_metrics['cvar_95_pct']:.1f}% (Sert Satış Günü)",
+                    delta_color="inverse",
+                )
+            with r4:
+                st.metric(
+                    "1 Yıllık Maksimum Düşüş",
+                    f"%{stress_metrics['max_dd_pct']:.1f}",
+                    delta="Zirveden En Derin Çekilme",
+                    delta_color="inverse",
+                )
 
-            # Hisselerin Portföy Payları (Bar grafiği)
-            st.divider()
-            st.markdown("#### 🥧 Portföy Ağırlık Dağılımı")
-            w_df = pd.DataFrame([
-                {"Hisse": s, "Ağırlık (%)": round(w * 100, 1), "Bireysel Beta": betas.get(s, 1.2)}
-                for s, w in weights.items()
-            ]).sort_values("Ağırlık (%)", ascending=False)
+            if stress_metrics.get("high_corr_pairs"):
+                pairs_txt = ", ".join(
+                    f"**{a}–{b}** (%{c} benzer)" for a, b, c in stress_metrics["high_corr_pairs"][:5]
+                )
+                st.warning(
+                    f"⚠️ **İkiz Hareket (Yüksek Korelasyon) Uyarısı:** Portföy ve takip listendeki şu hisseler "
+                    f"birbiriyle neredeyse aynı gün düşüp aynı gün çıkıyor: {pairs_txt}. "
+                    f"Bu hisselerin hepsine aynı anda yüklü girmek, tek bir hisseye bütün parayı yatırmakla aynı riski taşır!"
+                )
 
-            fig_w = px.bar(
-                w_df, x="Hisse", y="Ağırlık (%)", text="Ağırlık (%)",
-                color="Ağırlık (%)", color_continuous_scale="Viridis",
-                template="plotly_dark", height=280
-            )
-            fig_w.update_layout(margin=dict(l=10, r=10, t=10, b=10), showlegend=False)
-            st.plotly_chart(fig_w, use_container_width=True)
-
-            # Korelasyon Isı Haritası
+            # Korelasyon Isı Haritası (Portföy + Takip Listesi)
             if not corr_mat.empty and len(corr_mat) >= 2:
                 st.divider()
-                st.markdown("#### 🔥 Hisseler Arası Korelasyon Isı Haritası")
-                st.caption("1.00 = Kusursuz paralel hareket (biri düşerse diğeri de düşer). 0.00 = Birbirinden tamamen bağımsız.")
+                st.markdown("#### 🔥 Portföy & Takip Listesi Korelasyon (İkiz Hareket) Haritası")
+                st.caption("1.00'e yakın koyu kırmızı kutular, iki hissenin aynı anda düştüğünü (ikiz hareket ettiğini) gösterir.")
                 fig_corr = px.imshow(
                     corr_mat, text_auto=True, aspect="auto",
                     color_continuous_scale="RdBu_r", zmin=-1, zmax=1,
-                    template="plotly_dark", height=320
+                    template="plotly_dark", height=340
                 )
                 fig_corr.update_layout(margin=dict(l=10, r=10, t=10, b=10))
                 st.plotly_chart(fig_corr, use_container_width=True)
-            elif len(weights) < 2:
-                st.info("ℹ️ Korelasyon matrisi için portföyünüzde en az 2 farklı hisse bulunmalıdır.")
+
+            # Volatiliteye Göre Pozisyon Büyüklüğü Önerisi
+            if stress_metrics.get("sizing_table"):
+                st.divider()
+                st.markdown("#### 📏 Oynaklığa (Volatiliteye) Göre İdeal Pozisyon Büyüklüğü Rehberi")
+                st.caption("Çok sert dalgalanan (yüksek beta) hisselere portföyde daha küçük pay ayırarak ani düşüşlerde kasanızı koruyun:")
+                st.dataframe(pd.DataFrame(stress_metrics["sizing_table"]), use_container_width=True, hide_index=True)
 
             # Kriz Simülasyonu
             st.divider()
-            st.markdown("#### ⚡ Tarihsel Kriz & Şok Simülasyonları")
-            st.caption("Büyük piyasa şokları tekrar yaşanırsa mevcut portföyünüzün tahmini dolar ve TL kaybı:")
+            st.markdown("#### ⚡ Piyasa ve Sektör Şok Stres Testleri")
+            st.caption("Piyasa -%5, Teknoloji/Çip sektörü -%10 veya -%20 düştüğünde mevcut portföyünüzün tahmini dolar ve TL kaybı:")
 
             sc_results = run_stress_scenarios(p_val, p_beta, usdtry)
             st.dataframe(pd.DataFrame(sc_results), use_container_width=True, hide_index=True)

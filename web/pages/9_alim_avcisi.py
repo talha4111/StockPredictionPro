@@ -24,15 +24,30 @@ from web.components.dip_hunter import (
 )
 from web.components.mobile import get_vix_status
 from web.components.portfolio_tracker import calculate_fifo_portfolio
+from web.components.investment_committee import get_market_regime_summary, analyze_earnings_catalyst
 
 st.markdown("""
-<div style="margin-bottom: 1rem;">
+<div style="margin-bottom: 0.8rem;">
     <h2 style="margin: 0; font-size: 1.55rem; font-weight: 800; color: #e6f1ff;">
         🎯 Alım & Satış Avcısı (Akıllı Zamanlama Asistanı)
     </h2>
     <p style="margin: 4px 0 0 0; color: #8892b0; font-size: 0.9rem;">
         "Şimdi alsam mı?" ve "Ne zaman satıp kârı cebime koymalıyım?" sorularını teknik terime boğmadan çözen takip ve Telegram bildirim merkezi.
     </p>
+</div>
+""", unsafe_allow_html=True)
+
+regime_info = get_market_regime_summary()
+rc = regime_info["regime_color"]
+st.markdown(f"""
+<div style="background: #0d1b2a; border-left: 5px solid {rc}; border: 1px solid #233554;
+            border-radius: 10px; padding: 10px 14px; margin-bottom: 1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <span style="color:{rc}; font-weight:800; font-size:0.92rem;">🧭 Aktif Piyasa Rejimi: {regime_info['regime_badge']}</span>
+        <span style="color:#8892b0; font-size:0.78rem;">S&P 500 (2H): %{regime_info['spy_2w_ret']:+.1f} | Çip ETF SMH (2H): %{regime_info['smh_2w_ret']:+.1f} | VIX: {regime_info['vix_val']:.1f}</span>
+    </div>
+    <div style="color:#ccd6f6; font-size:0.86rem; margin-top:4px;">{regime_info['summary']}</div>
+    <div style="color:#64ffda; font-size:0.83rem; margin-top:4px;">💡 <b>Bu Rejimde Oyun Planı:</b> {regime_info['hunter_rule']}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -507,10 +522,19 @@ with tab_sell:
             </div>
             """, unsafe_allow_html=True)
 
-        with st.expander(f"📋 {sym} Satış & Kâr Koruma Kontrol Listesi & Telegram'a Gönder"):
+        with st.expander(f"📋 {sym} Satış Kontrol Listesi, Geçmiş Bilanço Karnesi & Telegram'a Gönder"):
             for item in res["exit_checklist"]:
                 icon = "⚠️" if item["ok"] else "✅"
                 st.markdown(f"{icon} **{item['kriter']}** — *{item['detay']}*")
+
+            e_cat = analyze_earnings_catalyst(sym)
+            if e_cat and e_cat.get("history_rows"):
+                st.markdown("---")
+                st.markdown(f"#### 📅 {sym} Geçmiş Bilanço Karnesi (Son Bilançolarda Ertesi Gün Ne Yaptı?)")
+                st.caption(e_cat["summary_text"])
+                import pandas as _pd
+                clean_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in e_cat["history_rows"][:6]]
+                st.dataframe(_pd.DataFrame(clean_rows), use_container_width=True, hide_index=True)
 
             if st.button(f"📲 Sadece {sym} Satış/Kâr Koruma Raporunu Telegram'a Gönder", key=f"tg_single_sell_{sym}"):
                 if not tg_ready:

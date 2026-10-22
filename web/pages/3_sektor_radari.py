@@ -244,23 +244,45 @@ def get_cached_macro():
     return vix_val, spy_ret
 
 # ─── ANA İÇERİK ───
-st.markdown("## 🌍 Sektör & Makro Radarı")
-st.caption("Piyasadaki paranın hangi sektörlere aktığını ve tematik fırsatları görün.")
+st.markdown("## 🌍 Piyasa Rejimi, Sektör & Makro Radarı")
+st.caption("Piyasanın hangi rejimde (Boğa, Seçici, Düzeltme, Kriz) olduğunu, faiz/korku etkisini ve paranın hangi sektörlere aktığını görün.")
+
+from web.components.investment_committee import get_market_regime_summary
+reg = get_market_regime_summary()
+rc = reg["regime_color"]
+
+st.markdown(f"""
+<div style="background: linear-gradient(135deg, #0b192c 0%, #162a45 100%);
+            border-left: 6px solid {rc}; border: 1px solid #233554;
+            border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:1.15rem; font-weight:800; color:#fff;">🧭 Piyasa Rejimi Motoru</span>
+        <span style="background:{rc}22; border:1px solid {rc}; color:{rc};
+                     padding:5px 14px; border-radius:20px; font-weight:700; font-size:0.86rem;">
+            {reg['regime_badge']}
+        </span>
+    </div>
+    <p style="color:#ccd6f6; font-size:0.95rem; margin:0.7rem 0 0.4rem 0;">{reg['summary']}</p>
+    <p style="color:#64ffda; font-size:0.9rem; margin:0;">💡 <b>Bu Rejimde Strateji:</b> {reg['hunter_rule']}</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Makro kartlar
 vix_val, spy_ret = get_cached_macro()
-mcol1, mcol2 = st.columns(2)
+mcol1, mcol2, mcol3, mcol4 = st.columns(4)
 with mcol1:
-    if vix_val is not None:
-        vix_emoji = "🟢 Sakin" if vix_val < 15 else ("🟡 Dikkatli" if vix_val < 25 else "🔴 Panik")
-        st.metric("CBOE VIX (Korku Endeksi)", f"{vix_val:.1f}", delta=vix_emoji)
-    else:
-        st.metric("CBOE VIX", "18.5 🟡", delta="Varsayılan")
+    v_show = vix_val if vix_val is not None else reg["vix_val"]
+    vix_emoji = "🟢 Sakin" if v_show < 18 else ("🟡 Dikkatli" if v_show < 25 else "🔴 Yüksek Korku")
+    st.metric("CBOE VIX (Korku Endeksi)", f"{v_show:.1f}", delta=vix_emoji)
 with mcol2:
+    st.metric("Çip Sektörü (SMH 2 Hafta)", f"%{reg['smh_2w_ret']:+.1f}", delta="Yarı İletken Momentum")
+with mcol3:
+    st.metric("ABD 10 Yıllık Tahvil Faizi", f"%{reg['tnx_val']:.2f}", delta=f"{reg['tnx_2w_chg']:+.2f} puan (2H)", delta_color="inverse")
+with mcol4:
     if spy_ret is not None:
-        st.metric("S&P 500 (12 Ay Getiri)", f"%{spy_ret:.1f}")
+        st.metric("S&P 500 (12 Ay Getiri)", f"%{spy_ret:.1f}", delta=f"Son 2H: %{reg['spy_2w_ret']:+.1f}")
     else:
-        st.metric("S&P 500 (12A)", "%15.0", delta="Normal")
+        st.metric("S&P 500 (2 Hafta)", f"%{reg['spy_2w_ret']:+.1f}")
 
 # Sektör tablosu ve scatter
 st.divider()

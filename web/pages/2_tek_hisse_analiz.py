@@ -573,5 +573,152 @@ if (analiz_btn and sembol_input) or (auto_analyze and incoming_symbol):
     else:
         st.info("Fiyat grafiği çizilemedi.")
 
+    # ─── YENİ MODÜLLER: YATIRIM KOMİTESİ, FAKTÖR ÇATIŞMASI, BİLANÇO KARNESİ & ALTERNATİF FIRSAT ───
+    st.divider()
+    from web.components.investment_committee import (
+        get_market_regime_summary,
+        detect_factor_conflicts,
+        analyze_earnings_catalyst,
+        compare_opportunity_cost,
+        build_investment_committee_card,
+    )
+    from web.components.dip_hunter import analyze_stock_dip, analyze_stock_exit
+
+    with st.spinner(f"🏛️ {sembol} için Yatırım Komitesi senaryoları ve geçmiş bilanço karnesi hazırlanıyor..."):
+        regime_info = get_market_regime_summary()
+        dip_res = analyze_stock_dip(sembol, vix_value=float(regime_info.get("vix_val", 18.5)))
+        exit_res = analyze_stock_exit(sembol)
+        earnings_info = analyze_earnings_catalyst(sembol)
+        conflict_info = detect_factor_conflicts(sembol, kalite, deger, momentum, risk)
+        opp_info = compare_opportunity_cost(sembol)
+        ic_card = build_investment_committee_card(
+            symbol=sembol,
+            current_price=quote.get("price") or 0.0,
+            kalite=kalite,
+            deger=deger,
+            momentum=momentum,
+            risk=risk,
+            dip_res=dip_res,
+            exit_res=exit_res,
+            earnings_info=earnings_info,
+            regime_info=regime_info,
+        )
+
+    # 1. YATIRIM KOMİTESİ KARAR EKRANI (MOD #1)
+    st.markdown("### 🏛️ Yatırım Komitesi Kararı & Senaryo Haritası")
+    vc = ic_card["verdict_color"]
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #0b192c 0%, #162a45 100%);
+                border-left: 6px solid {vc}; border-top: 1px solid #233554;
+                border-right: 1px solid #233554; border-bottom: 1px solid #233554;
+                border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <span style="font-size:1.15rem; font-weight:800; color:#e6f1ff;">📋 Komite Ortak Hükmü ({sembol})</span>
+            <span style="background:{vc}22; border:1px solid {vc}; color:{vc};
+                         padding:5px 14px; border-radius:20px; font-weight:700; font-size:0.86rem;">
+                {ic_card['verdict_badge']}
+            </span>
+        </div>
+        <p style="color:#ccd6f6; font-size:0.96rem; margin:0.75rem 0 0.2rem 0; line-height:1.55;">
+            {ic_card['verdict_summary']}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    sc1, sc2, sc3 = st.columns(3)
+    with sc1:
+        st.markdown(f"""
+        <div style="background:#112240; border:1px solid #00c85366; border-radius:10px; padding:12px; height:100%;">
+            <div style="color:#00c853; font-weight:700; font-size:0.9rem; margin-bottom:6px;">🟢 Boğa (İyi) Senaryosu</div>
+            <div style="color:#ccd6f6; font-size:0.86rem; line-height:1.45;">{ic_card['bull_case']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with sc2:
+        st.markdown(f"""
+        <div style="background:#112240; border:1px solid #29b6f666; border-radius:10px; padding:12px; height:100%;">
+            <div style="color:#29b6f6; font-weight:700; font-size:0.9rem; margin-bottom:6px;">🟡 Baz (Normal) Senaryo</div>
+            <div style="color:#ccd6f6; font-size:0.86rem; line-height:1.45;">{ic_card['base_case']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with sc3:
+        st.markdown(f"""
+        <div style="background:#112240; border:1px solid #ef535066; border-radius:10px; padding:12px; height:100%;">
+            <div style="color:#ef5350; font-weight:700; font-size:0.9rem; margin-bottom:6px;">🔴 Ayı (Kötü) Senaryosu</div>
+            <div style="color:#ccd6f6; font-size:0.86rem; line-height:1.45;">{ic_card['bear_case']}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.write("")
+    st.error(ic_card["invalidation_rule"])
+
+    # 2. FAKTÖR ÇATIŞMASI VE UYUM ANALİZİ (MOD #2 & BÖLÜM 3)
+    st.divider()
+    st.markdown("### ⚖️ 4-Faktör Çatışma & Uyum Analizi")
+    st.caption("Tek bir ortalama puan yerine Kalite, Değer, Momentum ve Risk sinyallerinin birbiriyle çelişip çelişmediğini gösterir.")
+
+    fc1, fc2, fc3, fc4 = st.columns(4)
+    with fc1:
+        st.metric("Kalite Puanı", f"{kalite:.0f}/100", delta="Bilanço Sağlamlığı")
+    with fc2:
+        st.metric("Değer (Ucuzluk)", f"{deger:.0f}/100", delta="Pahalı 🔴" if deger < 45 else "Makul/Ucuz 🟢")
+    with fc3:
+        st.metric("Momentum (Trend)", f"{momentum:.0f}/100", delta="Güçlü 🟢" if momentum >= 60 else "Zayıf/Yatay 🟡")
+    with fc4:
+        st.metric("Risk Dayanımı", f"{risk:.0f}/100", delta="Yüksek Oynaklık ⚠️" if risk < 45 else "Dengeli 🛡️")
+
+    if conflict_info["has_conflict"]:
+        for c_txt in conflict_info["conflicts"]:
+            st.warning(c_txt)
+    else:
+        st.success(conflict_info["headline"])
+
+    for s_txt in conflict_info["strengths"]:
+        st.info(s_txt)
+
+    # 3. KATALİZÖR & BİLANÇO GEÇMİŞİ KARNESİ (MOD #4)
+    st.divider()
+    st.markdown("### 📅 Katalizör & Bilanço Geçmişi Karnesi (Bilanço Kumarı Röntgeni)")
+    st.caption("Bir şirketin iyi bilanço açıklaması her zaman yükseliş getirmez. Son bilançolarda ertesi gün ne yaptığını buradan kontrol et.")
+
+    if earnings_info.get("next_earnings_date"):
+        st.markdown(
+            f"📌 **Bir Sonraki Bilanço Tarihi:** `{earnings_info['next_earnings_date']}` "
+            f"(**{earnings_info['days_to_earnings']} gün** kaldı) | "
+            f"**Son 15 Günlük Fiyat Değişimi:** `%{earnings_info['pre_earnings_runup_15d_pct']:+.1f}`"
+        )
+    if earnings_info.get("priced_in_warning"):
+        st.warning(
+            f"⚠️ **Beklenti Önceden Fiyatlanmış Olabilir!** {sembol} bilançoya günler kala son 15 günde "
+            f"**+%{earnings_info['pre_earnings_runup_15d_pct']:.1f}** yükselmiş. İyi bilanço gelse bile 'beklenti bitti' satışı (Sell the news) yaşanabilir!"
+        )
+
+    st.info(f"📊 **Bilanço İstatistiği:** {earnings_info['summary_text']}")
+
+    if earnings_info.get("history_rows"):
+        clean_e_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in earnings_info["history_rows"]]
+        st.dataframe(pd.DataFrame(clean_e_rows), use_container_width=True, hide_index=True)
+
+    # 4. ALTERNATİF FIRSAT KIYASI (MOD #11)
+    if opp_info and opp_info.get("stats"):
+        st.divider()
+        st.markdown("### 🔄 Alternatif Fırsat Kıyası (Endeks veya Çip ETF'i Alsaydın Ne Olurdu?)")
+        st.caption(f"{sembol} hissesinde tekil şirket riski almak yerine S&P 500 (SPY) veya Yarı İletken ETF'i (SMH) tutmanın 3 aylık karşılaştırması:")
+        st.markdown(opp_info["verdict"])
+        opp_rows = []
+        for k_sym, k_val in opp_info["stats"].items():
+            label_name = (
+                f"🎯 {k_sym} (İncelenen Hisse)"
+                if k_sym == sembol
+                else ("🇺🇸 SPY (S&P 500 Endeksi)" if k_sym == "SPY" else "🔌 SMH (Yarı İletken / Çip ETF)")
+            )
+            opp_rows.append({
+                "Varlık": label_name,
+                "1 Aylık Getiri": f"%{k_val['ret_1m']:+.1f}",
+                "3 Aylık Getiri": f"%{k_val['ret_3m']:+.1f}",
+                "Zirveden En Derin Düşüş (6 Ay)": f"%{k_val['max_dd']:.1f}",
+                "Yıllık Oynaklık (Volatilite)": f"%{k_val['vol']:.1f}",
+            })
+        st.dataframe(pd.DataFrame(opp_rows), use_container_width=True, hide_index=True)
+
 elif not sembol_input and analiz_btn:
     st.warning("Lütfen analiz etmek istediğiniz hisse sembolünü girin (Örn: AVGO, MU, AAPL, BE, NVDA, TSLA, EOG).")
