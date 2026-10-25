@@ -651,6 +651,50 @@ if (analiz_btn and sembol_input) or (auto_analyze and incoming_symbol):
     st.write("")
     st.error(ic_card["invalidation_rule"])
 
+    # 1B. YAPAY ZEKA (ÜÇLÜ BARİYER: HEDEF vs STOP) 15 GÜNLÜK OLASILIK KARTI
+    ai_pred = (dip_res or {}).get("ai_pred") or {}
+    if ai_pred.get("available"):
+        st.divider()
+        st.markdown("### 🤖 Yapay Zeka (Üçlü Bariyer) 15 Günlük Hedef vs Stop Olasılığı")
+        st.caption(
+            "QuantBot yapay zeka motorunun 20 ABD hissesi ve bu hissenin kendi geçmişindeki benzer günleri (Tarihsel İkizler) "
+            "tarayarak hesapladığı 15 işlem günlük Hedef / Stop olasılığı:"
+        )
+        wp = int(ai_pred.get("win_prob_pct", 50))
+        sp = int(ai_pred.get("stop_prob_pct", 50))
+        ac = ai_pred.get("ai_color", "#64ffda")
+        st.markdown(f"""
+        <div style="background:#0d1b2a; border-left:5px solid {ac}; border:1px solid #233554; border-radius:12px; padding:1.1rem; margin-bottom:0.8rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <span style="font-size:1.05rem; font-weight:800; color:#e6f1ff;">{ai_pred['verdict_short']}</span>
+                <span style="background:{ac}22; border:1px solid {ac}; color:{ac}; padding:4px 12px; border-radius:16px; font-weight:700; font-size:0.82rem;">
+                    {ai_pred['ai_badge']}
+                </span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700; margin-bottom:5px;">
+                <span style="color:#00e676;">🎯 Önce Kâr Hedefine (${ai_pred['ai_target']:.2f}) Ulaşma İhtimali: %{wp}</span>
+                <span style="color:#ef5350;">⛔ Önce Kaçış Sınırına (${ai_pred['ai_stop']:.2f}) Değme Riski: %{sp}</span>
+            </div>
+            <div style="width:100%; height:12px; background:#ef535055; border-radius:6px; overflow:hidden; display:flex; margin-bottom:8px;">
+                <div style="width:{wp}%; height:100%; background:linear-gradient(90deg, #00c853, {ac});"></div>
+            </div>
+            <div style="color:#ccd6f6; font-size:0.88rem;">
+                📊 <b>Tarihsel İkiz Analizi:</b> {sembol} geçmişte benzer fiyat/indikatör durumuna <b>{ai_pred['analog_count']} kez</b> geldi;
+                bunların <b>%{ai_pred['analog_win_rate_pct']:.0f}'inde</b> yukarı tepki verdi (15 günlük ortalama getiri: <b>%{ai_pred['analog_avg_ret_pct']:+.1f}</b>).
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        ai_c1, ai_c2 = st.columns(2)
+        with ai_c1:
+            st.markdown("**➕ Yapay Zekaya Göre Güçlü Yanlar**")
+            for p_txt in ai_pred.get("positives", []):
+                st.success(f"🟢 {p_txt}")
+        with ai_c2:
+            st.markdown("**➖ Yapay Zekaya Göre Dikkat Edilecek Riskler**")
+            for n_txt in ai_pred.get("negatives", []):
+                st.warning(f"🟠 {n_txt}")
+
     # 2. FAKTÖR ÇATIŞMASI VE UYUM ANALİZİ (MOD #2 & BÖLÜM 3)
     st.divider()
     st.markdown("### ⚖️ 4-Faktör Çatışma & Uyum Analizi")

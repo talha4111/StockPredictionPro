@@ -181,7 +181,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
     symbol = symbol.strip().upper()
     try:
         tk = yf.Ticker(symbol)
-        df_daily = tk.history(period="6mo", interval="1d")
+        df_daily = tk.history(period="2y", interval="1d")
         if df_daily is None or len(df_daily) < 25:
             return None
 
@@ -206,8 +206,9 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
         # Temel teknik referanslar (arka planda hesaplanır, kullanıcıya sade anlatılır)
         sma20 = float(close_s.rolling(20).mean().iloc[-1])
         sma50 = float(close_s.rolling(50).mean().iloc[-1]) if len(close_s) >= 50 else sma20
-        sma200 = float(close_s.rolling(120).mean().iloc[-1]) if len(close_s) >= 120 else sma50 * 0.90
-        atr = _calc_atr(df_daily, 14)
+        sma200_win = min(200, len(close_s))
+        sma200 = float(close_s.rolling(sma200_win).mean().iloc[-1]) if sma200_win >= 50 else sma50 * 0.90
+        atr = _calc_atr(df_daily.tail(120), 14)
 
         rsi_daily_s = _calc_rsi(close_s, 14)
         rsi_daily = float(rsi_daily_s.iloc[-1]) if not np.isnan(rsi_daily_s.iloc[-1]) else 50.0
@@ -293,6 +294,35 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
         # 4. Genel Borsa Havası Güvenli mi? (VIX < 32)
         market_calm = vix_value < 32.0
 
+        # 5. Yapay Zeka (Üçlü Bariyer: Hedef vs Stop) 15 Günlük Olasılık Motoru
+        days_to_earnings, _ = _get_days_to_earnings(tk)
+        try:
+            from web.components.stock_ai_predictor import predict_stock_triple_barrier
+            ai_pred = predict_stock_triple_barrier(
+                symbol=symbol,
+                target_price=target1,
+                stop_price=stop_level,
+                days_to_earnings=days_to_earnings,
+                df_daily=df_daily,
+            )
+        except Exception:
+            ai_pred = {
+                "available": False,
+                "win_prob_pct": 50,
+                "stop_prob_pct": 50,
+                "analog_count": 0,
+                "analog_win_rate_pct": 50.0,
+                "analog_avg_ret_pct": 0.0,
+                "ai_badge": "🤖 AI VERİ BEKLİYOR (%50)",
+                "ai_color": "#8892b0",
+                "ai_summary_tr": "",
+                "positives": [],
+                "negatives": [],
+            }
+
+        ai_win_prob = int(ai_pred.get("win_prob_pct", 50))
+        ai_ok = ai_win_prob >= 53
+
         # Kontrol Listesi (Sade Türkçe)
         checklist = [
             {
@@ -315,6 +345,11 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
                 "ok": bool(market_calm),
                 "detay": f"Korku endeksi normal seviyede ({vix_value:.1f})" if market_calm else f"Piyasada genel korku yüksek ({vix_value:.1f})"
             },
+            {
+                "kriter": "Yapay Zeka (Üçlü Bariyer) 15 günlük hedef olasılığı güçlü",
+                "ok": bool(ai_ok),
+                "detay": f"Stopa değmeden önce hedefe ulaşma ihtimali %{ai_win_prob} (Geçmiş benzer gün başarısı: %{ai_pred.get('analog_win_rate_pct', 50):.0f})"
+            },
         ]
         passed_count = sum(1 for item in checklist if item["ok"])
 
@@ -329,7 +364,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
                 f"Satışların nerede duracağını görmeden ortalama düşürmeye çalışmak tehlikelidir. "
                 f"Yeniden güvenli olması için fiyatın en az **${zone2_high:.2f}** üzerine çıkıp tutunmasını beklemelisin."
             )
-        elif in_buy_zone and intraday_bounce and (strong_buyers or rsi_daily < 38 or rsi_intra < 40):
+        elif in_buy_zone and intraday_bounce and (strong_buyers or rsi_daily < 38 or rsi_intra < 40) and ai_win_prob >= 48:
             state_code = "ALIM_FIRSATI"
             state_badge = "🟢 ŞİMDİ ALIM FIRSATI (DÖNÜŞ BAŞLADI)"
             state_color = "#00c853"
@@ -338,6 +373,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             action_advice = (
                 f"✅ **{which_tier} alımı için şartlar olgunlaştı!** Hisse son zirvesinden %{abs(drop_from_peak_pct):.1f} "
                 f"ucuzladı ve **${current_price:.2f}** seviyesinde düşüş hızı kesilip yukarı dönüş başladı. "
+                f"Yapay zeka motorumuz da önümüzdeki 15 işlem gününde stopa değmeden önce kâr hedefine ulaşma ihtimalini **%{ai_win_prob}** olarak hesaplıyor. "
                 f"Tüm paranla tek seferde değil, planlanan ilk parçayla giriş yapabilirsin. "
                 f"Olası terslikte kaçış (iptal) sınırımız **${stop_level:.2f}**, ilk kâr alma hedefimiz ise **${target1:.2f}** (+%{upside_pct})."
             )
@@ -345,10 +381,14 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             state_code = "PUSUDA_IZLE"
             state_badge = "🟡 UCUZLUK BÖLGESİNDE — HENÜZ ALMA, İZLE"
             state_color = "#ffa726"
-            headline = f"{symbol} ucuzluk bölgesine girdi (${current_price:.2f}) ama düşüş henüz tam durmadı."
+            headline = f"{symbol} ucuzluk bölgesine girdi (${current_price:.2f}) ama dönüş onayı henüz tamamlanmadı."
+            ai_note = (
+                f" (Yapay zeka 15 günlük hedef olasılığını şu an **%{ai_win_prob}** olarak görüyor)."
+                if ai_pred.get("available") else ""
+            )
             action_advice = (
                 f"⏳ **Elimiz tetikte ama henüz almıyoruz!** Fiyat istediğimiz **${zone1_low:.2f} – ${zone1_high:.2f}** "
-                f"bölgesine geldi/yaklaştı fakat satış baskısı henüz bitmedi (daha da düşme ihtimali var). "
+                f"bölgesine geldi/yaklaştı fakat satış baskısı henüz bitmedi (daha da düşme ihtimali var){ai_note} "
                 f"Gün içinde satışların durup ilk yeşil dönüş mumunun yanmasını bekliyoruz. Dönüş başladığı an bildirim gelecek!"
             )
         else:
@@ -385,6 +425,8 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             "action_advice": action_advice,
             "checklist": checklist,
             "passed_count": passed_count,
+            "total_checks": len(checklist),
+            "ai_pred": ai_pred,
             "updated_at": datetime.now().strftime("%H:%M:%S"),
         }
     except Exception:
@@ -778,17 +820,29 @@ def format_plain_telegram_message(res: dict) -> str:
     checks_text = "\n".join(
         f"{'✅' if c['ok'] else '⏳'} {c['kriter']}" for c in res["checklist"]
     )
+    total_chk = res.get("total_checks", len(res["checklist"]))
+
+    ai_block = ""
+    ai_pred = res.get("ai_pred") or {}
+    if ai_pred.get("available"):
+        ai_block = (
+            f"🤖 *Yapay Zeka (15 Günlük Hedef/Stop Tahmini):*\n"
+            f"• *Kâr Hedefine Ulaşma İhtimali:* %{ai_pred['win_prob_pct']} (Stop Riski: %{ai_pred['stop_prob_pct']})\n"
+            f"• *Geçmiş Benzer Gün Başarısı:* %{ai_pred['analog_win_rate_pct']:.0f} "
+            f"(Son {ai_pred['analog_count']} benzer günde ort. %{ai_pred['analog_avg_ret_pct']:+.1f})\n\n"
+        )
 
     msg = (
         f"{header}\n\n"
         f"💵 *Anlık Fiyat:* ${price:.2f} ({chg_sign}%{chg:.1f})\n\n"
         f"🗣️ *Ne Oluyor?*\n{what_happened}\n\n"
+        f"{ai_block}"
         f"🎯 *Oyun Planımız:*\n"
         f"• *1. Parça Alım Yeri:* ${res['zone1_low']:.2f} – ${res['zone1_high']:.2f}\n"
         f"• *2. Parça (Çok Düşerse):* ${res['zone2_low']:.2f} – ${res['zone2_high']:.2f}\n"
         f"• *İptal / Kaçış Çizgisi:* ${res['stop_level']:.2f} altı\n"
         f"• *Kâr Alma Hedefi:* ${res['target1']:.2f} – ${res['target2']:.2f} (+%{res['upside_pct']} potansiyel)\n\n"
-        f"📋 *Güven Kontrolü ({res['passed_count']}/4):*\n"
+        f"📋 *Güven Kontrolü ({res['passed_count']}/{total_chk}):*\n"
         f"{checks_text}\n\n"
         f"💡 *Tavsiye:* {res['action_advice'].replace('**', '*')}"
     )
