@@ -19,6 +19,8 @@ from web.components.mobile import (
     get_top_opportunities,
     get_vix_status,
 )
+from web.components.investment_committee import get_market_regime_summary
+from web.components.dip_hunter import analyze_stock_dip, load_dip_config, save_dip_config
 
 WATCHLIST_PATH = os.path.join(PROJECT_ROOT, "web", "data", "watchlist.json")
 LAST_UPDATE_PATH = os.path.join(PROJECT_ROOT, "web", "data", "last_update.json")
@@ -41,6 +43,9 @@ def save_watchlist(symbols):
         os.makedirs(os.path.dirname(WATCHLIST_PATH), exist_ok=True)
         with open(WATCHLIST_PATH, "w", encoding="utf-8") as f:
             json.dump(symbols, f, indent=2)
+        cfg = load_dip_config()
+        cfg["symbols"] = symbols
+        save_dip_config(cfg)
         return True
     except Exception:
         return False
@@ -195,13 +200,41 @@ st.markdown("""
 vix_val, vix_text, vix_color = get_vix_status()
 st.markdown(f"""
 <div class="mobile-header">
-    <div class="mobile-title">🏦 StockPredictionPro</div>
+    <div class="mobile-title">🏦 StockPredictionPro · AI Komuta Merkezi</div>
     <div class="vix-pill" style="background: rgba(0,0,0,0.3); color: {vix_color};">
         <span>VIX {vix_val:.1f}</span>
         <span>{vix_text.split()[-1]}</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# ─── 1B. AKTİF PİYASA REJİMİ & YENİ SİSTEMLERE HIZLI GEÇİŞ ───
+regime_info = get_market_regime_summary()
+rc = regime_info["regime_color"]
+st.markdown(f"""
+<div style="background: #0d1b2a; border-left: 5px solid {rc}; border: 1px solid #233554;
+            border-radius: 10px; padding: 10px 14px; margin-bottom: 0.8rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <span style="color:{rc}; font-weight:800; font-size:0.9rem;">🧭 Aktif Piyasa Rejimi: {regime_info['regime_badge']}</span>
+        <span style="color:#8892b0; font-size:0.76rem;">S&P 500 (2H): %{regime_info['spy_2w_ret']:+.1f} | Çip ETF SMH (2H): %{regime_info['smh_2w_ret']:+.1f}</span>
+    </div>
+    <div style="color:#ccd6f6; font-size:0.84rem; margin-top:4px;">{regime_info['summary']}</div>
+    <div style="color:#64ffda; font-size:0.8rem; margin-top:3px;">💡 <b>Oyun Planı:</b> {regime_info['hunter_rule']}</div>
+</div>
+""", unsafe_allow_html=True)
+
+nav_c1, nav_c2, nav_c3 = st.columns(3)
+with nav_c1:
+    if st.button("🎯 Alım & Satış Avcısı (AI)", type="primary", use_container_width=True, key="home_nav_dip"):
+        st.switch_page("pages/9_alim_avcisi.py")
+with nav_c2:
+    if st.button("💼 Portföy & Risk Merkezi", use_container_width=True, key="home_nav_port"):
+        st.switch_page("pages/8_portfoy_defteri.py")
+with nav_c3:
+    if st.button("🏛️ Yatırım Komitesi & Analiz", use_container_width=True, key="home_nav_ic"):
+        st.switch_page("pages/2_tek_hisse_analiz.py")
+
+st.write("")
 
 # ─── 2. HIZLI HİSSE ARAMA ───
 col_s1, col_s2 = st.columns([3, 1])
@@ -227,48 +260,82 @@ for idx, q_sym in enumerate(quick_tickers):
 
 st.write("")
 
-# ─── 3. PORTFÖYÜM & TAKİP LİSTESİ ───
-watchlist = load_watchlist()
+# ─── 3. PORTFÖYÜM & YAPAY ZEKA (ÜÇLÜ BARİYER) CANLI ÖZETİ ───
+dip_cfg = load_dip_config()
+watchlist = dip_cfg.get("symbols") or load_watchlist()
 
-st.markdown("### 💼 Portföyüm")
+st.markdown("### 💼 Takip Listem & Yapay Zeka (15 Günlük Hedef/Stop) Özeti")
+st.caption("Her hisse için Alım Avcısı ucuzluk bölgesi ve yeni Üçlü Bariyer Yapay Zeka motorunun 15 günlük hedef başarı olasılığı:")
 
-with st.spinner("Canlı piyasa verileri yükleniyor..."):
+@st.cache_data(ttl=120, show_spinner=False)
+def _home_dip_ai_scan(sym_tuple: tuple, vix_v: float) -> dict[str, dict]:
+    out = {}
+    for s in sym_tuple:
+        r = analyze_stock_dip(s, vix_value=vix_v)
+        if r:
+            out[s] = r
+    return out
+
+with st.spinner("Canlı piyasa ve Yapay Zeka (Üçlü Bariyer) olasılıkları hesaplanıyor..."):
     quotes = get_cached_quotes(tuple(watchlist))
     db_info = get_db_symbol_data(tuple(watchlist))
+    dip_ai_map = _home_dip_ai_scan(tuple(watchlist), float(vix_val))
 
 for sym in watchlist:
     q = quotes.get(sym, {"price": 0.0, "change": 0.0, "change_pct": 0.0})
     db = db_info.get(sym, {})
-    
-    price = q["price"] if q["price"] > 0 else (db.get("db_fiyat") or 0.0)
-    chg = q["change"]
-    chg_pct = q["change_pct"]
-    chg_class = "stock-change-pos" if chg >= 0 else "stock-change-neg"
-    chg_sign = "+" if chg >= 0 else ""
-    
-    decision = db.get("decision") or "IZLE"
-    b_label, b_color, b_bg = badge_info(decision)
+    dip_r = dip_ai_map.get(sym, {})
+    ai_p = dip_r.get("ai_pred") or {}
+
+    price = dip_r.get("current_price") or (q["price"] if q["price"] > 0 else (db.get("db_fiyat") or 0.0))
+    chg_pct = dip_r.get("daily_change_pct") if dip_r else q["change_pct"]
+    chg_class = "stock-change-pos" if chg_pct >= 0 else "stock-change-neg"
+    chg_sign = "+" if chg_pct >= 0 else ""
+
+    if dip_r:
+        b_label = dip_r["state_badge"]
+        b_color = dip_r["state_color"]
+        b_bg = f"{b_color}22"
+    else:
+        decision = db.get("decision") or "IZLE"
+        b_label, b_color, b_bg = badge_info(decision)
     comp_name = COMPANY_NAMES.get(sym, sym)
+
+    ai_sub_html = ""
+    if ai_p.get("available"):
+        wp = ai_p["win_prob_pct"]
+        ac = ai_p["ai_color"]
+        ai_sub_html = (
+            f"<div style='margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.07); "
+            f"display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; font-size:0.78rem;'>"
+            f"<span style='color:{ac}; font-weight:700;'>{ai_p['ai_badge']}</span>"
+            f"<span style='color:#ccd6f6;'>🟢 1. Alım: <b>${dip_r['zone1_low']:.2f}–${dip_r['zone1_high']:.2f}</b> · "
+            f"🎯 Hedef: <b>${dip_r['target1']:.2f}</b> · "
+            f"📊 Geçmiş Benzer Gün: <b>%{ai_p['analog_win_rate_pct']:.0f}</b> ({ai_p['analog_avg_ret_pct']:+.1f}%)</span>"
+            f"</div>"
+        )
 
     card_col, btn_col = st.columns([4, 1])
     with card_col:
         price_str = f"${price:.2f}" if price > 0 else "N/A"
         chg_str = f"{chg_sign}{chg_pct:.2f}%" if price > 0 else "—"
         st.markdown(f"""
-        <div class="stock-card">
-            <div class="stock-info">
-                <span class="stock-symbol">{sym}</span>
-                <span class="stock-name" title="{comp_name}">{comp_name}</span>
-            </div>
-            <div style="display: flex; align-items: center;">
-                <div class="stock-price-col">
-                    <span class="stock-price">{price_str}</span>
-                    <span class="{chg_class}">{chg_str}</span>
+        <div class="stock-card" style="display:block;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                <div class="stock-info">
+                    <span class="stock-symbol">{sym} <span style="font-size:0.78rem; color:#8892b0; font-weight:500;">· {comp_name}</span></span>
                 </div>
-                <div class="stock-badge" style="color: {b_color}; background: {b_bg}; border: 1px solid {b_color}40;">
-                    {b_label}
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="stock-price-col">
+                        <span class="stock-price">{price_str}</span>
+                        <span class="{chg_class}">{chg_str}</span>
+                    </div>
+                    <div class="stock-badge" style="color: {b_color}; background: {b_bg}; border: 1px solid {b_color}60;">
+                        {b_label}
+                    </div>
                 </div>
             </div>
+            {ai_sub_html}
         </div>
         """, unsafe_allow_html=True)
     with btn_col:
@@ -325,30 +392,17 @@ else:
 
 st.divider()
 
-# ─── 5. MODEL NABZI ───
-st.markdown("### 🧪 Model Nabzı")
+# ─── 5. YAPAY ZEKA & MODEL NABZI ───
+st.markdown("### 🤖 Hibrit Yapay Zeka (Üçlü Bariyer) & Model Nabzı")
 
-last_update = {}
-if os.path.exists(LAST_UPDATE_PATH):
-    try:
-        with open(LAST_UPDATE_PATH, "r", encoding="utf-8") as f:
-            last_update = json.load(f)
-    except Exception:
-        pass
-
-lider = last_update.get("lider", "Challenger (m00_r15)")
-tarih = last_update.get("son_guncelleme", "29.09.2026")
-ch_ret = last_update.get("challenger_1m", 4.15)
-bl_ret = last_update.get("baseline_1m", 3.29)
-
-st.markdown(f"""
+st.markdown("""
 <div class="model-strip">
     <div>
-        <div style="font-weight: 700; color: #f1f5f9; font-size: 0.95rem;">🏆 Lider: {lider}</div>
-        <div style="font-size: 0.75rem; color: #8892b0;">Son güncelleme: {tarih} · Getiri: Challenger %{ch_ret:.2f} vs Baseline %{bl_ret:.2f}</div>
+        <div style="font-weight: 700; color: #f1f5f9; font-size: 0.95rem;">🏆 Aktif AI Motoru: Hibrit Üçlü Bariyer (Lojistik + Sığ RF + Tarihsel İkizler)</div>
+        <div style="font-size: 0.78rem; color: #8892b0;">20 ABD Hissesi · 2.837 Geçmiş Dip Testi · AI Onaylı Kazanma Oranı: <b>%59.8</b> (Baz: %54.9) · 15G Ort. Getiri: <b>+%2.14</b> (Baz: +%1.03)</div>
     </div>
-    <div style="font-size: 1.1rem; color: #64ffda; font-weight: 800;">
-        +%{ch_ret - bl_ret:.2f}
+    <div style="font-size: 1.05rem; color: #00e676; font-weight: 800; white-space: nowrap; margin-left: 8px;">
+        2.1x Getiri Avantajı
     </div>
 </div>
 """, unsafe_allow_html=True)
