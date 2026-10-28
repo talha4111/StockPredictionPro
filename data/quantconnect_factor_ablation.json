@@ -1,0 +1,187 @@
+{
+  "generated_at": "2026-07-20T17:34:53+03:00",
+  "provider": "QuantConnect Cloud",
+  "project_id": 34186258,
+  "project_url": "https://www.quantconnect.com/project/34186258",
+  "period": {
+    "start_date": "2021-07-01",
+    "end_date": "2026-04-17"
+  },
+  "controlled_conditions": {
+    "top_n": 20,
+    "max_position_weight": 0.05,
+    "sector_cap": 0.25,
+    "cash_buffer": 0.005,
+    "round_trip_cost_bps": 25.0,
+    "execution": "MarketOnOpen",
+    "universe": "historical SPY ETF constituents",
+    "fundamentals": "point-in-time Morningstar"
+  },
+  "variants": [
+    {
+      "id": "baseline",
+      "backtest_name": "Calm Red Orange Albatross",
+      "weights": {
+        "quality": 0.35,
+        "value": 0.2,
+        "momentum": 0.3,
+        "risk": 0.15
+      },
+      "total_return_pct": 50.886,
+      "cagr_pct": 8.95,
+      "max_drawdown_pct": 16.8,
+      "sharpe_ratio": 0.234,
+      "sortino_ratio": 0.267,
+      "probabilistic_sharpe_ratio_pct": 1.959,
+      "total_fees_usd": 54128.12,
+      "total_orders": 1487,
+      "out_of_sample_90_days": {
+        "strategy_return_pct": 3.041,
+        "spy_return_pct": 2.952,
+        "strategy_max_drawdown_pct": 5.454,
+        "spy_max_drawdown_pct": 8.885
+      },
+      "raw_result_sha256": "C411BC5AB9198966C3D2D4CAA4B79D0482AD9225B915C9480B240C8EB227781B"
+    },
+    {
+      "id": "no_value",
+      "backtest_name": "Alert Blue Rabbit",
+      "weights": {
+        "quality": 0.4375,
+        "value": 0.0,
+        "momentum": 0.375,
+        "risk": 0.1875
+      },
+      "total_return_pct": 49.96,
+      "cagr_pct": 8.81,
+      "max_drawdown_pct": 18.1,
+      "sharpe_ratio": 0.221,
+      "sortino_ratio": 0.249,
+      "probabilistic_sharpe_ratio_pct": 1.81,
+      "total_fees_usd": 60602.98,
+      "total_orders": 1517,
+      "out_of_sample_90_days": {
+        "strategy_return_pct": 0.435,
+        "spy_return_pct": 2.952,
+        "strategy_max_drawdown_pct": 7.98,
+        "spy_max_drawdown_pct": 8.885
+      },
+      "execution_audit": {
+        "market_on_open_total": 1516,
+        "market_on_open_filled": 1515,
+        "market_on_open_canceled": 1,
+        "delisting_liquidation_market_filled": 1,
+        "rejected": 0,
+        "note": "The canceled DRE opening order was replaced by QuantConnect's filled delisting liquidation order."
+      },
+      "raw_result_sha256": "B7E8D55EF871E1857B033038B7021A63F11C6B0A6C3EA22D831A0ED0CFCBCFEA"
+    },
+    {
+      "id": "no_quality",
+      "backtest_name": "Calm Red Galago",
+      "weights": {
+        "quality": 0.0,
+        "value": 0.307692,
+        "momentum": 0.461538,
+        "risk": 0.230769
+      },
+      "total_return_pct": 36.25,
+      "cagr_pct": 6.642,
+      "max_drawdown_pct": 17.3,
+      "sharpe_ratio": 0.092,
+      "sortino_ratio": 0.11,
+      "probabilistic_sharpe_ratio_pct": 0.763,
+      "total_fees_usd": 64066.42,
+      "total_orders": 1593,
+      "end_equity_usd": 1362500.59
+    },
+    {
+      "id": "no_momentum",
+      "backtest_name": "Measured Red Orange Mule",
+      "weights": {
+        "quality": 0.5,
+        "value": 0.285714,
+        "momentum": 0.0,
+        "risk": 0.214286
+      },
+      "total_return_pct": 64.564,
+      "cagr_pct": 10.911,
+      "max_drawdown_pct": 14.8,
+      "sharpe_ratio": 0.36,
+      "sortino_ratio": 0.427,
+      "probabilistic_sharpe_ratio_pct": 3.952,
+      "total_fees_usd": 41242.24,
+      "total_orders": 1383,
+      "end_equity_usd": 1645644.96
+    },
+    {
+      "id": "no_risk",
+      "backtest_name": "Hipster Black Coyote",
+      "weights": {
+        "quality": 0.411765,
+        "value": 0.235294,
+        "momentum": 0.352941,
+        "risk": 0.0
+      },
+      "total_return_pct": 76.478,
+      "cagr_pct": 12.535,
+      "max_drawdown_pct": 18.0,
+      "sharpe_ratio": 0.414,
+      "sortino_ratio": 0.478,
+      "probabilistic_sharpe_ratio_pct": 5.2,
+      "total_fees_usd": 55982.85,
+      "total_orders": 1488,
+      "end_equity_usd": 1764779.08
+    }
+  ],
+  "completed_decisions": {
+    "value_factor": {
+      "decision": "KEEP",
+      "total_return_delta_without_factor_percentage_points": -0.926,
+      "cagr_delta_without_factor_percentage_points": -0.14,
+      "drawdown_increase_without_factor_percentage_points": 1.3,
+      "sharpe_delta_without_factor": -0.013,
+      "fee_increase_without_factor_usd": 6474.86,
+      "out_of_sample_return_delta_without_factor_percentage_points": -2.606,
+      "reason": "Removing value reduced full-period and out-of-sample return, increased drawdown and fees, and lowered Sharpe."
+    },
+    "quality_factor": {
+      "decision": "KEEP",
+      "total_return_delta_without_factor_percentage_points": -14.636,
+      "cagr_delta_without_factor_percentage_points": -2.308,
+      "drawdown_increase_without_factor_percentage_points": 0.5,
+      "sharpe_delta_without_factor": -0.142,
+      "sortino_delta_without_factor": -0.157,
+      "fee_increase_without_factor_usd": 9938.3,
+      "order_count_delta_without_factor": 106,
+      "reason": "Removing quality materially reduced return and risk-adjusted performance while increasing drawdown, turnover, and costs."
+    },
+    "momentum_factor": {
+      "decision": "REDUCE_AND_RETEST",
+      "total_return_delta_without_factor_percentage_points": 13.678,
+      "cagr_delta_without_factor_percentage_points": 1.961,
+      "drawdown_increase_without_factor_percentage_points": -2.0,
+      "sharpe_delta_without_factor": 0.126,
+      "sortino_delta_without_factor": 0.16,
+      "fee_increase_without_factor_usd": -12885.88,
+      "order_count_delta_without_factor": -104,
+      "reason": "The no-momentum variant improved every recorded full-period metric. This is a strong signal to reduce the sleeve, but not proof that momentum should be deleted until rolling out-of-sample and regime tests confirm it."
+    },
+    "risk_factor": {
+      "decision": "REDUCE_AND_RETEST",
+      "total_return_delta_without_factor_percentage_points": 25.592,
+      "cagr_delta_without_factor_percentage_points": 3.585,
+      "drawdown_increase_without_factor_percentage_points": 1.2,
+      "sharpe_delta_without_factor": 0.18,
+      "sortino_delta_without_factor": 0.211,
+      "fee_increase_without_factor_usd": 1854.73,
+      "order_count_delta_without_factor": 1,
+      "reason": "The no-risk variant produced the highest return and risk-adjusted ratios, but maximum drawdown worsened. Retest a smaller risk weight instead of deleting the defensive sleeve."
+    }
+  },
+  "pending_variants": [],
+  "status": "ABLATION_COMPLETE_RESEARCH_ONLY",
+  "blocker": null,
+  "next_gate": "Run rolling walk-forward and market-regime tests over reduced momentum and reduced risk weight grids. Keep quality and value active, and do not promote a same-period ablation winner directly to production.",
+  "cloud_parameter_state": "DEFAULTS_RESTORED_NO_OVERRIDES"
+}

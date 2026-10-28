@@ -1,0 +1,14 @@
+[
+  {
+    "id": "example_lot_1",
+    "tarih": "2026-03-15",
+    "sembol": "AAPL",
+    "islem_tipi": "ALIS",
+    "adet": 10.0,
+    "fiyat_usd": 185.0,
+    "komisyon_usd": 1.5,
+    "usdtry_kuru": 38.5,
+    "notlar": "Örnek 1. Kademe Giriş",
+    "user": "demo_user"
+  }
+]

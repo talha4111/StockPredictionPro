@@ -1,0 +1,103 @@
+# ========== GÜVENLİK — API KEY, ŞİFRE, HASSAS VERİ ==========
+.env
+*.pem
+ayar.json
+QuantBot/ayar.json
+web/data/telegram_secret.json
+web/data/users.json
+web/data/portfolio_transactions.json
+PROJE_HAFIZASI.md
+BORSA_PARA_AI_MIMARI.md
+SECURITY_ROTATION.md
+Yeni Metin Belgesi.txt
+python
+sistem_loglari.txt
+tahmin_gecmisi.xlsx
+src - Kopya/
+QuantBot/.env
+QuantBot/aktif_detay.json
+QuantBot/aktif_islemler.json
+QuantBot/performans.json
+runtime_status.json
+runtime_status_*.json
+QuantBot/runtime_status.json
+QuantBot/runtime_status_*.json
+QuantBot/forward_test_report.json
+QuantBot/demo_analysis_report.json
+demo_trade_journal*.jsonl
+QuantBot/demo_trade_journal*.jsonl
+
+# ========== YAPAY ZEKA MODELLERİ (Her sunucuda sıfırdan eğitilir) ==========
+*.pkl
+*.keras
+beyin_*
+QuantBot/beyin_*
+QuantBot/stock_beyin_*
+
+# ========== VERİTABANI & VERİ DOSYALARI ==========
+*.db
+*.sqlite3
+*.csv
+*.xlsx
+*.zip
+
+# ========== LOG DOSYALARI ==========
+*.log
+bot_rapor.txt
+nohup.out
+
+# ========== PYTHON CACHE ==========
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.cache/
+.vs/
+
+# ========== SANAL ORTAM ==========
+venv/
+env/
+.venv/
+
+# ========== IDE / OS ==========
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# ========== DEPLOYMENT SCRIPTS (Sunucu şifreleri içerir) ==========
+deploy_bot.py
+deploy_bot_resume.py
+deploy_fix.py
+deploy_phase2.py
+fix_remote.py
+fix_syntax_remote.py
+restart_bot.py
+restart_bot_fix.py
+kill_zombie.py
+diagnose_remote.py
+deep_diagnose.py
+verify_deploy.py
+mute_telegram.py
+
+# ========== SUNUCUDA OLUŞAN GEÇİCİ DOSYALAR ==========
+QuantBot/kill_zombie_helper.py
+QuantBot/tmp*/
+tmp*/
+QuantBot/gunluk_risk_durumu.json
+
+# ========== CODEX / CI GEÇİCİ ÇIKTI ==========
+.agents/
+.codex_doc_review/
+.codex_doc_tmp/
+.codex_lo_profile_review/
+bg_cmd.*
+bg_probe.*
+window_validate_*.out
+window_validate_*.err
+
+# ========== BORSA VERİ ÖNBELLEĞİ ==========
+sektor_pe_cache.json
+sanal_kasa_*.json
+offline_cache/

@@ -1,0 +1,39 @@
+{
+  "portfoy": [
+    "BTC/USDT",
+    "ETH/USDT",
+    "SOL/USDT",
+    "BNB/USDT",
+    "AVAX/USDT",
+    "LINK/USDT",
+    "DOT/USDT",
+    "ADA/USDT",
+    "LTC/USDT",
+    "XRP/USDT"
+  ],
+  "referans_varlik": "BTC/USDT",
+  "demo_calisma_profili": "LIVE_SHADOW",
+  "short_islem_aktif": false,
+  "min_scout_quote_volume_usdt": 15000000,
+  "max_scout_coin_sayisi": 100,
+  "tek_dongu_tani_modu": false,
+  "tani_max_coin_sayisi": 20,
+  "model_kalite_kapisi_aktif": true,
+  "model_kalite_bilinmeyeni_engelle": true,
+  "min_model_walk_forward_skoru": 0.50,
+  "model_kalite_sari_esik": 0.55,
+  "model_kalite_sari_margin_carpani": 0.5,
+  "risk_yonetimi": {
+    "kullan": true,
+    "sl_atr_carpani": 1.0,
+    "tp_atr_carpani": 2.5
+  },
+  "islem_miktari_usdt": 50,
+  "sl_yuzde": 0.01,
+  "tp_yuzde": 0.02,
+  "telegram": {
+    "aktif_mi": false,
+    "bot_token": "",
+    "chat_id": ""
+  }
+}

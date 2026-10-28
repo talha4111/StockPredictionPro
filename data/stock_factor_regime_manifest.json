@@ -1,0 +1,233 @@
+{
+    "engine_version":  "stock-factor-regime-validation-v1.0",
+    "created_at":  "2026-07-22T01:00:00+03:00",
+    "status":  "REGIME_ROBUSTNESS_PASS_RESEARCH_ONLY",
+    "production_valid":  false,
+    "provider":  "QuantConnect Cloud",
+    "project_id":  34186258,
+    "controlled_conditions":  {
+                                  "top_n":  20,
+                                  "max_position_weight":  0.05,
+                                  "sector_cap":  0.25,
+                                  "cash_buffer":  0.005,
+                                  "round_trip_cost_bps":  25.0,
+                                  "execution":  "MarketOnOpen",
+                                  "universe":  "historical SPY ETF constituents",
+                                  "fundamentals":  "point-in-time Morningstar"
+                              },
+    "variants":  [
+                     {
+                         "id":  "baseline",
+                         "weights":  {
+                                         "quality":  0.35,
+                                         "value":  0.2,
+                                         "momentum":  0.3,
+                                         "risk":  0.15
+                                     }
+                     },
+                     {
+                         "id":  "m00_r15",
+                         "weights":  {
+                                         "quality":  0.35,
+                                         "value":  0.2,
+                                         "momentum":  0.0,
+                                         "risk":  0.15
+                                     }
+                     },
+                     {
+                         "id":  "m10_r15",
+                         "weights":  {
+                                         "quality":  0.35,
+                                         "value":  0.2,
+                                         "momentum":  0.1,
+                                         "risk":  0.15
+                                     }
+                     }
+                 ],
+    "regimes":  [
+                    {
+                        "id":  "inflation_rate_stress",
+                        "start_date":  "2021-07-01",
+                        "end_date":  "2022-12-31"
+                    },
+                    {
+                        "id":  "recovery_expansion",
+                        "start_date":  "2023-01-01",
+                        "end_date":  "2024-12-31"
+                    },
+                    {
+                        "id":  "recent_unseen_window",
+                        "start_date":  "2025-01-01",
+                        "end_date":  "2026-04-22"
+                    }
+                ],
+    "decision_rule":  {
+                          "minimum_completed_runs":  9,
+                          "minimum_regimes_beating_baseline_return":  2,
+                          "minimum_regimes_beating_baseline_sharpe":  2,
+                          "maximum_drawdown_deterioration_percentage_points":  2.0,
+                          "best_possible_status":  "REGIME_ROBUSTNESS_PASS_RESEARCH_ONLY"
+                      },
+    "warning":  "These slices are diagnostic because the candidates were shortlisted using the enclosing full period. They are not a genuinely untouched holdout and cannot authorize production deployment.",
+    "results":  [
+                    {
+                        "variant_id":  "baseline",
+                        "regime_id":  "inflation_rate_stress",
+                        "backtest_name":  "Dancing Fluorescent Pink Falcon",
+                        "total_return_pct":  6.302,
+                        "cagr_pct":  4.157,
+                        "max_drawdown_pct":  15.9,
+                        "sharpe_ratio":  0.174,
+                        "sortino_ratio":  0.206,
+                        "probabilistic_sharpe_ratio_pct":  11.12,
+                        "total_fees_usd":  14927.62,
+                        "total_orders":  461,
+                        "end_equity_usd":  1063022.34
+                    },
+                    {
+                        "variant_id":  "m00_r15",
+                        "regime_id":  "inflation_rate_stress",
+                        "backtest_name":  "Dancing Green Bear",
+                        "total_return_pct":  6.588,
+                        "cagr_pct":  4.343,
+                        "max_drawdown_pct":  14.8,
+                        "sharpe_ratio":  0.186,
+                        "sortino_ratio":  0.225,
+                        "probabilistic_sharpe_ratio_pct":  11.425,
+                        "total_fees_usd":  12770.87,
+                        "total_orders":  437,
+                        "end_equity_usd":  1065878.63
+                    },
+                    {
+                        "variant_id":  "m10_r15",
+                        "regime_id":  "inflation_rate_stress",
+                        "backtest_name":  "Creative Red Orange Albatross",
+                        "total_return_pct":  1.225,
+                        "cagr_pct":  0.814,
+                        "max_drawdown_pct":  15,
+                        "sharpe_ratio":  -0.01,
+                        "sortino_ratio":  -0.012,
+                        "probabilistic_sharpe_ratio_pct":  6.84,
+                        "total_fees_usd":  12773.85,
+                        "total_orders":  443,
+                        "end_equity_usd":  1012245.52
+                    },
+                    {
+                        "variant_id":  "baseline",
+                        "regime_id":  "recovery_expansion",
+                        "backtest_name":  "Dancing Asparagus Lemur",
+                        "total_return_pct":  30.479,
+                        "cagr_pct":  14.214,
+                        "max_drawdown_pct":  11,
+                        "sharpe_ratio":  0.503,
+                        "sortino_ratio":  0.627,
+                        "probabilistic_sharpe_ratio_pct":  17.633,
+                        "total_fees_usd":  21031.08,
+                        "total_orders":  610,
+                        "end_equity_usd":  1304791.37
+                    },
+                    {
+                        "variant_id":  "m00_r15",
+                        "regime_id":  "recovery_expansion",
+                        "backtest_name":  "Emotional Asparagus Termite",
+                        "total_return_pct":  31.013,
+                        "cagr_pct":  14.447,
+                        "max_drawdown_pct":  10.7,
+                        "sharpe_ratio":  0.55,
+                        "sortino_ratio":  0.725,
+                        "probabilistic_sharpe_ratio_pct":  19.54,
+                        "total_fees_usd":  13842.33,
+                        "total_orders":  552,
+                        "end_equity_usd":  1310126.38
+                    },
+                    {
+                        "variant_id":  "m10_r15",
+                        "regime_id":  "recovery_expansion",
+                        "backtest_name":  "Smooth Fluorescent Pink Owlet",
+                        "total_return_pct":  36.413,
+                        "cagr_pct":  16.779,
+                        "max_drawdown_pct":  10.6,
+                        "sharpe_ratio":  0.721,
+                        "sortino_ratio":  0.935,
+                        "probabilistic_sharpe_ratio_pct":  27.558,
+                        "total_fees_usd":  15533.48,
+                        "total_orders":  559,
+                        "end_equity_usd":  1364127.97
+                    },
+                    {
+                        "variant_id":  "baseline",
+                        "regime_id":  "recent_unseen_window",
+                        "backtest_name":  "Hyper Active Yellow Galago",
+                        "total_return_pct":  8.386,
+                        "cagr_pct":  6.361,
+                        "max_drawdown_pct":  11.5,
+                        "sharpe_ratio":  -0.056,
+                        "sortino_ratio":  -0.059,
+                        "probabilistic_sharpe_ratio_pct":  7.105,
+                        "total_fees_usd":  12718.08,
+                        "total_orders":  399,
+                        "end_equity_usd":  1083859.72
+                    },
+                    {
+                        "variant_id":  "m00_r15",
+                        "regime_id":  "recent_unseen_window",
+                        "backtest_name":  "Emotional Light Brown Baboon",
+                        "total_return_pct":  16.543,
+                        "cagr_pct":  12.438,
+                        "max_drawdown_pct":  11.1,
+                        "sharpe_ratio":  0.325,
+                        "sortino_ratio":  0.364,
+                        "probabilistic_sharpe_ratio_pct":  16.563,
+                        "total_fees_usd":  10397.2,
+                        "total_orders":  376,
+                        "end_equity_usd":  1165426.33
+                    },
+                    {
+                        "variant_id":  "m10_r15",
+                        "regime_id":  "recent_unseen_window",
+                        "backtest_name":  "Jumping Green Fish",
+                        "total_return_pct":  12.484,
+                        "cagr_pct":  9.427,
+                        "max_drawdown_pct":  10.8,
+                        "sharpe_ratio":  0.144,
+                        "sortino_ratio":  0.155,
+                        "probabilistic_sharpe_ratio_pct":  11.467,
+                        "total_fees_usd":  10173.82,
+                        "total_orders":  375,
+                        "end_equity_usd":  1124843.34
+                    }
+                ],
+    "decision":  {
+                     "status":  "REGIME_ROBUSTNESS_PASS_RESEARCH_ONLY",
+                     "production_valid":  false,
+                     "completed_runs":  9,
+                     "required_runs":  9,
+                     "recommended_candidate":  "m00_r15",
+                     "comparisons":  [
+                                         {
+                                             "variant_id":  "m00_r15",
+                                             "return_wins":  3,
+                                             "sharpe_wins":  3,
+                                             "average_return_delta_percentage_points":  2.9923333333333346,
+                                             "average_sharpe_delta":  0.1466666666666667,
+                                             "worst_drawdown_deterioration_percentage_points":  -0.3000000000000007,
+                                             "drawdown_guard_pass":  true,
+                                             "passed":  true
+                                         },
+                                         {
+                                             "variant_id":  "m10_r15",
+                                             "return_wins":  2,
+                                             "sharpe_wins":  2,
+                                             "average_return_delta_percentage_points":  1.6516666666666662,
+                                             "average_sharpe_delta":  0.07799999999999999,
+                                             "worst_drawdown_deterioration_percentage_points":  -0.40000000000000036,
+                                             "drawdown_guard_pass":  true,
+                                             "passed":  true
+                                         }
+                                     ],
+                     "note":  "The candidates were selected on the enclosing period. Even a pass remains research-only until genuinely new paper observations accrue."
+                 },
+    "completed_at":  "2026-07-22T11:02:00+03:00",
+    "cloud_parameter_state":  "DEFAULTS_RESTORED_35_20_30_15_AND_BUILT",
+    "next_gate":  "Freeze m00_r15 as the research challenger and collect genuinely new paper observations without further factor-weight tuning before any production change."
+}

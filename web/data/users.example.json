@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "username": "demo_admin",
+    "password_hash": "REPLACE_WITH_PBKDF2_SHA256_HASH",
+    "salt": "REPLACE_WITH_RANDOM_SALT",
+    "role": "admin",
+    "totp_secret": null,
+    "is_2fa_enabled": 0,
+    "created_at": "2026-01-01T00:00:00",
+    "last_login": null
+  }
+]

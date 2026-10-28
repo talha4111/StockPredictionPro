@@ -1,0 +1,3493 @@
+{
+  "engine_version": "stock-walk-forward-v1.0",
+  "generated_at": "2026-07-16T09:04:08.672940+00:00",
+  "config": {
+    "start_date": "2021-07-16",
+    "end_date": "2026-07-16",
+    "top_n": 12,
+    "min_positions": 5,
+    "sector_cap": 0.25,
+    "max_position_weight": 0.1,
+    "transaction_cost_bps": 10.0,
+    "min_avg_dollar_volume": 5000000.0,
+    "min_history_days": 252,
+    "benchmark_symbol": "SPY",
+    "strategy_mode": "full_factor",
+    "fundamental_mode": "point_in_time",
+    "universe_mode": "current_static",
+    "event_risk_mode": "not_modeled"
+  },
+  "validity": {
+    "classification": "DIAGNOSTIC_ONLY",
+    "production_valid": false,
+    "point_in_time_fundamentals": true,
+    "point_in_time_universe": false,
+    "point_in_time_event_calendar": false,
+    "warnings": [
+      "Bugunku sabit hisse havuzu survivorship bias icerir.",
+      "Tarihsel olarak bilinen bilanco takvimi modellenmedi."
+    ]
+  },
+  "data_quality": {
+    "histories_supplied": 93,
+    "histories_usable": 93,
+    "signal_months": 61,
+    "completed_periods": 59,
+    "missing_data_events": {},
+    "fundamental_coverage": {
+      "periods": 59,
+      "average_returned": 93.0,
+      "average_ok": 91.13559322033899,
+      "average_metric_count": 8.975578640422818,
+      "by_period": [
+        {
+          "signal_date": "2021-07-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2021-08-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2021-09-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2021-10-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2021-11-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2021-12-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2022-01-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2022-02-28",
+          "requested": 93,
+          "returned": 93,
+          "ok": 90,
+          "average_metric_count": 8.86021505376344
+        },
+        {
+          "signal_date": "2022-03-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.935483870967742
+        },
+        {
+          "signal_date": "2022-04-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.935483870967742
+        },
+        {
+          "signal_date": "2022-05-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.935483870967742
+        },
+        {
+          "signal_date": "2022-06-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.935483870967742
+        },
+        {
+          "signal_date": "2022-07-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.935483870967742
+        },
+        {
+          "signal_date": "2022-08-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.935483870967742
+        },
+        {
+          "signal_date": "2022-09-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.935483870967742
+        },
+        {
+          "signal_date": "2022-10-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.946236559139784
+        },
+        {
+          "signal_date": "2022-11-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.946236559139784
+        },
+        {
+          "signal_date": "2022-12-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.946236559139784
+        },
+        {
+          "signal_date": "2023-01-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.946236559139784
+        },
+        {
+          "signal_date": "2023-02-28",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.946236559139784
+        },
+        {
+          "signal_date": "2023-03-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-04-28",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-05-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-06-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-07-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-08-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-09-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-10-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-11-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2023-12-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-01-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-02-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-03-28",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-04-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-05-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-06-28",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-07-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-08-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-09-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-10-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.96774193548387
+        },
+        {
+          "signal_date": "2024-11-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.978494623655914
+        },
+        {
+          "signal_date": "2024-12-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.978494623655914
+        },
+        {
+          "signal_date": "2025-01-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 91,
+          "average_metric_count": 8.978494623655914
+        },
+        {
+          "signal_date": "2025-02-28",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.053763440860216
+        },
+        {
+          "signal_date": "2025-03-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-04-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-05-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-06-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-07-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-08-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-09-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-10-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-11-28",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2025-12-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2026-01-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.064516129032258
+        },
+        {
+          "signal_date": "2026-02-27",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.086021505376344
+        },
+        {
+          "signal_date": "2026-03-31",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.086021505376344
+        },
+        {
+          "signal_date": "2026-04-30",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.086021505376344
+        },
+        {
+          "signal_date": "2026-05-29",
+          "requested": 93,
+          "returned": 93,
+          "ok": 92,
+          "average_metric_count": 9.086021505376344
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "strategy": {
+      "periods": 59,
+      "cumulative_return": 0.3170114657828984,
+      "annualized_return": 0.05760452309066899,
+      "annualized_volatility": 0.08868969765950163,
+      "sharpe_zero_rf": 0.6760716800652096,
+      "max_drawdown": -0.10308780486616342,
+      "positive_period_rate": 0.3220338983050847
+    },
+    "strategy_before_costs": {
+      "periods": 59,
+      "cumulative_return": 0.34061749785569284,
+      "annualized_return": 0.061432836123564316,
+      "annualized_volatility": 0.08875963895911147,
+      "sharpe_zero_rf": 0.7164928340310146,
+      "max_drawdown": -0.10042860193803971,
+      "positive_period_rate": 0.3389830508474576
+    },
+    "spy": {
+      "periods": 59,
+      "cumulative_return": 0.8102061218352734,
+      "annualized_return": 0.12828615803468346,
+      "annualized_volatility": 0.1546626631478684,
+      "sharpe_zero_rf": 0.8604527597565206,
+      "max_drawdown": -0.23312901064774816,
+      "positive_period_rate": 0.6610169491525424
+    },
+    "equal_weight_universe": {
+      "periods": 59,
+      "cumulative_return": 1.0251278166666737,
+      "annualized_return": 0.15432821097134264,
+      "annualized_volatility": 0.14876518498962946,
+      "sharpe_zero_rf": 1.0436715587171124,
+      "max_drawdown": -0.19779997982981556,
+      "positive_period_rate": 0.6779661016949152
+    },
+    "comparison": {
+      "cumulative_excess_vs_spy": -0.27245220867574504,
+      "cumulative_excess_vs_equal_weight": -0.34966501623059176,
+      "period_win_rate_vs_spy": 0.423728813559322,
+      "period_win_rate_vs_equal_weight": 0.3898305084745763,
+      "average_monthly_turnover": 0.3029210303540553,
+      "average_invested_weight": 0.33775038520801237,
+      "empty_portfolio_periods": 27,
+      "total_transaction_cost_drag": 0.01787234079088926,
+      "compounded_cost_drag": 0.023606032072794436
+    }
+  },
+  "annual_summary": [
+    {
+      "year": "2021",
+      "periods": 6,
+      "strategy_return": 0.0,
+      "spy_return": 0.03036793045687647,
+      "equal_weight_return": 0.0538659842888789,
+      "average_invested_weight": 0.0,
+      "average_positions": 0.0,
+      "win_rate_vs_spy": 0.3333333333333333
+    },
+    {
+      "year": "2022",
+      "periods": 12,
+      "strategy_return": -0.06061661995482148,
+      "spy_return": -0.08630548593590082,
+      "equal_weight_return": -0.0017591203250928444,
+      "average_invested_weight": 0.47500000000000003,
+      "average_positions": 5.083333333333333,
+      "win_rate_vs_spy": 0.5
+    },
+    {
+      "year": "2023",
+      "periods": 12,
+      "strategy_return": 0.14264199412059742,
+      "spy_return": 0.21417480755026497,
+      "equal_weight_return": 0.21140800828773343,
+      "average_invested_weight": 0.46893939393939393,
+      "average_positions": 4.916666666666667,
+      "win_rate_vs_spy": 0.5
+    },
+    {
+      "year": "2024",
+      "periods": 12,
+      "strategy_return": 0.1725524959554674,
+      "spy_return": 0.23861976216732428,
+      "equal_weight_return": 0.2067454672145972,
+      "average_invested_weight": 0.31250000000000006,
+      "average_positions": 3.1666666666666665,
+      "win_rate_vs_spy": 0.4166666666666667
+    },
+    {
+      "year": "2025",
+      "periods": 12,
+      "strategy_return": -0.02510536073749936,
+      "spy_return": 0.17717759617163664,
+      "equal_weight_return": 0.19551772716189975,
+      "average_invested_weight": 0.27916666666666673,
+      "average_positions": 2.8333333333333335,
+      "win_rate_vs_spy": 0.25
+    },
+    {
+      "year": "2026",
+      "periods": 5,
+      "strategy_return": 0.07336276326668467,
+      "spy_return": 0.08610913941472731,
+      "equal_weight_return": 0.10146211557076201,
+      "average_invested_weight": 0.3,
+      "average_positions": 3.0,
+      "win_rate_vs_spy": 0.6
+    }
+  ],
+  "periods": [
+    {
+      "signal_date": "2021-07-30",
+      "entry_date": "2021-08-02",
+      "exit_date": "2021-09-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.0277510659770428,
+      "equal_weight_return": 0.01765899236902407,
+      "selected": [
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 75.4,
+          "weight": 0.0,
+          "return": 0.024940485754402886
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 71.6,
+          "weight": 0.0,
+          "return": 0.06001113059332819
+        }
+      ]
+    },
+    {
+      "signal_date": "2021-08-31",
+      "entry_date": "2021-09-01",
+      "exit_date": "2021-10-01",
+      "universe_size": 93,
+      "eligible_count": 1,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.04463317858697369,
+      "equal_weight_return": -0.03449502831464884,
+      "selected": [
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 73.8,
+          "weight": 0.0,
+          "return": -0.06597374545757184
+        }
+      ]
+    },
+    {
+      "signal_date": "2021-09-30",
+      "entry_date": "2021-10-01",
+      "exit_date": "2021-11-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.06803069496228975,
+      "equal_weight_return": 0.05935086756386266,
+      "selected": [
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 77.3,
+          "weight": 0.0,
+          "return": 0.1011437317088284
+        },
+        {
+          "symbol": "CMG",
+          "sector": "Consumer Disc.",
+          "score": 74.3,
+          "weight": 0.0,
+          "return": -0.028335328527903658
+        }
+      ]
+    },
+    {
+      "signal_date": "2021-10-29",
+      "entry_date": "2021-11-01",
+      "exit_date": "2021-12-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.0029111373083949843,
+      "equal_weight_return": 0.0034286768192056515,
+      "selected": [
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 77.2,
+          "weight": 0.0,
+          "return": -0.027329341128648155
+        },
+        {
+          "symbol": "CMG",
+          "sector": "Consumer Disc.",
+          "score": 72.7,
+          "weight": 0.0,
+          "return": -0.07202978924296577
+        }
+      ]
+    },
+    {
+      "signal_date": "2021-11-30",
+      "entry_date": "2021-12-01",
+      "exit_date": "2022-01-03",
+      "universe_size": 93,
+      "eligible_count": 3,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.03538125448593843,
+      "equal_weight_return": 0.04836663638948873,
+      "selected": [
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 75.0,
+          "weight": 0.0,
+          "return": 0.007326285265938592
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 66.9,
+          "weight": 0.0,
+          "return": 0.010661872633370262
+        },
+        {
+          "symbol": "GILD",
+          "sector": "Healthcare",
+          "score": 66.2,
+          "weight": 0.0,
+          "return": 0.05757023660630045
+        }
+      ]
+    },
+    {
+      "signal_date": "2021-12-31",
+      "entry_date": "2022-01-03",
+      "exit_date": "2022-02-01",
+      "universe_size": 93,
+      "eligible_count": 3,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.05378951533166243,
+      "equal_weight_return": -0.03752585560405977,
+      "selected": [
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 75.4,
+          "weight": 0.0,
+          "return": -0.051432004048879154
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 70.5,
+          "weight": 0.0,
+          "return": -0.09583928774579598
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 68.2,
+          "weight": 0.0,
+          "return": 0.2565377510926412
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-01-31",
+      "entry_date": "2022-02-01",
+      "exit_date": "2022-03-01",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.5,
+      "transaction_cost": 0.0005,
+      "gross_return": -0.03665231462218115,
+      "net_return": -0.03715231462218115,
+      "spy_return": -0.034703157020034237,
+      "equal_weight_return": -0.034110152050673366,
+      "selected": [
+        {
+          "symbol": "GILD",
+          "sector": "Healthcare",
+          "score": 71.5,
+          "weight": 0.1,
+          "return": -0.12865232984566044
+        },
+        {
+          "symbol": "PFE",
+          "sector": "Healthcare",
+          "score": 71.4,
+          "weight": 0.1,
+          "return": -0.11471392226071442
+        },
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 70.5,
+          "weight": 0.1,
+          "return": -0.0197393607289309
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 69.6,
+          "weight": 0.1,
+          "return": -0.10852096153546387
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 67.8,
+          "weight": 0.1,
+          "return": 0.0051034281489581446
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-02-28",
+      "entry_date": "2022-03-01",
+      "exit_date": "2022-04-01",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.6000000000000001,
+      "turnover": 0.3081031603462999,
+      "transaction_cost": 0.0003081031603462999,
+      "gross_return": 0.027054481335936877,
+      "net_return": 0.026746378175590578,
+      "spy_return": 0.0452331087208826,
+      "equal_weight_return": 0.037991088375695044,
+      "selected": [
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 87.0,
+          "weight": 0.1,
+          "return": 0.037164616395163774
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 75.1,
+          "weight": 0.1,
+          "return": 0.010735873262086582
+        },
+        {
+          "symbol": "PFE",
+          "sector": "Healthcare",
+          "score": 72.6,
+          "weight": 0.1,
+          "return": 0.11629922779535162
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 72.1,
+          "weight": 0.1,
+          "return": -0.04774281850632123
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 69.8,
+          "weight": 0.1,
+          "return": 0.11982354212862667
+        },
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 68.6,
+          "weight": 0.1,
+          "return": 0.03426437228446133
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-03-31",
+      "entry_date": "2022-04-01",
+      "exit_date": "2022-05-02",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.21212560148275755,
+      "transaction_cost": 0.00021212560148275755,
+      "gross_return": -0.031426463952726746,
+      "net_return": -0.031638589554209506,
+      "spy_return": -0.0909751549729566,
+      "equal_weight_return": -0.07677787849951088,
+      "selected": [
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 85.3,
+          "weight": 0.1,
+          "return": -0.030632440800197225
+        },
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 76.1,
+          "weight": 0.1,
+          "return": -0.058711957151841965
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 75.1,
+          "weight": 0.1,
+          "return": 0.04732875381660073
+        },
+        {
+          "symbol": "PFE",
+          "sector": "Healthcare",
+          "score": 74.7,
+          "weight": 0.1,
+          "return": -0.08518799041156122
+        },
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 70.6,
+          "weight": 0.1,
+          "return": -0.1870610049802678
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-04-29",
+      "entry_date": "2022-05-02",
+      "exit_date": "2022-06-01",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.6000000000000001,
+      "turnover": 0.20836766818848892,
+      "transaction_cost": 0.0002083676681884889,
+      "gross_return": 0.059071009031925206,
+      "net_return": 0.058862641363736715,
+      "spy_return": 0.007523047379747183,
+      "equal_weight_return": 0.03000581244009086,
+      "selected": [
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 85.0,
+          "weight": 0.1,
+          "return": 0.2167406537285339
+        },
+        {
+          "symbol": "PFE",
+          "sector": "Healthcare",
+          "score": 77.6,
+          "weight": 0.1,
+          "return": 0.12592812735086745
+        },
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 74.8,
+          "weight": 0.1,
+          "return": 0.21855791676404657
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 73.7,
+          "weight": 0.1,
+          "return": -0.028492690169454105
+        },
+        {
+          "symbol": "ABBV",
+          "sector": "Healthcare",
+          "score": 72.1,
+          "weight": 0.1,
+          "return": 0.007773682591087683
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 67.8,
+          "weight": 0.1,
+          "return": 0.05020240005417054
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-05-31",
+      "entry_date": "2022-06-01",
+      "exit_date": "2022-07-01",
+      "universe_size": 93,
+      "eligible_count": 9,
+      "position_count": 9,
+      "invested_weight": 0.85,
+      "turnover": 0.2924387009013948,
+      "transaction_cost": 0.0002924387009013948,
+      "gross_return": -0.061912153161693254,
+      "net_return": -0.062204591862594645,
+      "spy_return": -0.08907998020611618,
+      "equal_weight_return": -0.08929200435805451,
+      "selected": [
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 84.8,
+          "weight": 0.1,
+          "return": -0.18989721943677396
+        },
+        {
+          "symbol": "PFE",
+          "sector": "Healthcare",
+          "score": 79.4,
+          "weight": 0.08333333333333333,
+          "return": -0.022722846324673807
+        },
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 76.3,
+          "weight": 0.08333333333333333,
+          "return": 0.004114822065582446
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 75.2,
+          "weight": 0.1,
+          "return": -0.06190999266846209
+        },
+        {
+          "symbol": "ABBV",
+          "sector": "Healthcare",
+          "score": 74.2,
+          "weight": 0.08333333333333333,
+          "return": 0.035794272552658546
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 71.4,
+          "weight": 0.1,
+          "return": 0.0024602700002447353
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 70.7,
+          "weight": 0.1,
+          "return": -0.18901631449787382
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 70.5,
+          "weight": 0.1,
+          "return": -0.12311588209650959
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 65.2,
+          "weight": 0.1,
+          "return": -0.07196426649553045
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-06-30",
+      "entry_date": "2022-07-01",
+      "exit_date": "2022-08-01",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.65,
+      "turnover": 0.30374344861740793,
+      "transaction_cost": 0.00030374344861740796,
+      "gross_return": -0.008174908950416435,
+      "net_return": -0.008478652399033842,
+      "spy_return": 0.08654655417761847,
+      "equal_weight_return": 0.07961205494750975,
+      "selected": [
+        {
+          "symbol": "PFE",
+          "sector": "Healthcare",
+          "score": 81.6,
+          "weight": 0.08333333333333333,
+          "return": -0.025548727858084708
+        },
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 78.2,
+          "weight": 0.1,
+          "return": 0.036766961353492666
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 78.1,
+          "weight": 0.1,
+          "return": -0.012164191080641373
+        },
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 77.5,
+          "weight": 0.08333333333333333,
+          "return": -0.02146764484218766
+        },
+        {
+          "symbol": "ABBV",
+          "sector": "Healthcare",
+          "score": 75.2,
+          "weight": 0.08333333333333333,
+          "return": -0.06693463866746441
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 73.9,
+          "weight": 0.1,
+          "return": 0.015367561147561881
+        },
+        {
+          "symbol": "LMT",
+          "sector": "Industrials",
+          "score": 72.9,
+          "weight": 0.1,
+          "return": -0.026760244784796883
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-07-29",
+      "entry_date": "2022-08-01",
+      "exit_date": "2022-09-01",
+      "universe_size": 93,
+      "eligible_count": 10,
+      "position_count": 10,
+      "invested_weight": 0.75,
+      "turnover": 0.3004022162946093,
+      "transaction_cost": 0.0003004022162946093,
+      "gross_return": 0.00016206019543090248,
+      "net_return": -0.00013834202086370682,
+      "spy_return": -0.03974090361243798,
+      "equal_weight_return": -0.03763473632568477,
+      "selected": [
+        {
+          "symbol": "PFE",
+          "sector": "Healthcare",
+          "score": 81.8,
+          "weight": 0.05,
+          "return": -0.10294102893038226
+        },
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 77.8,
+          "weight": 0.05,
+          "return": -0.041414808089672794
+        },
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 75.5,
+          "weight": 0.1,
+          "return": 0.1359220847714484
+        },
+        {
+          "symbol": "ABBV",
+          "sector": "Healthcare",
+          "score": 74.6,
+          "weight": 0.05,
+          "return": -0.04854780105383305
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 74.4,
+          "weight": 0.1,
+          "return": -0.020523317732529245
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 71.9,
+          "weight": 0.1,
+          "return": -0.039163660330733485
+        },
+        {
+          "symbol": "JNJ",
+          "sector": "Healthcare",
+          "score": 71.2,
+          "weight": 0.05,
+          "return": -0.06657269047606451
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 66.7,
+          "weight": 0.1,
+          "return": -0.0449892771733551
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 66.3,
+          "weight": 0.05,
+          "return": 0.006647790466984604
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 65.3,
+          "weight": 0.1,
+          "return": 0.09678904146096245
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-08-31",
+      "entry_date": "2022-09-01",
+      "exit_date": "2022-10-03",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.55,
+      "turnover": 0.4577949185489243,
+      "transaction_cost": 0.0004577949185489243,
+      "gross_return": -0.029420005765203216,
+      "net_return": -0.02987780068375214,
+      "spy_return": -0.07718902593459487,
+      "equal_weight_return": -0.07606870117383298,
+      "selected": [
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 81.9,
+          "weight": 0.08333333333333333,
+          "return": 0.02077441679739067
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 78.1,
+          "weight": 0.08333333333333333,
+          "return": 0.042819093981682155
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 74.5,
+          "weight": 0.1,
+          "return": -0.07809487010221794
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 74.3,
+          "weight": 0.1,
+          "return": -0.10557959362508362
+        },
+        {
+          "symbol": "AMGN",
+          "sector": "Healthcare",
+          "score": 71.0,
+          "weight": 0.08333333333333333,
+          "return": -0.05329302570987848
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 67.2,
+          "weight": 0.1,
+          "return": -0.11910933148239256
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-09-30",
+      "entry_date": "2022-10-03",
+      "exit_date": "2022-11-01",
+      "universe_size": 93,
+      "eligible_count": 3,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.5363596996919568,
+      "transaction_cost": 0.0005363596996919569,
+      "gross_return": 0.0,
+      "net_return": -0.0005363596996919569,
+      "spy_return": 0.08048091859500772,
+      "equal_weight_return": 0.09957275041418814,
+      "selected": [
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 81.0,
+          "weight": 0.0,
+          "return": 0.16063171026950096
+        },
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 80.0,
+          "weight": 0.0,
+          "return": 0.20396540011877184
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 78.6,
+          "weight": 0.0,
+          "return": 0.06377042501529195
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-10-31",
+      "entry_date": "2022-11-01",
+      "exit_date": "2022-12-01",
+      "universe_size": 93,
+      "eligible_count": 1,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.047751823965527906,
+      "equal_weight_return": 0.07619657665397737,
+      "selected": [
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 73.3,
+          "weight": 0.0,
+          "return": 0.019555707668093225
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-11-30",
+      "entry_date": "2022-12-01",
+      "exit_date": "2023-01-03",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.05537327785898205,
+      "equal_weight_return": -0.045703043449500026,
+      "selected": [
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 77.0,
+          "weight": 0.0,
+          "return": -0.05921868741828473
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 74.8,
+          "weight": 0.0,
+          "return": -0.09398839613475296
+        }
+      ]
+    },
+    {
+      "signal_date": "2022-12-30",
+      "entry_date": "2023-01-03",
+      "exit_date": "2023-02-01",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.7000000000000001,
+      "turnover": 0.7000000000000001,
+      "transaction_cost": 0.0007000000000000001,
+      "gross_return": 0.028719787155662903,
+      "net_return": 0.028019787155662904,
+      "spy_return": 0.054218687657605846,
+      "equal_weight_return": 0.06057806410244546,
+      "selected": [
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 78.0,
+          "weight": 0.1,
+          "return": 0.03560381092558074
+        },
+        {
+          "symbol": "CAT",
+          "sector": "Industrials",
+          "score": 73.8,
+          "weight": 0.1,
+          "return": 0.050983059446501944
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 71.0,
+          "weight": 0.1,
+          "return": 0.11396007178467316
+        },
+        {
+          "symbol": "ABBV",
+          "sector": "Healthcare",
+          "score": 70.9,
+          "weight": 0.1,
+          "return": -0.08649781376906307
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 69.5,
+          "weight": 0.1,
+          "return": 0.09599607305466962
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 66.2,
+          "weight": 0.1,
+          "return": 0.05488705395383131
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 66.0,
+          "weight": 0.1,
+          "return": 0.02226561616043532
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-01-31",
+      "entry_date": "2023-02-01",
+      "exit_date": "2023-03-01",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.65,
+      "turnover": 0.3417087298740388,
+      "transaction_cost": 0.00034170872987403873,
+      "gross_return": -0.031815260058896434,
+      "net_return": -0.032156968788770474,
+      "spy_return": -0.024185069197417475,
+      "equal_weight_return": -0.03500944645620927,
+      "selected": [
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 76.6,
+          "weight": 0.1,
+          "return": -0.05263139600085265
+        },
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 76.6,
+          "weight": 0.1,
+          "return": -0.13684153168265623
+        },
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 75.8,
+          "weight": 0.08333333333333333,
+          "return": -0.009442022558568075
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 74.7,
+          "weight": 0.08333333333333333,
+          "return": -0.10090202936673798
+        },
+        {
+          "symbol": "ABBV",
+          "sector": "Healthcare",
+          "score": 73.7,
+          "weight": 0.08333333333333333,
+          "return": 0.04180600798088974
+        },
+        {
+          "symbol": "CAT",
+          "sector": "Industrials",
+          "score": 72.9,
+          "weight": 0.1,
+          "return": -0.03868918050008774
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 65.6,
+          "weight": 0.1,
+          "return": -0.032875455785020824
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-02-28",
+      "entry_date": "2023-03-01",
+      "exit_date": "2023-04-03",
+      "universe_size": 93,
+      "eligible_count": 8,
+      "position_count": 8,
+      "invested_weight": 0.75,
+      "turnover": 0.40809643454029854,
+      "transaction_cost": 0.00040809643454029854,
+      "gross_return": 0.03023845346145092,
+      "net_return": 0.02983035702691062,
+      "spy_return": 0.037936316451654406,
+      "equal_weight_return": 0.041575652324250784,
+      "selected": [
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 82.0,
+          "weight": 0.1,
+          "return": 0.026291843738158738
+        },
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 76.0,
+          "weight": 0.08333333333333333,
+          "return": 0.00685744457718962
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 75.9,
+          "weight": 0.1,
+          "return": -0.00477262665502487
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 73.5,
+          "weight": 0.1,
+          "return": 0.024321901844382543
+        },
+        {
+          "symbol": "AVGO",
+          "sector": "Technology",
+          "score": 73.3,
+          "weight": 0.1,
+          "return": 0.0835002781915879
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 72.3,
+          "weight": 0.08333333333333333,
+          "return": 0.08973916370475332
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 69.2,
+          "weight": 0.1,
+          "return": 0.06259697059638403
+        },
+        {
+          "symbol": "ABBV",
+          "sector": "Healthcare",
+          "score": 66.0,
+          "weight": 0.08333333333333333,
+          "return": 0.0359387919968821
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-03-31",
+      "entry_date": "2023-04-03",
+      "exit_date": "2023-05-01",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.6000000000000001,
+      "turnover": 0.28025134201153024,
+      "transaction_cost": 0.00028025134201153023,
+      "gross_return": 0.01885522521134806,
+      "net_return": 0.01857497386933653,
+      "spy_return": 0.01619180807484777,
+      "equal_weight_return": 0.01638731599620034,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 79.7,
+          "weight": 0.1,
+          "return": 0.013433882457968505
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 78.0,
+          "weight": 0.1,
+          "return": 0.03392089616385641
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 74.5,
+          "weight": 0.1,
+          "return": 0.050955491328129376
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 74.4,
+          "weight": 0.1,
+          "return": 0.026023459703187424
+        },
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 71.9,
+          "weight": 0.1,
+          "return": 0.0929683024701966
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 69.7,
+          "weight": 0.1,
+          "return": -0.02874978000985773
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-04-28",
+      "entry_date": "2023-05-01",
+      "exit_date": "2023-06-01",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.21260701674208257,
+      "transaction_cost": 0.00021260701674208257,
+      "gross_return": 0.028412818367871566,
+      "net_return": 0.028200211351129482,
+      "spy_return": 0.006306108747382799,
+      "equal_weight_return": 0.0032191431116879487,
+      "selected": [
+        {
+          "symbol": "AVGO",
+          "sector": "Technology",
+          "score": 77.7,
+          "weight": 0.1,
+          "return": 0.2779250096424548
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 77.7,
+          "weight": 0.1,
+          "return": -0.06611143711551126
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 77.3,
+          "weight": 0.1,
+          "return": -0.04167884337653016
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 70.9,
+          "weight": 0.1,
+          "return": 0.15838022915718808
+        },
+        {
+          "symbol": "MRK",
+          "sector": "Healthcare",
+          "score": 70.2,
+          "weight": 0.1,
+          "return": -0.04438677462888585
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-05-31",
+      "entry_date": "2023-06-01",
+      "exit_date": "2023-07-03",
+      "universe_size": 93,
+      "eligible_count": 4,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.5138139168728778,
+      "transaction_cost": 0.0005138139168728779,
+      "gross_return": 0.0,
+      "net_return": -0.0005138139168728779,
+      "spy_return": 0.06332438920782435,
+      "equal_weight_return": 0.05467309647791507,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 79.1,
+          "weight": 0.0,
+          "return": 0.07613690833211417
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 76.0,
+          "weight": 0.0,
+          "return": 0.06406859752445127
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 74.6,
+          "weight": 0.0,
+          "return": 0.0748913233936841
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 70.5,
+          "weight": 0.0,
+          "return": 0.06585666105389931
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-06-30",
+      "entry_date": "2023-07-03",
+      "exit_date": "2023-08-01",
+      "universe_size": 93,
+      "eligible_count": 4,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.030140741125092685,
+      "equal_weight_return": 0.034413426130380065,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 79.6,
+          "weight": 0.0,
+          "return": 0.09225216839863437
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 75.1,
+          "weight": 0.0,
+          "return": 0.007598200812968026
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 73.6,
+          "weight": 0.0,
+          "return": 0.0005907293801634683
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 71.3,
+          "weight": 0.0,
+          "return": 0.00769020583323865
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-07-31",
+      "entry_date": "2023-08-01",
+      "exit_date": "2023-09-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.006794141693279632,
+      "equal_weight_return": -0.006919543543709234,
+      "selected": [
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 74.9,
+          "weight": 0.0,
+          "return": 0.002532536841537647
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 71.6,
+          "weight": 0.0,
+          "return": 0.04552306455337307
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-08-31",
+      "entry_date": "2023-09-01",
+      "exit_date": "2023-10-02",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.6000000000000001,
+      "turnover": 0.6000000000000001,
+      "transaction_cost": 0.0006000000000000001,
+      "gross_return": -0.030625383517921403,
+      "net_return": -0.031225383517921403,
+      "spy_return": -0.055266501715619865,
+      "equal_weight_return": -0.05419832659253814,
+      "selected": [
+        {
+          "symbol": "AVGO",
+          "sector": "Technology",
+          "score": 78.5,
+          "weight": 0.1,
+          "return": -0.07572547655100359
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 75.0,
+          "weight": 0.1,
+          "return": -0.020306495899315324
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 74.3,
+          "weight": 0.1,
+          "return": -0.015753137383067606
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 74.1,
+          "weight": 0.1,
+          "return": -0.07366536232511955
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 72.9,
+          "weight": 0.1,
+          "return": -0.08832778183176926
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 67.4,
+          "weight": 0.1,
+          "return": -0.032475581188938674
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-09-29",
+      "entry_date": "2023-10-02",
+      "exit_date": "2023-11-01",
+      "universe_size": 93,
+      "eligible_count": 11,
+      "position_count": 11,
+      "invested_weight": 0.9772727272727273,
+      "turnover": 0.446969696969697,
+      "transaction_cost": 0.00044696969696969704,
+      "gross_return": -0.0037056327425816172,
+      "net_return": -0.004152602439551315,
+      "spy_return": -0.01739257400194094,
+      "equal_weight_return": -0.012531132906542735,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 82.8,
+          "weight": 0.09090909090909091,
+          "return": -0.0875057026755478
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 77.8,
+          "weight": 0.09090909090909091,
+          "return": -0.036537196942092676
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 76.3,
+          "weight": 0.09090909090909091,
+          "return": 0.030099356823402257
+        },
+        {
+          "symbol": "AVGO",
+          "sector": "Technology",
+          "score": 75.0,
+          "weight": 0.08333333333333333,
+          "return": 0.015608044312180214
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 72.1,
+          "weight": 0.09090909090909091,
+          "return": 0.0037480088737531503
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 71.9,
+          "weight": 0.09090909090909091,
+          "return": 0.052457036362701936
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 70.3,
+          "weight": 0.08333333333333333,
+          "return": 0.028730206196642127
+        },
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 69.9,
+          "weight": 0.09090909090909091,
+          "return": -0.05441666737905393
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 67.5,
+          "weight": 0.09090909090909091,
+          "return": -0.029685704957958636
+        },
+        {
+          "symbol": "NOW",
+          "sector": "Technology",
+          "score": 67.2,
+          "weight": 0.08333333333333333,
+          "return": 0.0473186132889134
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 65.0,
+          "weight": 0.09090909090909091,
+          "return": -0.0029398820881931798
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-10-31",
+      "entry_date": "2023-11-01",
+      "exit_date": "2023-12-01",
+      "universe_size": 93,
+      "eligible_count": 9,
+      "position_count": 9,
+      "invested_weight": 0.85,
+      "turnover": 0.2713299685407031,
+      "transaction_cost": 0.0002713299685407031,
+      "gross_return": 0.07050186087391971,
+      "net_return": 0.07023053090537901,
+      "spy_return": 0.08723744152454915,
+      "equal_weight_return": 0.08633980251990482,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 77.1,
+          "weight": 0.1,
+          "return": 0.11498039026480411
+        },
+        {
+          "symbol": "AVGO",
+          "sector": "Technology",
+          "score": 76.5,
+          "weight": 0.08333333333333333,
+          "return": 0.09555817433924241
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 76.5,
+          "weight": 0.1,
+          "return": 0.07828410678920106
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 74.1,
+          "weight": 0.1,
+          "return": 0.08551934477980017
+        },
+        {
+          "symbol": "NOW",
+          "sector": "Technology",
+          "score": 71.8,
+          "weight": 0.08333333333333333,
+          "return": 0.17977624731740116
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 71.1,
+          "weight": 0.1,
+          "return": -0.03218183456376067
+        },
+        {
+          "symbol": "CMG",
+          "sector": "Consumer Disc.",
+          "score": 70.1,
+          "weight": 0.1,
+          "return": 0.12810770670572924
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 69.8,
+          "weight": 0.08333333333333333,
+          "return": 0.1533914564206138
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 67.4,
+          "weight": 0.1,
+          "return": -0.02696267030095789
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-11-30",
+      "entry_date": "2023-12-01",
+      "exit_date": "2024-01-02",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.7000000000000001,
+      "turnover": 0.3932916326867774,
+      "transaction_cost": 0.0003932916326867774,
+      "gross_return": 0.06187107086600181,
+      "net_return": 0.06147777923331504,
+      "spy_return": 0.04016146939275056,
+      "equal_weight_return": 0.04954085562592445,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 81.0,
+          "weight": 0.1,
+          "return": 0.12629553751004985
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 76.2,
+          "weight": 0.1,
+          "return": 0.07939025763442786
+        },
+        {
+          "symbol": "AVGO",
+          "sector": "Technology",
+          "score": 71.3,
+          "weight": 0.1,
+          "return": 0.1893652146170599
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 69.7,
+          "weight": 0.1,
+          "return": 0.14049172568055468
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 69.4,
+          "weight": 0.1,
+          "return": 0.01915710015326688
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 67.1,
+          "weight": 0.1,
+          "return": 0.0054763550588960985
+        },
+        {
+          "symbol": "NVDA",
+          "sector": "Technology",
+          "score": 66.2,
+          "weight": 0.1,
+          "return": 0.058534518005762814
+        }
+      ]
+    },
+    {
+      "signal_date": "2023-12-29",
+      "entry_date": "2024-01-02",
+      "exit_date": "2024-02-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.7174798257237228,
+      "transaction_cost": 0.0007174798257237228,
+      "gross_return": 0.0,
+      "net_return": -0.0007174798257237228,
+      "spy_return": 0.02641058501606408,
+      "equal_weight_return": 0.02455795270406721,
+      "selected": [
+        {
+          "symbol": "NVDA",
+          "sector": "Technology",
+          "score": 70.2,
+          "weight": 0.0,
+          "return": 0.26106736311848056
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 68.1,
+          "weight": 0.0,
+          "return": -0.05506465050804665
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-01-31",
+      "entry_date": "2024-02-01",
+      "exit_date": "2024-03-01",
+      "universe_size": 93,
+      "eligible_count": 1,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.0502444915202207,
+      "equal_weight_return": 0.03692576262810278,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 81.1,
+          "weight": 0.0,
+          "return": -0.03053805287744349
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-02-29",
+      "entry_date": "2024-03-01",
+      "exit_date": "2024-04-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.03237359807954787,
+      "equal_weight_return": 0.03212701526958463,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 68.2,
+          "weight": 0.0,
+          "return": 0.05106123957482822
+        },
+        {
+          "symbol": "NOW",
+          "sector": "Technology",
+          "score": 67.7,
+          "weight": 0.0,
+          "return": -0.010375581667236289
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-03-28",
+      "entry_date": "2024-04-01",
+      "exit_date": "2024-05-01",
+      "universe_size": 93,
+      "eligible_count": 4,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.04285740519115966,
+      "equal_weight_return": -0.04732090419853628,
+      "selected": [
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 74.9,
+          "weight": 0.0,
+          "return": -0.0712407782148683
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 73.1,
+          "weight": 0.0,
+          "return": -0.04355097075061509
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 72.5,
+          "weight": 0.0,
+          "return": -0.12027926763955565
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 66.7,
+          "weight": 0.0,
+          "return": -0.058553356113721144
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-04-30",
+      "entry_date": "2024-05-01",
+      "exit_date": "2024-06-03",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.65,
+      "turnover": 0.65,
+      "transaction_cost": 0.00065,
+      "gross_return": 0.04605331331996145,
+      "net_return": 0.045403313319961454,
+      "spy_return": 0.055127747605207444,
+      "equal_weight_return": 0.047379278740634974,
+      "selected": [
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 74.1,
+          "weight": 0.08333333333333333,
+          "return": 0.020307343956634805
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 73.5,
+          "weight": 0.08333333333333333,
+          "return": -0.0052038937142353525
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 70.4,
+          "weight": 0.1,
+          "return": -0.052197660305531635
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 69.5,
+          "weight": 0.1,
+          "return": 0.09865467711411147
+        },
+        {
+          "symbol": "NVDA",
+          "sector": "Technology",
+          "score": 69.2,
+          "weight": 0.1,
+          "return": 0.3355079713769884
+        },
+        {
+          "symbol": "JPM",
+          "sector": "Financials",
+          "score": 65.3,
+          "weight": 0.08333333333333333,
+          "return": 0.05221825087016341
+        },
+        {
+          "symbol": "CAT",
+          "sector": "Industrials",
+          "score": 65.2,
+          "weight": 0.1,
+          "return": 0.022466727420243915
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-05-31",
+      "entry_date": "2024-06-03",
+      "exit_date": "2024-07-01",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.6000000000000001,
+      "turnover": 0.3142693171679334,
+      "transaction_cost": 0.0003142693171679334,
+      "gross_return": 0.011580137647770218,
+      "net_return": 0.011265868330602285,
+      "spy_return": 0.034725048899215905,
+      "equal_weight_return": 0.02175571222534851,
+      "selected": [
+        {
+          "symbol": "CMG",
+          "sector": "Consumer Disc.",
+          "score": 78.0,
+          "weight": 0.1,
+          "return": -0.001395413474490237
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 75.9,
+          "weight": 0.1,
+          "return": 0.0556502392259004
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 73.8,
+          "weight": 0.1,
+          "return": -0.006043329803484765
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 73.5,
+          "weight": 0.1,
+          "return": 0.02818045030218186
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 71.4,
+          "weight": 0.1,
+          "return": -0.03405475938965541
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 70.1,
+          "weight": 0.1,
+          "return": 0.07346418961725032
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-06-28",
+      "entry_date": "2024-07-01",
+      "exit_date": "2024-08-01",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.7000000000000001,
+      "turnover": 0.3030248734069322,
+      "transaction_cost": 0.0003030248734069322,
+      "gross_return": 0.019025972649843195,
+      "net_return": 0.018722947776436263,
+      "spy_return": 0.01271938176822296,
+      "equal_weight_return": 0.02942608301327991,
+      "selected": [
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 74.4,
+          "weight": 0.1,
+          "return": 0.03178533878172973
+        },
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 73.7,
+          "weight": 0.1,
+          "return": 0.05964440636939172
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 73.3,
+          "weight": 0.1,
+          "return": 0.1353205796818424
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 73.1,
+          "weight": 0.1,
+          "return": 0.057507918806125824
+        },
+        {
+          "symbol": "CMG",
+          "sector": "Consumer Disc.",
+          "score": 69.8,
+          "weight": 0.1,
+          "return": -0.13399262873173579
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 66.1,
+          "weight": 0.1,
+          "return": 0.002393590058428652
+        },
+        {
+          "symbol": "CAT",
+          "sector": "Industrials",
+          "score": 65.7,
+          "weight": 0.1,
+          "return": 0.03760052153264937
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-07-31",
+      "entry_date": "2024-08-01",
+      "exit_date": "2024-09-03",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.6000000000000001,
+      "turnover": 0.30723340744193894,
+      "transaction_cost": 0.00030723340744193893,
+      "gross_return": 0.003735616262500785,
+      "net_return": 0.0034283828550588464,
+      "spy_return": 0.014296716970359169,
+      "equal_weight_return": 0.018823104695618067,
+      "selected": [
+        {
+          "symbol": "VRTX",
+          "sector": "Healthcare",
+          "score": 76.4,
+          "weight": 0.1,
+          "return": -0.006453589125021031
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 71.8,
+          "weight": 0.1,
+          "return": 0.04299503535519755
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 70.5,
+          "weight": 0.1,
+          "return": -0.0007079746721254665
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 69.0,
+          "weight": 0.1,
+          "return": -0.0026104342268156167
+        },
+        {
+          "symbol": "NVDA",
+          "sector": "Technology",
+          "score": 66.9,
+          "weight": 0.1,
+          "return": -0.012932907386859593
+        },
+        {
+          "symbol": "CAT",
+          "sector": "Industrials",
+          "score": 66.8,
+          "weight": 0.1,
+          "return": 0.017066032680632004
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-08-30",
+      "entry_date": "2024-09-03",
+      "exit_date": "2024-10-01",
+      "universe_size": 93,
+      "eligible_count": 1,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.6014886853478053,
+      "transaction_cost": 0.0006014886853478054,
+      "gross_return": 0.0,
+      "net_return": -0.0006014886853478054,
+      "spy_return": 0.02620808122224827,
+      "equal_weight_return": 0.027059621820297888,
+      "selected": [
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 68.5,
+          "weight": 0.0,
+          "return": 0.11333104811266215
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-09-30",
+      "entry_date": "2024-10-01",
+      "exit_date": "2024-11-01",
+      "universe_size": 93,
+      "eligible_count": 3,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.0036275018480911303,
+      "equal_weight_return": -0.007461786287142855,
+      "selected": [
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 80.0,
+          "weight": 0.0,
+          "return": 0.09185179545697442
+        },
+        {
+          "symbol": "JNJ",
+          "sector": "Healthcare",
+          "score": 69.3,
+          "weight": 0.0,
+          "return": -0.011389452691639157
+        },
+        {
+          "symbol": "CL",
+          "sector": "Consumer Stap.",
+          "score": 67.4,
+          "weight": 0.0,
+          "return": -0.09039740050268386
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-10-31",
+      "entry_date": "2024-11-01",
+      "exit_date": "2024-12-02",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.5,
+      "transaction_cost": 0.0005,
+      "gross_return": 0.042616872057111066,
+      "net_return": 0.042116872057111066,
+      "spy_return": 0.05539799412702706,
+      "equal_weight_return": 0.048301196109033974,
+      "selected": [
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 76.9,
+          "weight": 0.1,
+          "return": 0.01742394869543107
+        },
+        {
+          "symbol": "NFLX",
+          "sector": "Communication",
+          "score": 73.5,
+          "weight": 0.1,
+          "return": 0.17788129683506892
+        },
+        {
+          "symbol": "ISRG",
+          "sector": "Healthcare",
+          "score": 70.4,
+          "weight": 0.1,
+          "return": 0.08820365672349939
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 69.1,
+          "weight": 0.1,
+          "return": 0.06492297329726116
+        },
+        {
+          "symbol": "CAT",
+          "sector": "Industrials",
+          "score": 67.9,
+          "weight": 0.1,
+          "return": 0.07773684501985012
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-11-29",
+      "entry_date": "2024-12-02",
+      "exit_date": "2025-01-02",
+      "universe_size": 93,
+      "eligible_count": 1,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.520437455598156,
+      "transaction_cost": 0.000520437455598156,
+      "gross_return": 0.0,
+      "net_return": -0.000520437455598156,
+      "spy_return": -0.019232001489338124,
+      "equal_weight_return": -0.04131146337054483,
+      "selected": [
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 75.2,
+          "weight": 0.0,
+          "return": 0.02198378056267214
+        }
+      ]
+    },
+    {
+      "signal_date": "2024-12-31",
+      "entry_date": "2025-01-02",
+      "exit_date": "2025-02-03",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.7000000000000001,
+      "turnover": 0.7000000000000001,
+      "transaction_cost": 0.0007000000000000001,
+      "gross_return": 0.04304517371548426,
+      "net_return": 0.04234517371548426,
+      "spy_return": 0.005565113660669585,
+      "equal_weight_return": 0.029287543828966468,
+      "selected": [
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 81.0,
+          "weight": 0.1,
+          "return": 0.062386673393911574
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 78.5,
+          "weight": 0.1,
+          "return": 0.04585214627034917
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 78.1,
+          "weight": 0.1,
+          "return": -0.06421584597294339
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 77.2,
+          "weight": 0.1,
+          "return": 0.0699226303148266
+        },
+        {
+          "symbol": "NFLX",
+          "sector": "Communication",
+          "score": 74.1,
+          "weight": 0.1,
+          "return": 0.08654382731311228
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 72.8,
+          "weight": 0.1,
+          "return": 0.1461541121419787
+        },
+        {
+          "symbol": "ISRG",
+          "sector": "Healthcare",
+          "score": 68.4,
+          "weight": 0.1,
+          "return": 0.0838081936936077
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-01-31",
+      "entry_date": "2025-02-03",
+      "exit_date": "2025-03-03",
+      "universe_size": 93,
+      "eligible_count": 4,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.7123806259211625,
+      "transaction_cost": 0.0007123806259211624,
+      "gross_return": 0.0,
+      "net_return": -0.0007123806259211624,
+      "spy_return": 0.005922284697812641,
+      "equal_weight_return": 0.023363595314268435,
+      "selected": [
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 79.3,
+          "weight": 0.0,
+          "return": 0.20099302702308885
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 74.5,
+          "weight": 0.0,
+          "return": 0.07404826507799989
+        },
+        {
+          "symbol": "NFLX",
+          "sector": "Communication",
+          "score": 72.7,
+          "weight": 0.0,
+          "return": 0.010277491969533203
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 68.0,
+          "weight": 0.0,
+          "return": 0.004988120147970676
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-02-28",
+      "entry_date": "2025-03-03",
+      "exit_date": "2025-04-01",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.5,
+      "transaction_cost": 0.0005,
+      "gross_return": -0.036943915957942365,
+      "net_return": -0.037443915957942366,
+      "spy_return": -0.06215083374549324,
+      "equal_weight_return": -0.04862296218277073,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 76.5,
+          "weight": 0.1,
+          "return": -0.08663328124705927
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 75.6,
+          "weight": 0.1,
+          "return": -0.15190009210444566
+        },
+        {
+          "symbol": "NFLX",
+          "sector": "Communication",
+          "score": 71.4,
+          "weight": 0.1,
+          "return": -0.05645984617961375
+        },
+        {
+          "symbol": "JPM",
+          "sector": "Financials",
+          "score": 68.1,
+          "weight": 0.1,
+          "return": -0.08098504197686618
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 66.0,
+          "weight": 0.1,
+          "return": 0.0065391019285612195
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-03-31",
+      "entry_date": "2025-04-01",
+      "exit_date": "2025-05-01",
+      "universe_size": 93,
+      "eligible_count": 7,
+      "position_count": 7,
+      "invested_weight": 0.7000000000000001,
+      "turnover": 0.4071860088584173,
+      "transaction_cost": 0.0004071860088584173,
+      "gross_return": 0.006355309491578009,
+      "net_return": 0.005948123482719592,
+      "spy_return": 0.005238186500833519,
+      "equal_weight_return": -0.01900424310052484,
+      "selected": [
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 80.2,
+          "weight": 0.1,
+          "return": -0.013868301992796872
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 78.7,
+          "weight": 0.1,
+          "return": 0.007447494925224785
+        },
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 76.2,
+          "weight": 0.1,
+          "return": 0.09408815388788905
+        },
+        {
+          "symbol": "ABT",
+          "sector": "Healthcare",
+          "score": 72.7,
+          "weight": 0.1,
+          "return": -0.017966087788650498
+        },
+        {
+          "symbol": "NFLX",
+          "sector": "Communication",
+          "score": 68.9,
+          "weight": 0.1,
+          "return": 0.21026413909829844
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 66.6,
+          "weight": 0.1,
+          "return": -0.08165006810250341
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 65.8,
+          "weight": 0.1,
+          "return": -0.1347622351116814
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-04-30",
+      "entry_date": "2025-05-01",
+      "exit_date": "2025-06-02",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.6000000000000001,
+      "turnover": 0.3063209223064043,
+      "transaction_cost": 0.00030632092230640427,
+      "gross_return": 0.02379933501477316,
+      "net_return": 0.023493014092466756,
+      "spy_return": 0.048878362981773726,
+      "equal_weight_return": 0.03777421760094343,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 83.2,
+          "weight": 0.1,
+          "return": 0.09950085681729282
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 79.6,
+          "weight": 0.1,
+          "return": 0.05148580846902884
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 78.9,
+          "weight": 0.1,
+          "return": 0.055454627432893755
+        },
+        {
+          "symbol": "ABT",
+          "sector": "Healthcare",
+          "score": 73.9,
+          "weight": 0.1,
+          "return": 0.025946037518620013
+        },
+        {
+          "symbol": "JNJ",
+          "sector": "Healthcare",
+          "score": 67.0,
+          "weight": 0.1,
+          "return": 0.0051892727432159
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 65.0,
+          "weight": 0.1,
+          "return": 0.0004167471666802758
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-05-30",
+      "entry_date": "2025-06-02",
+      "exit_date": "2025-07-01",
+      "universe_size": 93,
+      "eligible_count": 3,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.6092984373795983,
+      "transaction_cost": 0.0006092984373795983,
+      "gross_return": 0.0,
+      "net_return": -0.0006092984373795983,
+      "spy_return": 0.05175951002140766,
+      "equal_weight_return": 0.054657750902034535,
+      "selected": [
+        {
+          "symbol": "ABT",
+          "sector": "Healthcare",
+          "score": 73.9,
+          "weight": 0.0,
+          "return": 0.02017151638096637
+        },
+        {
+          "symbol": "GILD",
+          "sector": "Healthcare",
+          "score": 70.0,
+          "weight": 0.0,
+          "return": 0.027935838613124542
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 66.3,
+          "weight": 0.0,
+          "return": -0.007431101758952785
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-06-30",
+      "entry_date": "2025-07-01",
+      "exit_date": "2025-08-01",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.5,
+      "transaction_cost": 0.0005,
+      "gross_return": -0.021695966032405114,
+      "net_return": -0.022195966032405114,
+      "spy_return": 0.016126918783393895,
+      "equal_weight_return": -0.0063125504521833985,
+      "selected": [
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 75.8,
+          "weight": 0.1,
+          "return": 0.009481094477247431
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 74.5,
+          "weight": 0.1,
+          "return": -0.09516250725357878
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 74.4,
+          "weight": 0.1,
+          "return": -0.027471565861944658
+        },
+        {
+          "symbol": "ABT",
+          "sector": "Healthcare",
+          "score": 71.7,
+          "weight": 0.1,
+          "return": -0.07014012618342702
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 65.6,
+          "weight": 0.1,
+          "return": -0.033666555502348094
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-07-31",
+      "entry_date": "2025-08-01",
+      "exit_date": "2025-09-02",
+      "universe_size": 93,
+      "eligible_count": 4,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.4889114399618617,
+      "transaction_cost": 0.0004889114399618616,
+      "gross_return": 0.0,
+      "net_return": -0.0004889114399618616,
+      "spy_return": 0.017882790900053624,
+      "equal_weight_return": 0.0253749568134199,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 83.4,
+          "weight": 0.0,
+          "return": 0.017857617864569963
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 72.6,
+          "weight": 0.0,
+          "return": 0.056326039074192424
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 71.7,
+          "weight": 0.0,
+          "return": 0.016927123330426896
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 69.9,
+          "weight": 0.0,
+          "return": -0.009949999310818414
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-08-29",
+      "entry_date": "2025-09-02",
+      "exit_date": "2025-10-01",
+      "universe_size": 93,
+      "eligible_count": 6,
+      "position_count": 6,
+      "invested_weight": 0.55,
+      "turnover": 0.55,
+      "transaction_cost": 0.00055,
+      "gross_return": 0.025445833363240848,
+      "net_return": 0.02489583336324085,
+      "spy_return": 0.04315072119045049,
+      "equal_weight_return": 0.03290527541312784,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 80.7,
+          "weight": 0.1,
+          "return": -0.03874729280148148
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 71.6,
+          "weight": 0.1,
+          "return": -0.005596203373105624
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 69.8,
+          "weight": 0.1,
+          "return": -0.025765088122951862
+        },
+        {
+          "symbol": "MSFT",
+          "sector": "Technology",
+          "score": 67.8,
+          "weight": 0.08333333333333333,
+          "return": 0.028633045155666004
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 67.4,
+          "weight": 0.08333333333333333,
+          "return": 0.27113864977611235
+        },
+        {
+          "symbol": "NVDA",
+          "sector": "Technology",
+          "score": 66.2,
+          "weight": 0.08333333333333333,
+          "return": 0.08970860658415858
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-09-30",
+      "entry_date": "2025-10-01",
+      "exit_date": "2025-11-03",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.1918553520453637,
+      "transaction_cost": 0.00019185535204536367,
+      "gross_return": -0.01593325794871796,
+      "net_return": -0.016125113300763324,
+      "spy_return": 0.033928005720840426,
+      "equal_weight_return": 0.021562377322069448,
+      "selected": [
+        {
+          "symbol": "BKNG",
+          "sector": "Consumer Disc.",
+          "score": 78.3,
+          "weight": 0.1,
+          "return": -0.0538864814717912
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 78.2,
+          "weight": 0.1,
+          "return": -0.026435230437518387
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 72.7,
+          "weight": 0.1,
+          "return": 0.002027609751549919
+        },
+        {
+          "symbol": "META",
+          "sector": "Communication",
+          "score": 70.0,
+          "weight": 0.1,
+          "return": -0.09077051071262598
+        },
+        {
+          "symbol": "MSFT",
+          "sector": "Technology",
+          "score": 65.8,
+          "weight": 0.1,
+          "return": 0.009732033383206051
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-10-31",
+      "entry_date": "2025-11-03",
+      "exit_date": "2025-12-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.49190438144698134,
+      "transaction_cost": 0.0004919043814469814,
+      "gross_return": 0.0,
+      "net_return": -0.0004919043814469814,
+      "spy_return": -0.010004818278940175,
+      "equal_weight_return": 0.0075084160422971506,
+      "selected": [
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 69.2,
+          "weight": 0.0,
+          "return": -0.021702402954996924
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 66.4,
+          "weight": 0.0,
+          "return": 0.05237786726191862
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-11-28",
+      "entry_date": "2025-12-01",
+      "exit_date": "2026-01-02",
+      "universe_size": 93,
+      "eligible_count": 3,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.013149802073915806,
+      "equal_weight_return": 0.017950801601019573,
+      "selected": [
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 73.5,
+          "weight": 0.0,
+          "return": 0.08129615402545864
+        },
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 71.0,
+          "weight": 0.0,
+          "return": 0.04212625130672554
+        },
+        {
+          "symbol": "V",
+          "sector": "Financials",
+          "score": 67.8,
+          "weight": 0.0,
+          "return": 0.05085002536955163
+        }
+      ]
+    },
+    {
+      "signal_date": "2025-12-31",
+      "entry_date": "2026-01-02",
+      "exit_date": "2026-02-02",
+      "universe_size": 93,
+      "eligible_count": 4,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": 0.005643786778186444,
+      "equal_weight_return": 0.0371903539325755,
+      "selected": [
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 73.4,
+          "weight": 0.0,
+          "return": 0.11139075390485331
+        },
+        {
+          "symbol": "JNJ",
+          "sector": "Healthcare",
+          "score": 70.4,
+          "weight": 0.0,
+          "return": 0.10395520631279398
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 68.1,
+          "weight": 0.0,
+          "return": 0.015301452010389571
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 65.2,
+          "weight": 0.0,
+          "return": 0.07387267366329975
+        }
+      ]
+    },
+    {
+      "signal_date": "2026-01-30",
+      "entry_date": "2026-02-02",
+      "exit_date": "2026-03-02",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.015777733465529575,
+      "equal_weight_return": 0.010518424567115364,
+      "selected": [
+        {
+          "symbol": "MA",
+          "sector": "Financials",
+          "score": 69.6,
+          "weight": 0.0,
+          "return": -0.058245015514097775
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 67.5,
+          "weight": 0.0,
+          "return": 0.13399788787599531
+        }
+      ]
+    },
+    {
+      "signal_date": "2026-02-27",
+      "entry_date": "2026-03-02",
+      "exit_date": "2026-04-01",
+      "universe_size": 93,
+      "eligible_count": 2,
+      "position_count": 0,
+      "invested_weight": 0.0,
+      "turnover": 0.0,
+      "transaction_cost": 0.0,
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "spy_return": -0.03390917808025162,
+      "equal_weight_return": -0.03513182711299846,
+      "selected": [
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 70.3,
+          "weight": 0.0,
+          "return": 0.006244080183803069
+        },
+        {
+          "symbol": "GOOGL",
+          "sector": "Communication",
+          "score": 66.6,
+          "weight": 0.0,
+          "return": -0.040184923890672186
+        }
+      ]
+    },
+    {
+      "signal_date": "2026-03-31",
+      "entry_date": "2026-04-01",
+      "exit_date": "2026-05-01",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.5,
+      "transaction_cost": 0.0005,
+      "gross_return": 0.01816755438081368,
+      "net_return": 0.01766755438081368,
+      "spy_return": 0.10299734048914799,
+      "equal_weight_return": 0.07644951452331794,
+      "selected": [
+        {
+          "symbol": "JNJ",
+          "sector": "Healthcare",
+          "score": 72.1,
+          "weight": 0.1,
+          "return": -0.06734533819100108
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 71.9,
+          "weight": 0.1,
+          "return": 0.10952986331427339
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 70.8,
+          "weight": 0.1,
+          "return": 0.16762455523400632
+        },
+        {
+          "symbol": "GILD",
+          "sector": "Healthcare",
+          "score": 70.7,
+          "weight": 0.1,
+          "return": -0.0693679366101364
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 65.9,
+          "weight": 0.1,
+          "return": 0.04123440006099455
+        }
+      ]
+    },
+    {
+      "signal_date": "2026-04-30",
+      "entry_date": "2026-05-01",
+      "exit_date": "2026-06-01",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.408921691868222,
+      "transaction_cost": 0.000408921691868222,
+      "gross_return": -0.011839451712454275,
+      "net_return": -0.012248373404322497,
+      "spy_return": 0.04729289090034916,
+      "equal_weight_return": 0.036273998310158345,
+      "selected": [
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 74.3,
+          "weight": 0.1,
+          "return": -0.030464888009337776
+        },
+        {
+          "symbol": "COP",
+          "sector": "Energy",
+          "score": 72.6,
+          "weight": 0.1,
+          "return": -0.06752128186294137
+        },
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 71.5,
+          "weight": 0.1,
+          "return": -0.03495603267555869
+        },
+        {
+          "symbol": "BMY",
+          "sector": "Healthcare",
+          "score": 71.1,
+          "weight": 0.1,
+          "return": -0.043652126704722516
+        },
+        {
+          "symbol": "PM",
+          "sector": "Consumer Stap.",
+          "score": 65.9,
+          "weight": 0.1,
+          "return": 0.058199812128017614
+        }
+      ]
+    },
+    {
+      "signal_date": "2026-05-29",
+      "entry_date": "2026-06-01",
+      "exit_date": "2026-07-01",
+      "universe_size": 93,
+      "eligible_count": 5,
+      "position_count": 5,
+      "invested_weight": 0.5,
+      "turnover": 0.30422421410491707,
+      "transaction_cost": 0.00030422421410491703,
+      "gross_return": 0.06811141924198383,
+      "net_return": 0.06780719502787891,
+      "spy_return": -0.011174391690643826,
+      "equal_weight_return": 0.012719283470382927,
+      "selected": [
+        {
+          "symbol": "EOG",
+          "sector": "Energy",
+          "score": 76.2,
+          "weight": 0.1,
+          "return": -0.0444444444444444
+        },
+        {
+          "symbol": "UNP",
+          "sector": "Industrials",
+          "score": 73.8,
+          "weight": 0.1,
+          "return": 0.04062418703654491
+        },
+        {
+          "symbol": "KO",
+          "sector": "Consumer Stap.",
+          "score": 73.1,
+          "weight": 0.1,
+          "return": 0.04641729838316011
+        },
+        {
+          "symbol": "KLAC",
+          "sector": "Technology",
+          "score": 71.1,
+          "weight": 0.1,
+          "return": 0.5038845194435739
+        },
+        {
+          "symbol": "JNJ",
+          "sector": "Healthcare",
+          "score": 65.0,
+          "weight": 0.1,
+          "return": 0.13463263200100362
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "son_guncelleme": "2026-10-12T01:29:16.465349",
+  "lider": "Baseline (v3.1)",
+  "vix": 14.84000015258789,
+  "baseline_return": 0.0033297741604410916,
+  "challenger_return": -0.001293718929089853,
+  "status": "COLLECTING_GENUINELY_NEW_DATA",
+  "mature_cohorts": 2,
+  "required_cohorts": 3
+}

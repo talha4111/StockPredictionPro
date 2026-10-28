@@ -1,0 +1,43 @@
+name: Alim ve Satis Avcisi Telegram Alarm
+
+on:
+  schedule:
+    # Sadece ABD Borsası açıkken (Pazartesi-Cuma, 13:30-20:30 UTC / 16:30-23:30 TSİ) her 20 dakikada bir çalışır
+    - cron: '*/20 13-20 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scan_dips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Minimal Dependencies
+        run: |
+          pip install --quiet yfinance pandas numpy requests
+
+      - name: Run Dip & Exit Hunter Scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python web/scripts/alim_avcisi_tarayici.py
+
+      - name: Persist Alert State (Tekrarlı mesajları önle)
+        run: |
+          if [ -f web/data/dip_alert_state.json ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add web/data/dip_alert_state.json
+            git diff --staged --quiet || (git commit -m "Update dip alert state [skip ci]" && git pull --rebase origin main && git push)
+          fi
