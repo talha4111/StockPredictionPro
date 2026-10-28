@@ -1,0 +1,6504 @@
+{
+  "schema": 2,
+  "started_at": 1788337401.6078222,
+  "updated_at": 1790892259.6479197,
+  "config": {
+    "label_schema_version": 5,
+    "horizon_minutes": 60,
+    "threshold": 0.6,
+    "target_min_return": 0.0015,
+    "notional_usdt": 100.0,
+    "round_trip_cost_rate": 0.001,
+    "trade_mode": "LONG_ONLY",
+    "acceptance": {
+      "min_common_observations": 500,
+      "min_signals": 50,
+      "min_profit_factor": 1.2,
+      "min_brier_skill": 0.0,
+      "min_positive_regimes": 2,
+      "min_regime_signals": 10,
+      "requires_positive_net_pnl": true
+    }
+  },
+  "pending": {
+    "BTC/USDT": {
+      "created_at": 1790891297.8462856,
+      "probabilities": {
+        "450_8": 0.4829990149892356,
+        "400_5": 0.47457978545632673,
+        "200_3": 0.4746712582893186
+      },
+      "regime": "BULL",
+      "entry_price": 84629.4
+    },
+    "SOXL/USDT": {
+      "created_at": 1790891334.0705688,
+      "probabilities": {
+        "450_8": 0.484996072240913,
+        "400_5": 0.48321212032525085,
+        "200_3": 0.47906667568146033
+      },
+      "regime": "BULL",
+      "entry_price": 153.7
+    },
+    "SNDK/USDT": {
+      "created_at": 1790891374.5197823,
+      "probabilities": {
+        "450_8": 0.519899650307598,
+        "400_5": 0.5181904648250258,
+        "200_3": 0.5215499638301874
+      },
+      "regime": "BULL",
+      "entry_price": 1787.25
+    },
+    "ZEC/USDT": {
+      "created_at": 1790891409.2312799,
+      "probabilities": {
+        "450_8": 0.5687635315328082,
+        "400_5": 0.5285170658592275,
+        "200_3": 0.5379243469933548
+      },
+      "regime": "YUKSEK_RISK",
+      "entry_price": 1325.79
+    },
+    "MOVR/USDT": {
+      "created_at": 1790891448.9687834,
+      "probabilities": {
+        "450_8": 0.4602218537044329,
+        "400_5": 0.46140379819491384,
+        "200_3": 0.4645350107778411
+      },
+      "regime": "BULL",
+      "entry_price": 2.9457
+    },
+    "CL/USDT": {
+      "created_at": 1790891539.0048165,
+      "probabilities": {
+        "450_8": 0.3833606893947204,
+        "400_5": 0.38260014110931234,
+        "200_3": 0.3803329015046261
+      },
+      "regime": "BULL",
+      "entry_price": 93.31
+    },
+    "NEAR/USDT": {
+      "created_at": 1790891599.1364799,
+      "probabilities": {
+        "450_8": 0.5006684972819203,
+        "400_5": 0.5028122338337112,
+        "200_3": 0.5029787896648334
+      },
+      "regime": "BULL",
+      "entry_price": 4.863
+    },
+    "MU/USDT": {
+      "created_at": 1790891640.0823686,
+      "probabilities": {
+        "450_8": 0.4915806033357545,
+        "400_5": 0.49557120989996306,
+        "200_3": 0.4988836628094444
+      },
+      "regime": "BEAR",
+      "entry_price": 1097.76
+    },
+    "QNT/USDT": {
+      "created_at": 1790891708.6574738,
+      "probabilities": {
+        "450_8": 0.4989711813768624,
+        "400_5": 0.48586227569369794,
+        "200_3": 0.49253904871307463
+      },
+      "regime": "YUKSEK_RISK",
+      "entry_price": 254.49
+    },
+    "XRP/USDT": {
+      "created_at": 1790891751.8837025,
+      "probabilities": {
+        "450_8": 0.47459574230031687,
+        "400_5": 0.472510095309609,
+        "200_3": 0.472889899560089
+      },
+      "regime": "BEAR",
+      "entry_price": 1.5006
+    },
+    "SKHYNIX/USDT": {
+      "created_at": 1790891787.9126737,
+      "probabilities": {
+        "450_8": 0.47401931802460917,
+        "400_5": 0.4810379058559096,
+        "200_3": 0.48578187897758757
+      },
+      "regime": "BULL",
+      "entry_price": 1362.76
+    },
+    "HYPE/USDT": {
+      "created_at": 1790891823.603772,
+      "probabilities": {
+        "450_8": 0.4954336515226762,
+        "400_5": 0.49529583968005914,
+        "200_3": 0.4961585393214588
+      },
+      "regime": "BULL",
+      "entry_price": 87.698
+    },
+    "XAG/USDT": {
+      "created_at": 1790891860.5789647,
+      "probabilities": {
+        "450_8": 0.46488970103036176,
+        "400_5": 0.46140034726403556,
+        "200_3": 0.4604677877196808
+      },
+      "regime": "YATAY",
+      "entry_price": 61.04
+    },
+    "BZ/USDT": {
+      "created_at": 1790891891.4820862,
+      "probabilities": {
+        "450_8": 0.39564577878701784,
+        "400_5": 0.39207238079305456,
+        "200_3": 0.38910047550515275
+      },
+      "regime": "BULL",
+      "entry_price": 102.63
+    },
+    "KORU/USDT": {
+      "created_at": 1790891918.638436,
+      "probabilities": {
+        "450_8": 0.5673688906125712,
+        "400_5": 0.566673733820046,
+        "200_3": 0.564159577975066
+      },
+      "regime": "YATAY",
+      "entry_price": 21.1
+    },
+    "SUI/USDT": {
+      "created_at": 1790891988.1778996,
+      "probabilities": {
+        "450_8": 0.46176913173137535,
+        "400_5": 0.4634876786267405,
+        "200_3": 0.46348584452413455
+      },
+      "regime": "YATAY",
+      "entry_price": 1.1887
+    },
+    "ENA/USDT": {
+      "created_at": 1790892025.6051755,
+      "probabilities": {
+        "450_8": 0.528832824711059,
+        "400_5": 0.5185582490905398,
+        "200_3": 0.5294874093450744
+      },
+      "regime": "BEAR",
+      "entry_price": 0.24644
+    },
+    "WLD/USDT": {
+      "created_at": 1790892081.2635515,
+      "probabilities": {
+        "450_8": 0.4518100807959714,
+        "400_5": 0.45134779370886424,
+        "200_3": 0.4513515763507181
+      },
+      "regime": "BULL",
+      "entry_price": 0.5012
+    },
+    "PUMP/USDT": {
+      "created_at": 1790892157.156673,
+      "probabilities": {
+        "450_8": 0.49772763127046366,
+        "400_5": 0.4549136575391391,
+        "200_3": 0.45756914259617676
+      },
+      "regime": "YATAY",
+      "entry_price": 0.005866
+    },
+    "MSTR/USDT": {
+      "created_at": 1790892194.1932151,
+      "probabilities": {
+        "450_8": 0.44878042561689996,
+        "400_5": 0.4420263317211172,
+        "200_3": 0.44146031869273267
+      },
+      "regime": "BULL",
+      "entry_price": 160.78
+    },
+    "AAVE/USDT": {
+      "created_at": 1790892202.2706983,
+      "probabilities": {
+        "450_8": 0.4922901089694761,
+        "400_5": 0.49764173646763105,
+        "200_3": 0.4951573117675492
+      },
+      "regime": "BULL",
+      "entry_price": 169.32
+    },
+    "CRCL/USDT": {
+      "created_at": 1790892209.1708179,
+      "probabilities": {
+        "450_8": 0.4708115940146453,
+        "400_5": 0.4622356635017896,
+        "200_3": 0.46117093993825986
+      },
+      "regime": "YATAY",
+      "entry_price": 83.0
+    },
+    "US/USDT": {
+      "created_at": 1790892218.3007326,
+      "probabilities": {
+        "450_8": 0.53681481409102,
+        "400_5": 0.5407510363869713,
+        "200_3": 0.5412154118232478
+      },
+      "regime": "BULL",
+      "entry_price": 0.024746
+    },
+    "BTW/USDT": {
+      "created_at": 1790892224.6369584,
+      "probabilities": {
+        "450_8": 0.6033177734897127,
+        "400_5": 0.6015123967654502,
+        "200_3": 0.6037137712580147
+      },
+      "regime": "YATAY",
+      "entry_price": 1.4336
+    },
+    "TRUMP/USDT": {
+      "created_at": 1790892244.4833941,
+      "probabilities": {
+        "450_8": 0.4950606737371008,
+        "400_5": 0.4905007048743608,
+        "200_3": 0.4987318213225927
+      },
+      "regime": "BULL",
+      "entry_price": 2.063
+    },
+    "ADA/USDT": {
+      "created_at": 1790892252.3207428,
+      "probabilities": {
+        "450_8": 0.46319506824903034,
+        "400_5": 0.4693018493942447,
+        "200_3": 0.4714472390502778
+      },
+      "regime": "YATAY",
+      "entry_price": 0.248
+    },
+    "INTC/USDT": {
+      "created_at": 1790892259.6479197,
+      "probabilities": {
+        "450_8": 0.5175460947674294,
+        "400_5": 0.5186709080991995,
+        "200_3": 0.5167805141220538
+      },
+      "regime": "BULL",
+      "entry_price": 120.11
+    }
+  },
+  "models": {
+    "450_8": {
+      "evaluated": 2987,
+      "correct": 1639,
+      "brier_sum": 736.75299029549,
+      "actual_positives": 1369,
+      "signals": 15,
+      "wins": 12,
+      "gross_pnl": 26.814799326565552,
+      "gross_profit": 27.932228319073797,
+      "gross_loss": -2.617428992508242,
+      "cost": 1.5000000000000002,
+      "net_pnl": 25.31479932656556
+    },
+    "400_5": {
+      "evaluated": 2987,
+      "correct": 1645,
+      "brier_sum": 737.7392254505489,
+      "actual_positives": 1369,
+      "signals": 10,
+      "wins": 10,
+      "gross_pnl": 18.44300316175127,
+      "gross_profit": 17.443003161751268,
+      "gross_loss": 0.0,
+      "cost": 0.9999999999999999,
+      "net_pnl": 17.443003161751268
+    },
+    "200_3": {
+      "evaluated": 2987,
+      "correct": 1646,
+      "brier_sum": 737.980782289234,
+      "actual_positives": 1369,
+      "signals": 10,
+      "wins": 10,
+      "gross_pnl": 18.44300316175127,
+      "gross_profit": 17.443003161751268,
+      "gross_loss": 0.0,
+      "cost": 0.9999999999999999,
+      "net_pnl": 17.443003161751268
+    }
+  },
+  "regimes": {
+    "BEAR": {
+      "450_8": {
+        "evaluated": 315,
+        "correct": 195,
+        "brier_sum": 75.52786688382194,
+        "actual_positives": 119,
+        "signals": 4,
+        "wins": 2,
+        "gross_pnl": 6.278593408258839,
+        "gross_profit": 8.443777892648637,
+        "gross_loss": -2.5651844843897993,
+        "cost": 0.4,
+        "net_pnl": 5.878593408258838
+      },
+      "400_5": {
+        "evaluated": 315,
+        "correct": 192,
+        "brier_sum": 75.71219873125783,
+        "actual_positives": 119,
+        "signals": 1,
+        "wins": 1,
+        "gross_pnl": 6.9881487535758,
+        "gross_profit": 6.8881487535758,
+        "gross_loss": 0.0,
+        "cost": 0.1,
+        "net_pnl": 6.8881487535758
+      },
+      "200_3": {
+        "evaluated": 315,
+        "correct": 191,
+        "brier_sum": 75.74457320291245,
+        "actual_positives": 119,
+        "signals": 1,
+        "wins": 1,
+        "gross_pnl": 6.9881487535758,
+        "gross_profit": 6.8881487535758,
+        "gross_loss": 0.0,
+        "cost": 0.1,
+        "net_pnl": 6.8881487535758
+      }
+    },
+    "BULL": {
+      "450_8": {
+        "evaluated": 1849,
+        "correct": 988,
+        "brier_sum": 459.03951580700095,
+        "actual_positives": 916,
+        "signals": 10,
+        "wins": 10,
+        "gross_pnl": 20.48845042642516,
+        "gross_profit": 19.48845042642516,
+        "gross_loss": 0.0,
+        "cost": 0.9999999999999999,
+        "net_pnl": 19.48845042642516
+      },
+      "400_5": {
+        "evaluated": 1849,
+        "correct": 998,
+        "brier_sum": 459.6671990046861,
+        "actual_positives": 916,
+        "signals": 9,
+        "wins": 9,
+        "gross_pnl": 11.454854408175468,
+        "gross_profit": 10.55485440817547,
+        "gross_loss": 0.0,
+        "cost": 0.8999999999999999,
+        "net_pnl": 10.55485440817547
+      },
+      "200_3": {
+        "evaluated": 1849,
+        "correct": 994,
+        "brier_sum": 459.6615459824988,
+        "actual_positives": 916,
+        "signals": 9,
+        "wins": 9,
+        "gross_pnl": 11.454854408175468,
+        "gross_profit": 10.55485440817547,
+        "gross_loss": 0.0,
+        "cost": 0.8999999999999999,
+        "net_pnl": 10.55485440817547
+      }
+    },
+    "YATAY": {
+      "450_8": {
+        "evaluated": 171,
+        "correct": 106,
+        "brier_sum": 41.670327648502244,
+        "actual_positives": 61,
+        "signals": 0,
+        "wins": 0,
+        "gross_pnl": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "cost": 0.0,
+        "net_pnl": 0.0
+      },
+      "400_5": {
+        "evaluated": 171,
+        "correct": 96,
+        "brier_sum": 41.96234572546784,
+        "actual_positives": 61,
+        "signals": 0,
+        "wins": 0,
+        "gross_pnl": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "cost": 0.0,
+        "net_pnl": 0.0
+      },
+      "200_3": {
+        "evaluated": 171,
+        "correct": 101,
+        "brier_sum": 41.98020712743135,
+        "actual_positives": 61,
+        "signals": 0,
+        "wins": 0,
+        "gross_pnl": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "cost": 0.0,
+        "net_pnl": 0.0
+      }
+    },
+    "YUKSEK_RISK": {
+      "450_8": {
+        "evaluated": 652,
+        "correct": 350,
+        "brier_sum": 160.51527995616408,
+        "actual_positives": 273,
+        "signals": 1,
+        "wins": 0,
+        "gross_pnl": 0.04775549188155687,
+        "gross_profit": 0.0,
+        "gross_loss": -0.05224450811844313,
+        "cost": 0.1,
+        "net_pnl": -0.05224450811844313
+      },
+      "400_5": {
+        "evaluated": 652,
+        "correct": 359,
+        "brier_sum": 160.39748198913597,
+        "actual_positives": 273,
+        "signals": 0,
+        "wins": 0,
+        "gross_pnl": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "cost": 0.0,
+        "net_pnl": 0.0
+      },
+      "200_3": {
+        "evaluated": 652,
+        "correct": 360,
+        "brier_sum": 160.59445597639194,
+        "actual_positives": 273,
+        "signals": 0,
+        "wins": 0,
+        "gross_pnl": 0.0,
+        "gross_profit": 0.0,
+        "gross_loss": 0.0,
+        "cost": 0.0,
+        "net_pnl": 0.0
+      }
+    }
+  },
+  "recent": [
+    {
+      "symbol": "LIT/USDT",
+      "created_at": 1790613908.0161898,
+      "settled_at": 1790674343.0220525,
+      "hold_minutes": 1007.25,
+      "entry_price": 4.3452,
+      "exit_price": 4.4289,
+      "market_return_pct": 1.9263,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.538867,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.542851,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.534185,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790674367.6042907,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 78.99,
+      "entry_price": 83947.0,
+      "exit_price": 84009.2,
+      "market_return_pct": 0.0741,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.476345,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473875,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472331,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790674377.0411217,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 78.84,
+      "entry_price": 1423.32,
+      "exit_price": 1419.64,
+      "market_return_pct": -0.2586,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.563699,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.539584,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.546244,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOL/USDT",
+      "created_at": 1790674395.992594,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 78.52,
+      "entry_price": 119.48,
+      "exit_price": 119.41,
+      "market_return_pct": -0.0586,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.503977,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.496321,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.497184,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "QNT/USDT",
+      "created_at": 1790674405.3082166,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 78.37,
+      "entry_price": 263.81,
+      "exit_price": 261.96,
+      "market_return_pct": -0.7013,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.480287,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.478227,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.477239,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOXL/USDT",
+      "created_at": 1790674419.1331935,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 78.14,
+      "entry_price": 143.95,
+      "exit_price": 145.03,
+      "market_return_pct": 0.7503,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.518682,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.512079,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.509712,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CL/USDT",
+      "created_at": 1790674427.7761767,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 77.99,
+      "entry_price": 93.42,
+      "exit_price": 92.0,
+      "market_return_pct": -1.52,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.409242,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.417413,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.418622,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SNDK/USDT",
+      "created_at": 1790674435.9339619,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 77.86,
+      "entry_price": 1732.08,
+      "exit_price": 1733.36,
+      "market_return_pct": 0.0739,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.494994,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.494558,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.495979,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "NEAR/USDT",
+      "created_at": 1790674446.997258,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 77.67,
+      "entry_price": 4.748,
+      "exit_price": 4.753,
+      "market_return_pct": 0.1053,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.498431,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.499407,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.499375,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790674456.2836018,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 77.52,
+      "entry_price": 0.11686,
+      "exit_price": 0.11771,
+      "market_return_pct": 0.7274,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.456447,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.457561,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454822,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XAG/USDT",
+      "created_at": 1790674464.8679202,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 77.37,
+      "entry_price": 60.87,
+      "exit_price": 60.91,
+      "market_return_pct": 0.0657,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.465377,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462593,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.46135,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "created_at": 1790674472.4379346,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 77.25,
+      "entry_price": 88.484,
+      "exit_price": 88.228,
+      "market_return_pct": -0.2893,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.496846,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.49391,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.493399,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BZ/USDT",
+      "created_at": 1790674480.396618,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 77.11,
+      "entry_price": 98.73,
+      "exit_price": 97.21,
+      "market_return_pct": -1.5396,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.406619,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.371471,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.372519,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SKHYNIX/USDT",
+      "created_at": 1790674491.5038044,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 76.93,
+      "entry_price": 1309.2,
+      "exit_price": 1313.92,
+      "market_return_pct": 0.3605,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.451532,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.470921,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.462778,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SUI/USDT",
+      "created_at": 1790674499.801555,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 76.79,
+      "entry_price": 1.1526,
+      "exit_price": 1.1675,
+      "market_return_pct": 1.2927,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.462965,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462414,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.461288,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "DOGE/USDT",
+      "created_at": 1790674509.757968,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 76.62,
+      "entry_price": 0.09502,
+      "exit_price": 0.09492,
+      "market_return_pct": -0.1052,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.489006,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.485495,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.485137,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PUMP/USDT",
+      "created_at": 1790674517.2712057,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 76.5,
+      "entry_price": 0.005011,
+      "exit_price": 0.005063,
+      "market_return_pct": 1.0377,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.483446,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.517934,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.508197,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MU/USDT",
+      "created_at": 1790674525.6802506,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 76.36,
+      "entry_price": 1072.23,
+      "exit_price": 1072.67,
+      "market_return_pct": 0.041,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.56401,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.533087,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.527664,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "UNI/USDT",
+      "created_at": 1790674533.6929088,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 76.23,
+      "entry_price": 8.937,
+      "exit_price": 9.022,
+      "market_return_pct": 0.9511,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.460252,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.4574,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454153,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "KORU/USDT",
+      "created_at": 1790674543.8844693,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 76.06,
+      "entry_price": 20.94,
+      "exit_price": 20.95,
+      "market_return_pct": 0.0478,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.605964,
+          "direction_correct": false,
+          "signal": true,
+          "net_pnl": -0.052245
+        },
+        "400_5": {
+          "probability": 0.584391,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.587269,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "WLD/USDT",
+      "created_at": 1790674566.64022,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 75.68,
+      "entry_price": 0.5023,
+      "exit_price": 0.4974,
+      "market_return_pct": -0.9755,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.458111,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.457298,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.459907,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SAMSUNG/USDT",
+      "created_at": 1790674577.2370722,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 75.5,
+      "entry_price": 201.55,
+      "exit_price": 202.2,
+      "market_return_pct": 0.3225,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.497594,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.505539,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.506588,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ENA/USDT",
+      "created_at": 1790674589.22832,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 75.3,
+      "entry_price": 0.25169,
+      "exit_price": 0.25004,
+      "market_return_pct": -0.6556,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.54089,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.537511,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.543509,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "created_at": 1790674605.0182686,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 75.04,
+      "entry_price": 11.451,
+      "exit_price": 11.517,
+      "market_return_pct": 0.5764,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.473338,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.474255,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.473922,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "INTC/USDT",
+      "created_at": 1790674615.1387303,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 74.87,
+      "entry_price": 116.34,
+      "exit_price": 116.62,
+      "market_return_pct": 0.2407,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.51706,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.519237,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.519282,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "NMR/USDT",
+      "created_at": 1790674631.594997,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 74.59,
+      "entry_price": 12.744,
+      "exit_price": 13.166,
+      "market_return_pct": 3.3114,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.494859,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.501946,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.498331,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XLM/USDT",
+      "created_at": 1790674650.7293553,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 74.28,
+      "entry_price": 0.23044,
+      "exit_price": 0.22927,
+      "market_return_pct": -0.5077,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.479973,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.469821,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.468779,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTW/USDT",
+      "created_at": 1790674660.6484811,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 74.11,
+      "entry_price": 1.2235,
+      "exit_price": 1.309,
+      "market_return_pct": 6.9881,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.612002,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 6.888149
+        },
+        "400_5": {
+          "probability": 0.61475,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 6.888149
+        },
+        "200_3": {
+          "probability": 0.622068,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 6.888149
+        }
+      }
+    },
+    {
+      "symbol": "ONDO/USDT",
+      "created_at": 1790674671.7406027,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 73.93,
+      "entry_price": 0.5243,
+      "exit_price": 0.5219,
+      "market_return_pct": -0.4578,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.475533,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.475136,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472785,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CRCL/USDT",
+      "created_at": 1790674683.198728,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 73.73,
+      "entry_price": 86.68,
+      "exit_price": 86.63,
+      "market_return_pct": -0.0577,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.470074,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462159,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.460052,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ADA/USDT",
+      "created_at": 1790674700.1502953,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 73.45,
+      "entry_price": 0.2521,
+      "exit_price": 0.2511,
+      "market_return_pct": -0.3967,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.47181,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.453306,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.452618,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "TAO/USDT",
+      "created_at": 1790674711.6369267,
+      "settled_at": 1790679107.2538393,
+      "hold_minutes": 73.26,
+      "entry_price": 313.7,
+      "exit_price": 313.44,
+      "market_return_pct": -0.0829,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.488813,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.484281,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.487335,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BNB/USDT",
+      "created_at": 1790676236.6408322,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 125.69,
+      "entry_price": 766.18,
+      "exit_price": 766.35,
+      "market_return_pct": 0.0222,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.493542,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.500753,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.492125,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AAVE/USDT",
+      "created_at": 1790676317.9877987,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 124.34,
+      "entry_price": 163.8,
+      "exit_price": 171.36,
+      "market_return_pct": 4.6154,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.539901,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.519659,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.521855,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790679126.80111,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 77.52,
+      "entry_price": 83947.0,
+      "exit_price": 84272.9,
+      "market_return_pct": 0.3882,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.476345,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473875,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472331,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790679143.3997335,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 77.25,
+      "entry_price": 1423.32,
+      "exit_price": 1448.42,
+      "market_return_pct": 1.7635,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.563699,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.539584,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.546244,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOL/USDT",
+      "created_at": 1790679160.1290405,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 76.97,
+      "entry_price": 119.48,
+      "exit_price": 119.97,
+      "market_return_pct": 0.4101,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.503977,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.496321,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.497184,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOXL/USDT",
+      "created_at": 1790679177.635169,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 76.67,
+      "entry_price": 143.95,
+      "exit_price": 147.27,
+      "market_return_pct": 2.3064,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.518682,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.512079,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.509712,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CL/USDT",
+      "created_at": 1790679187.4328117,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 76.51,
+      "entry_price": 93.42,
+      "exit_price": 91.04,
+      "market_return_pct": -2.5476,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.409242,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.417413,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.418622,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SNDK/USDT",
+      "created_at": 1790679197.3680553,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 76.35,
+      "entry_price": 1732.08,
+      "exit_price": 1736.76,
+      "market_return_pct": 0.2702,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.494994,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.494558,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.495979,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XAG/USDT",
+      "created_at": 1790679205.968228,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 76.2,
+      "entry_price": 60.87,
+      "exit_price": 61.06,
+      "market_return_pct": 0.3121,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.465377,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462593,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.46135,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790679215.2792122,
+      "settled_at": 1790683778.1234248,
+      "hold_minutes": 76.05,
+      "entry_price": 0.11686,
+      "exit_price": 0.11821,
+      "market_return_pct": 1.1552,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.456447,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.457561,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454822,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790683798.361733,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 92.2,
+      "entry_price": 84310.8,
+      "exit_price": 84158.5,
+      "market_return_pct": -0.1806,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.465741,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.478214,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.477811,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790683809.5618482,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 92.02,
+      "entry_price": 1448.99,
+      "exit_price": 1447.96,
+      "market_return_pct": -0.0711,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.503554,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.501507,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.501657,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOL/USDT",
+      "created_at": 1790683825.0278199,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 91.76,
+      "entry_price": 120.08,
+      "exit_price": 121.08,
+      "market_return_pct": 0.8328,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.503001,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.500211,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.501032,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOXL/USDT",
+      "created_at": 1790683838.2204998,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 91.54,
+      "entry_price": 146.82,
+      "exit_price": 147.09,
+      "market_return_pct": 0.1839,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.499631,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.495476,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.490443,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CL/USDT",
+      "created_at": 1790683846.4288197,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 91.4,
+      "entry_price": 91.18,
+      "exit_price": 90.74,
+      "market_return_pct": -0.4826,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.458148,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460938,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.469244,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SNDK/USDT",
+      "created_at": 1790683853.856282,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 91.28,
+      "entry_price": 1736.59,
+      "exit_price": 1701.56,
+      "market_return_pct": -2.0172,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.49413,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.491143,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.489267,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XAG/USDT",
+      "created_at": 1790683860.969329,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 91.16,
+      "entry_price": 61.03,
+      "exit_price": 61.07,
+      "market_return_pct": 0.0655,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.465433,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.459955,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.460378,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790683868.8471498,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 91.03,
+      "entry_price": 0.11849,
+      "exit_price": 0.11329,
+      "market_return_pct": -4.3886,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.464683,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.46475,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.462741,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "created_at": 1790683877.0911639,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 90.89,
+      "entry_price": 88.572,
+      "exit_price": 88.155,
+      "market_return_pct": -0.4708,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.493429,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.497278,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.497548,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BZ/USDT",
+      "created_at": 1790683884.2860005,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 90.77,
+      "entry_price": 96.48,
+      "exit_price": 96.38,
+      "market_return_pct": -0.1036,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.456539,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.442108,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.469156,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SKHYNIX/USDT",
+      "created_at": 1790683891.1738694,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 90.66,
+      "entry_price": 1315.72,
+      "exit_price": 1306.56,
+      "market_return_pct": -0.6962,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.47368,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.498577,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.486916,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PUMP/USDT",
+      "created_at": 1790683901.309164,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 90.49,
+      "entry_price": 0.005607,
+      "exit_price": 0.005839,
+      "market_return_pct": 4.1377,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.51474,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.517088,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.513122,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SUI/USDT",
+      "created_at": 1790683910.6639552,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 90.33,
+      "entry_price": 1.1802,
+      "exit_price": 1.1618,
+      "market_return_pct": -1.5591,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.45928,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460188,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.4597,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "DOGE/USDT",
+      "created_at": 1790683919.2217128,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 90.19,
+      "entry_price": 0.09571,
+      "exit_price": 0.0958,
+      "market_return_pct": 0.094,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.484123,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.487242,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.484988,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MU/USDT",
+      "created_at": 1790683927.4785674,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 90.05,
+      "entry_price": 1073.01,
+      "exit_price": 1061.23,
+      "market_return_pct": -1.0978,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.540253,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.548363,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.5478,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "KORU/USDT",
+      "created_at": 1790683934.2567978,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 89.94,
+      "entry_price": 21.14,
+      "exit_price": 20.83,
+      "market_return_pct": -1.4664,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.630358,
+          "direction_correct": false,
+          "signal": true,
+          "net_pnl": -1.566414
+        },
+        "400_5": {
+          "probability": 0.586037,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.59229,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "created_at": 1790683942.9685907,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 89.79,
+      "entry_price": 11.841,
+      "exit_price": 11.653,
+      "market_return_pct": -1.5877,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.474603,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.476905,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.47661,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "WLD/USDT",
+      "created_at": 1790683952.410781,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 89.64,
+      "entry_price": 0.5051,
+      "exit_price": 0.4974,
+      "market_return_pct": -1.5245,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.454831,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.455122,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.456666,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SAMSUNG/USDT",
+      "created_at": 1790683960.9077888,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 89.5,
+      "entry_price": 203.89,
+      "exit_price": 202.36,
+      "market_return_pct": -0.7504,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.445045,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462211,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.446858,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "INTC/USDT",
+      "created_at": 1790683968.7966044,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 89.36,
+      "entry_price": 117.02,
+      "exit_price": 114.73,
+      "market_return_pct": -1.9569,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.521904,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.518309,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.51762,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AAVE/USDT",
+      "created_at": 1790683991.3184147,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 88.99,
+      "entry_price": 171.28,
+      "exit_price": 172.58,
+      "market_return_pct": 0.759,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.494113,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.506901,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.502655,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XLM/USDT",
+      "created_at": 1790684000.329632,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 88.84,
+      "entry_price": 0.23357,
+      "exit_price": 0.23203,
+      "market_return_pct": -0.6593,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.472032,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.470845,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472006,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ONDO/USDT",
+      "created_at": 1790684010.5727408,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 88.67,
+      "entry_price": 0.5241,
+      "exit_price": 0.5164,
+      "market_return_pct": -1.4692,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.462187,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460422,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.45675,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ADA/USDT",
+      "created_at": 1790684025.507196,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 88.42,
+      "entry_price": 0.2538,
+      "exit_price": 0.2519,
+      "market_return_pct": -0.7486,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.457292,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.454992,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454894,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTW/USDT",
+      "created_at": 1790684096.7720683,
+      "settled_at": 1790689330.6182046,
+      "hold_minutes": 87.23,
+      "entry_price": 1.2884,
+      "exit_price": 1.3061,
+      "market_return_pct": 1.3738,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.614844,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 1.273797
+        },
+        "400_5": {
+          "probability": 0.614678,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 1.273797
+        },
+        "200_3": {
+          "probability": 0.614099,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 1.273797
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790689338.604801,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 108.42,
+      "entry_price": 84310.8,
+      "exit_price": 83038.3,
+      "market_return_pct": -1.5093,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.465741,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.478214,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.477811,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790689349.8613613,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 108.23,
+      "entry_price": 1448.99,
+      "exit_price": 1398.27,
+      "market_return_pct": -3.5004,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.503554,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.501507,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.501657,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOL/USDT",
+      "created_at": 1790689359.7989848,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 108.06,
+      "entry_price": 120.08,
+      "exit_price": 118.49,
+      "market_return_pct": -1.3241,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.503001,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.500211,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.501032,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOXL/USDT",
+      "created_at": 1790689378.317364,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 107.75,
+      "entry_price": 146.82,
+      "exit_price": 148.96,
+      "market_return_pct": 1.4576,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.499631,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.495476,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.490443,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CL/USDT",
+      "created_at": 1790689386.71509,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 107.61,
+      "entry_price": 91.18,
+      "exit_price": 91.45,
+      "market_return_pct": 0.2961,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.458148,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460938,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.469244,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SNDK/USDT",
+      "created_at": 1790689395.4204173,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 107.47,
+      "entry_price": 1736.59,
+      "exit_price": 1715.03,
+      "market_return_pct": -1.2415,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.49413,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.491143,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.489267,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XAG/USDT",
+      "created_at": 1790689410.473577,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 107.22,
+      "entry_price": 61.03,
+      "exit_price": 60.86,
+      "market_return_pct": -0.2786,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.465433,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.459955,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.460378,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790689420.9120839,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 107.04,
+      "entry_price": 0.11849,
+      "exit_price": 0.11274,
+      "market_return_pct": -4.8527,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.464683,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.46475,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.462741,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "created_at": 1790689428.9028268,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 106.91,
+      "entry_price": 88.572,
+      "exit_price": 86.738,
+      "market_return_pct": -2.0706,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.493429,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.497278,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.497548,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BZ/USDT",
+      "created_at": 1790689436.8807414,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 106.78,
+      "entry_price": 96.48,
+      "exit_price": 96.9,
+      "market_return_pct": 0.4353,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.456539,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.442108,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.469156,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SKHYNIX/USDT",
+      "created_at": 1790689443.584001,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 106.67,
+      "entry_price": 1315.72,
+      "exit_price": 1320.24,
+      "market_return_pct": 0.3435,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.47368,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.498577,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.486916,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PUMP/USDT",
+      "created_at": 1790689451.3331313,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 106.54,
+      "entry_price": 0.005607,
+      "exit_price": 0.005696,
+      "market_return_pct": 1.5873,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.51474,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.517088,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.513122,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "DOGE/USDT",
+      "created_at": 1790689461.0533051,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 106.37,
+      "entry_price": 0.09571,
+      "exit_price": 0.09378,
+      "market_return_pct": -2.0165,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.484123,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.487242,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.484988,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SUI/USDT",
+      "created_at": 1790689472.839701,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 106.18,
+      "entry_price": 1.1802,
+      "exit_price": 1.1422,
+      "market_return_pct": -3.2198,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.45928,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460188,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.4597,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MU/USDT",
+      "created_at": 1790689481.538119,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 106.03,
+      "entry_price": 1073.01,
+      "exit_price": 1066.19,
+      "market_return_pct": -0.6356,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.540253,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.548363,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.5478,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "created_at": 1790689490.647621,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 105.88,
+      "entry_price": 11.841,
+      "exit_price": 11.186,
+      "market_return_pct": -5.5316,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.474603,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.476905,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.47661,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "KORU/USDT",
+      "created_at": 1790689498.5333273,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 105.75,
+      "entry_price": 21.14,
+      "exit_price": 20.95,
+      "market_return_pct": -0.8988,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.630358,
+          "direction_correct": false,
+          "signal": true,
+          "net_pnl": -0.99877
+        },
+        "400_5": {
+          "probability": 0.586037,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.59229,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "WLD/USDT",
+      "created_at": 1790689507.0960395,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 105.61,
+      "entry_price": 0.5051,
+      "exit_price": 0.5033,
+      "market_return_pct": -0.3564,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.454831,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.455122,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.456666,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AAVE/USDT",
+      "created_at": 1790689517.8894308,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 105.43,
+      "entry_price": 171.28,
+      "exit_price": 171.29,
+      "market_return_pct": 0.0058,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.494113,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.506901,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.502655,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SAMSUNG/USDT",
+      "created_at": 1790689527.2038627,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 105.27,
+      "entry_price": 203.89,
+      "exit_price": 203.12,
+      "market_return_pct": -0.3777,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.445045,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462211,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.446858,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "INTC/USDT",
+      "created_at": 1790689536.9301522,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 105.11,
+      "entry_price": 117.02,
+      "exit_price": 116.93,
+      "market_return_pct": -0.0769,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.521904,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.518309,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.51762,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BNB/USDT",
+      "created_at": 1790689548.2888112,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 104.92,
+      "entry_price": 767.14,
+      "exit_price": 756.08,
+      "market_return_pct": -1.4417,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.493044,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.509392,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.502708,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ONDO/USDT",
+      "created_at": 1790689563.2453818,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 104.67,
+      "entry_price": 0.5241,
+      "exit_price": 0.5099,
+      "market_return_pct": -2.7094,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.462187,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460422,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.45675,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MSTR/USDT",
+      "created_at": 1790689581.2338169,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 104.37,
+      "entry_price": 161.17,
+      "exit_price": 152.97,
+      "market_return_pct": -5.0878,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.461737,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.459246,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.460119,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTW/USDT",
+      "created_at": 1790689588.591598,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 104.25,
+      "entry_price": 1.2884,
+      "exit_price": 1.3079,
+      "market_return_pct": 1.5135,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.614844,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 1.413505
+        },
+        "400_5": {
+          "probability": 0.614678,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 1.413505
+        },
+        "200_3": {
+          "probability": 0.614099,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 1.413505
+        }
+      }
+    },
+    {
+      "symbol": "1000PEPE/USDT",
+      "created_at": 1790689600.6088278,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 104.05,
+      "entry_price": 0.0043028,
+      "exit_price": 0.004255,
+      "market_return_pct": -1.1109,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.480038,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.480396,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.480151,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XLM/USDT",
+      "created_at": 1790689610.447938,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 103.88,
+      "entry_price": 0.23357,
+      "exit_price": 0.22623,
+      "market_return_pct": -3.1425,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.472032,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.470845,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472006,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ADA/USDT",
+      "created_at": 1790689620.0885663,
+      "settled_at": 1790695843.5078561,
+      "hold_minutes": 103.72,
+      "entry_price": 0.2538,
+      "exit_price": 0.2455,
+      "market_return_pct": -3.2703,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.457292,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.454992,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454894,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790695868.1292038,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 229.25,
+      "entry_price": 84310.8,
+      "exit_price": 83597.7,
+      "market_return_pct": -0.8458,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.458046,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473119,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.473018,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790695880.8716598,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 229.04,
+      "entry_price": 1448.99,
+      "exit_price": 1423.59,
+      "market_return_pct": -1.7529,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.503636,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.508793,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.514657,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOXL/USDT",
+      "created_at": 1790695892.8652918,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 228.84,
+      "entry_price": 146.82,
+      "exit_price": 147.3,
+      "market_return_pct": 0.3269,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.499631,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.495476,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.490443,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CL/USDT",
+      "created_at": 1790695899.5854177,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 228.73,
+      "entry_price": 91.18,
+      "exit_price": 89.31,
+      "market_return_pct": -2.0509,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.458148,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460938,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.469244,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SNDK/USDT",
+      "created_at": 1790695913.6920934,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 228.49,
+      "entry_price": 1736.59,
+      "exit_price": 1719.63,
+      "market_return_pct": -0.9766,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.49413,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.491143,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.489267,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XAG/USDT",
+      "created_at": 1790695929.0882897,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 228.23,
+      "entry_price": 61.03,
+      "exit_price": 61.41,
+      "market_return_pct": 0.6226,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.465433,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.459955,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.460378,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790695941.584216,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 228.03,
+      "entry_price": 0.11849,
+      "exit_price": 0.10529,
+      "market_return_pct": -11.1402,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.463429,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.459762,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.457087,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BZ/USDT",
+      "created_at": 1790695949.9325721,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 227.89,
+      "entry_price": 96.48,
+      "exit_price": 96.03,
+      "market_return_pct": -0.4664,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.456539,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.442108,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.469156,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "created_at": 1790695960.0695505,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 227.72,
+      "entry_price": 88.572,
+      "exit_price": 86.415,
+      "market_return_pct": -2.4353,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.494648,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.494976,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.494983,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SKHYNIX/USDT",
+      "created_at": 1790695974.110487,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 227.48,
+      "entry_price": 1315.72,
+      "exit_price": 1327.91,
+      "market_return_pct": 0.9265,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.47368,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.498577,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.486916,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PUMP/USDT",
+      "created_at": 1790695984.143466,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 227.32,
+      "entry_price": 0.005607,
+      "exit_price": 0.005841,
+      "market_return_pct": 4.1734,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.462161,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.471765,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.469915,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SUI/USDT",
+      "created_at": 1790695993.8091016,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 227.16,
+      "entry_price": 1.1802,
+      "exit_price": 1.1549,
+      "market_return_pct": -2.1437,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.461869,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.461436,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.461563,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "created_at": 1790696002.9237182,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 227.0,
+      "entry_price": 11.841,
+      "exit_price": 11.309,
+      "market_return_pct": -4.4929,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.475665,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.475255,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.475463,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MU/USDT",
+      "created_at": 1790696009.1415045,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 226.9,
+      "entry_price": 1073.01,
+      "exit_price": 1072.01,
+      "market_return_pct": -0.0932,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.540253,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.548363,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.5478,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "KORU/USDT",
+      "created_at": 1790696015.0369315,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 226.8,
+      "entry_price": 21.14,
+      "exit_price": 21.49,
+      "market_return_pct": 1.6556,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.630358,
+          "direction_correct": true,
+          "signal": true,
+          "net_pnl": 1.555629
+        },
+        "400_5": {
+          "probability": 0.586037,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.59229,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "WLD/USDT",
+      "created_at": 1790696024.598115,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 226.64,
+      "entry_price": 0.5051,
+      "exit_price": 0.5007,
+      "market_return_pct": -0.8711,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.442464,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.445217,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.445109,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SAMSUNG/USDT",
+      "created_at": 1790696030.7102911,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 226.54,
+      "entry_price": 203.89,
+      "exit_price": 204.8,
+      "market_return_pct": 0.4463,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.445045,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462211,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.446858,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BNB/USDT",
+      "created_at": 1790696041.0191016,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 226.37,
+      "entry_price": 767.14,
+      "exit_price": 756.16,
+      "market_return_pct": -1.4313,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.47471,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.484571,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.48193,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MSTR/USDT",
+      "created_at": 1790696052.1914792,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 226.18,
+      "entry_price": 161.17,
+      "exit_price": 154.48,
+      "market_return_pct": -4.1509,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.461737,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.459246,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.460119,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "INTC/USDT",
+      "created_at": 1790696059.1045606,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 226.07,
+      "entry_price": 117.02,
+      "exit_price": 116.28,
+      "market_return_pct": -0.6324,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.521904,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.518309,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.51762,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "1000PEPE/USDT",
+      "created_at": 1790696067.8314734,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 225.92,
+      "entry_price": 0.0043028,
+      "exit_price": 0.0042534,
+      "market_return_pct": -1.1481,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.480038,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.480396,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.480151,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XLM/USDT",
+      "created_at": 1790696079.3402753,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 225.73,
+      "entry_price": 0.23357,
+      "exit_price": 0.22318,
+      "market_return_pct": -4.4483,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.475881,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.471936,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472951,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ONDO/USDT",
+      "created_at": 1790696099.2431936,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 225.4,
+      "entry_price": 0.5241,
+      "exit_price": 0.5134,
+      "market_return_pct": -2.0416,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.474421,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.476272,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.475808,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "0G/USDT",
+      "created_at": 1790696109.164802,
+      "settled_at": 1790709623.1753345,
+      "hold_minutes": 225.23,
+      "entry_price": 0.326,
+      "exit_price": 0.3295,
+      "market_return_pct": 1.0736,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.406494,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.406594,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.40082,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790709641.6059592,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 129.51,
+      "entry_price": 83039.2,
+      "exit_price": 83382.1,
+      "market_return_pct": 0.4129,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.468441,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473839,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.473425,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790709674.2610996,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 128.96,
+      "entry_price": 1390.7,
+      "exit_price": 1399.76,
+      "market_return_pct": 0.6515,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.530474,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.517665,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.52025,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "QNT/USDT",
+      "created_at": 1790709703.6893528,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 128.47,
+      "entry_price": 249.43,
+      "exit_price": 267.22,
+      "market_return_pct": 7.1323,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.469864,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.470608,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.46497,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOXL/USDT",
+      "created_at": 1790709713.4170816,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 128.31,
+      "entry_price": 149.38,
+      "exit_price": 147.92,
+      "market_return_pct": -0.9774,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.508764,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.500609,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.508544,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CL/USDT",
+      "created_at": 1790709735.299026,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 127.94,
+      "entry_price": 90.34,
+      "exit_price": 89.41,
+      "market_return_pct": -1.0294,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.469745,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.466954,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.477808,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SNDK/USDT",
+      "created_at": 1790709743.94121,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 127.8,
+      "entry_price": 1713.85,
+      "exit_price": 1728.95,
+      "market_return_pct": 0.8811,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.499181,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.49712,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.496578,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "created_at": 1790709759.8869302,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 127.53,
+      "entry_price": 86.219,
+      "exit_price": 85.818,
+      "market_return_pct": -0.4651,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.494808,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.494976,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.49498,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XAG/USDT",
+      "created_at": 1790709767.2729986,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 127.41,
+      "entry_price": 60.94,
+      "exit_price": 61.48,
+      "market_return_pct": 0.8861,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.473259,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.469024,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.46953,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790709934.5068457,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 124.62,
+      "entry_price": 0.11223,
+      "exit_price": 0.10365,
+      "market_return_pct": -7.645,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.48606,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.479056,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.483537,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SKHYNIX/USDT",
+      "created_at": 1790709969.5478766,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 124.04,
+      "entry_price": 1323.76,
+      "exit_price": 1326.24,
+      "market_return_pct": 0.1873,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.472659,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.47944,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.473594,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PUMP/USDT",
+      "created_at": 1790709991.4804182,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 123.67,
+      "entry_price": 0.005745,
+      "exit_price": 0.005795,
+      "market_return_pct": 0.8703,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.533864,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.507677,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.516254,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SUI/USDT",
+      "created_at": 1790710029.526831,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 123.04,
+      "entry_price": 1.1376,
+      "exit_price": 1.1519,
+      "market_return_pct": 1.257,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.461865,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.461924,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.461972,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "created_at": 1790710044.0901673,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 122.8,
+      "entry_price": 11.207,
+      "exit_price": 11.421,
+      "market_return_pct": 1.9095,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.47312,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.478378,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.478725,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MU/USDT",
+      "created_at": 1790710051.265383,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 122.68,
+      "entry_price": 1070.1,
+      "exit_price": 1072.09,
+      "market_return_pct": 0.186,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.563571,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.542843,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.557373,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "WLD/USDT",
+      "created_at": 1790710080.2733033,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 122.19,
+      "entry_price": 0.4961,
+      "exit_price": 0.4899,
+      "market_return_pct": -1.2497,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.438649,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.44452,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.441997,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "KORU/USDT",
+      "created_at": 1790710091.778386,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 122.0,
+      "entry_price": 21.22,
+      "exit_price": 21.45,
+      "market_return_pct": 1.0839,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.593974,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.582141,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.583422,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "0G/USDT",
+      "created_at": 1790710103.5736356,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 121.81,
+      "entry_price": 0.3453,
+      "exit_price": 0.329,
+      "market_return_pct": -4.7205,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.400603,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.398692,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.396574,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SAMSUNG/USDT",
+      "created_at": 1790710115.4802175,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 121.61,
+      "entry_price": 204.02,
+      "exit_price": 204.8,
+      "market_return_pct": 0.3823,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.436294,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.475851,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.453121,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MSTR/USDT",
+      "created_at": 1790710126.6718574,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 121.42,
+      "entry_price": 153.07,
+      "exit_price": 155.09,
+      "market_return_pct": 1.3197,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.507167,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.519261,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.527714,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "INTC/USDT",
+      "created_at": 1790710148.514959,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 121.06,
+      "entry_price": 116.83,
+      "exit_price": 116.2,
+      "market_return_pct": -0.5392,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.518852,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.518565,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.518387,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ONDO/USDT",
+      "created_at": 1790710162.0495753,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 120.83,
+      "entry_price": 0.5063,
+      "exit_price": 0.5064,
+      "market_return_pct": 0.0198,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.473247,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.476858,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.476359,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ADA/USDT",
+      "created_at": 1790710207.3276184,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 120.08,
+      "entry_price": 0.2441,
+      "exit_price": 0.244,
+      "market_return_pct": -0.041,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.453868,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.454731,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454715,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "TAO/USDT",
+      "created_at": 1790710219.684033,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 119.87,
+      "entry_price": 306.71,
+      "exit_price": 301.79,
+      "market_return_pct": -1.6041,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.487054,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.488149,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.490553,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BZ/USDT",
+      "created_at": 1790710958.8564548,
+      "settled_at": 1790717411.9425063,
+      "hold_minutes": 107.55,
+      "entry_price": 96.56,
+      "exit_price": 95.93,
+      "market_return_pct": -0.6524,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.398294,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.407673,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.42137,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790717433.7591133,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 488.86,
+      "entry_price": 83562.4,
+      "exit_price": 83418.0,
+      "market_return_pct": -0.1728,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.468725,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.475031,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.475181,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790717476.4573684,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 488.15,
+      "entry_price": 1393.4,
+      "exit_price": 1409.99,
+      "market_return_pct": 1.1906,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.510443,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.513006,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.51334,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SOXL/USDT",
+      "created_at": 1790717523.1034214,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 487.37,
+      "entry_price": 146.97,
+      "exit_price": 145.39,
+      "market_return_pct": -1.075,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.453796,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.483243,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.475626,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "QNT/USDT",
+      "created_at": 1790717551.6113317,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 486.9,
+      "entry_price": 265.74,
+      "exit_price": 284.12,
+      "market_return_pct": 6.9165,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.469583,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.476092,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.474796,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CL/USDT",
+      "created_at": 1790717575.5260868,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 486.5,
+      "entry_price": 89.15,
+      "exit_price": 89.54,
+      "market_return_pct": 0.4375,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.44331,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.455931,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454402,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SNDK/USDT",
+      "created_at": 1790717608.7706575,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 485.95,
+      "entry_price": 1730.17,
+      "exit_price": 1725.3,
+      "market_return_pct": -0.2815,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.494215,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.486687,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.483871,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "created_at": 1790717650.9054651,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 485.24,
+      "entry_price": 85.044,
+      "exit_price": 85.916,
+      "market_return_pct": 1.0254,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.494629,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.494989,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.495006,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XAG/USDT",
+      "created_at": 1790717681.2043989,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 484.74,
+      "entry_price": 61.52,
+      "exit_price": 61.16,
+      "market_return_pct": -0.5852,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.475544,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.477876,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.479225,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BZ/USDT",
+      "created_at": 1790717714.3659043,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 484.19,
+      "entry_price": 95.83,
+      "exit_price": 96.26,
+      "market_return_pct": 0.4487,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.413112,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.409883,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.430443,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PUMP/USDT",
+      "created_at": 1790717744.622291,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 483.68,
+      "entry_price": 0.005867,
+      "exit_price": 0.005738,
+      "market_return_pct": -2.1987,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.466238,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.475151,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.473091,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SKHYNIX/USDT",
+      "created_at": 1790717768.6513014,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 483.28,
+      "entry_price": 1325.99,
+      "exit_price": 1324.3,
+      "market_return_pct": -0.1275,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.493736,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.502392,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.494069,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790717790.6575196,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 482.91,
+      "entry_price": 0.10403,
+      "exit_price": 0.10425,
+      "market_return_pct": 0.2115,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.503122,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.512268,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.51812,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SUI/USDT",
+      "created_at": 1790717857.34734,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 481.8,
+      "entry_price": 1.1455,
+      "exit_price": 1.1608,
+      "market_return_pct": 1.3357,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.461751,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.460918,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.460837,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "created_at": 1790717891.009528,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 481.24,
+      "entry_price": 11.327,
+      "exit_price": 11.285,
+      "market_return_pct": -0.3708,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.472686,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473131,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472944,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MU/USDT",
+      "created_at": 1790717930.9421942,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 480.58,
+      "entry_price": 1066.45,
+      "exit_price": 1072.54,
+      "market_return_pct": 0.5711,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.581675,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.532757,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.54037,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "WLD/USDT",
+      "created_at": 1790717961.855502,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 480.06,
+      "entry_price": 0.4934,
+      "exit_price": 0.5023,
+      "market_return_pct": 1.8038,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.446048,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.447626,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.447456,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "NMR/USDT",
+      "created_at": 1790717988.9195528,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 479.61,
+      "entry_price": 12.698,
+      "exit_price": 11.606,
+      "market_return_pct": -8.5998,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.513968,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.517469,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.515116,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "KORU/USDT",
+      "created_at": 1790718020.5386565,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 479.08,
+      "entry_price": 21.48,
+      "exit_price": 20.63,
+      "market_return_pct": -3.9572,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.597567,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.586269,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.590175,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "0G/USDT",
+      "created_at": 1790718043.409673,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 478.7,
+      "entry_price": 0.3262,
+      "exit_price": 0.3491,
+      "market_return_pct": 7.0202,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.402814,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.40902,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.400743,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MSTR/USDT",
+      "created_at": 1790718065.2447915,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 478.34,
+      "entry_price": 154.85,
+      "exit_price": 154.83,
+      "market_return_pct": -0.0129,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.477858,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.483648,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.490323,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SAMSUNG/USDT",
+      "created_at": 1790718082.627357,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 478.05,
+      "entry_price": 204.91,
+      "exit_price": 199.3,
+      "market_return_pct": -2.7378,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.440937,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.471148,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.462718,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ONDO/USDT",
+      "created_at": 1790718125.5774171,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 477.33,
+      "entry_price": 0.5106,
+      "exit_price": 0.5055,
+      "market_return_pct": -0.9988,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.471188,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.47607,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.475424,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ADA/USDT",
+      "created_at": 1790718168.9130833,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 476.61,
+      "entry_price": 0.2432,
+      "exit_price": 0.2459,
+      "market_return_pct": 1.1102,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.458687,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.454929,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.454907,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "INTC/USDT",
+      "created_at": 1790718190.6396537,
+      "settled_at": 1790746765.4856179,
+      "hold_minutes": 476.25,
+      "entry_price": 116.09,
+      "exit_price": 116.16,
+      "market_return_pct": 0.0603,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.517312,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.519199,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.519141,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790746784.5637147,
+      "settled_at": 1790802469.025855,
+      "hold_minutes": 928.07,
+      "entry_price": 83270.0,
+      "exit_price": 83696.5,
+      "market_return_pct": 0.5122,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.459008,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473374,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.472737,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BTC/USDT",
+      "created_at": 1790802483.325778,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1478.31,
+      "entry_price": 83568.6,
+      "exit_price": 84475.3,
+      "market_return_pct": 1.085,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.477605,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.47353,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.473195,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZEC/USDT",
+      "created_at": 1790802502.0666018,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1478.0,
+      "entry_price": 1418.0,
+      "exit_price": 1322.49,
+      "market_return_pct": -6.7355,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.520106,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.513929,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.516241,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "QNT/USDT",
+      "created_at": 1790802517.2015216,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1477.75,
+      "entry_price": 295.97,
+      "exit_price": 243.27,
+      "market_return_pct": -17.8059,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.448861,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.455781,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.452688,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HYPE/USDT",
+      "created_at": 1790802536.1679342,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1477.43,
+      "entry_price": 88.727,
+      "exit_price": 86.791,
+      "market_return_pct": -2.182,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.494476,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.495075,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.495226,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XRP/USDT",
+      "created_at": 1790802554.329782,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1477.13,
+      "entry_price": 1.4883,
+      "exit_price": 1.4915,
+      "market_return_pct": 0.215,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.469795,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.466102,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.466662,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "MOVR/USDT",
+      "created_at": 1790802572.3864932,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1476.83,
+      "entry_price": 1.737,
+      "exit_price": 2.7902,
+      "market_return_pct": 60.6333,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.456708,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.472927,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.473033,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "SUI/USDT",
+      "created_at": 1790802589.6953084,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1476.54,
+      "entry_price": 1.147,
+      "exit_price": 1.1654,
+      "market_return_pct": 1.6042,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.460991,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.462371,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.462735,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "WLD/USDT",
+      "created_at": 1790802631.3214478,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1475.84,
+      "entry_price": 0.5311,
+      "exit_price": 0.4941,
+      "market_return_pct": -6.9667,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.455034,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.457351,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.45853,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PUMP/USDT",
+      "created_at": 1790802652.5745134,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1475.49,
+      "entry_price": 0.005773,
+      "exit_price": 0.005719,
+      "market_return_pct": -0.9354,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.467457,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473943,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.467565,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "LIT/USDT",
+      "created_at": 1790802674.841088,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1475.12,
+      "entry_price": 3.8385,
+      "exit_price": 3.7793,
+      "market_return_pct": -1.5423,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.57307,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.565056,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.576863,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ARK/USDT",
+      "created_at": 1790802688.7121134,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1474.89,
+      "entry_price": 0.235,
+      "exit_price": 0.2325,
+      "market_return_pct": -1.0638,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.398944,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.403934,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.398599,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "LINK/USDT",
+      "created_at": 1790802702.6930175,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1474.65,
+      "entry_price": 14.233,
+      "exit_price": 14.253,
+      "market_return_pct": 0.1405,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.53516,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.51979,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.526236,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "created_at": 1790802713.3346167,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1474.48,
+      "entry_price": 10.89,
+      "exit_price": 10.872,
+      "market_return_pct": -0.1653,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.480206,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.475861,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.475717,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "AAVE/USDT",
+      "created_at": 1790802724.756709,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1474.29,
+      "entry_price": 158.05,
+      "exit_price": 169.26,
+      "market_return_pct": 7.0927,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.544769,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.535918,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.539245,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ONDO/USDT",
+      "created_at": 1790802741.3467624,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1474.01,
+      "entry_price": 0.4895,
+      "exit_price": 0.4876,
+      "market_return_pct": -0.3882,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.480466,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.473258,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.474508,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ADA/USDT",
+      "created_at": 1790802754.188064,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1473.8,
+      "entry_price": 0.2425,
+      "exit_price": 0.2449,
+      "market_return_pct": 0.9897,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.455971,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.455863,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.455856,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "HBAR/USDT",
+      "created_at": 1790802764.1228318,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1473.63,
+      "entry_price": 0.10845,
+      "exit_price": 0.10257,
+      "market_return_pct": -5.4219,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.515692,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.507178,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.51443,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "TAO/USDT",
+      "created_at": 1790802773.5293517,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1473.47,
+      "entry_price": 299.64,
+      "exit_price": 300.91,
+      "market_return_pct": 0.4238,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.480737,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.477444,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.479436,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ASTER/USDT",
+      "created_at": 1790802780.983052,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1473.35,
+      "entry_price": 0.7563,
+      "exit_price": 0.7337,
+      "market_return_pct": -2.9882,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.497458,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.482465,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.484847,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ARB/USDT",
+      "created_at": 1790802811.748215,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1472.84,
+      "entry_price": 0.20192,
+      "exit_price": 0.19801,
+      "market_return_pct": -1.9364,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.488262,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.497268,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.495318,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XLM/USDT",
+      "created_at": 1790802830.9243023,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1472.52,
+      "entry_price": 0.22654,
+      "exit_price": 0.21823,
+      "market_return_pct": -3.6682,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.469117,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.474344,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.474698,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PENGU/USDT",
+      "created_at": 1790802843.0845423,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1472.31,
+      "entry_price": 0.009611,
+      "exit_price": 0.009356,
+      "market_return_pct": -2.6532,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.506641,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.488543,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.492652,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "LTC/USDT",
+      "created_at": 1790802856.3201997,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1472.09,
+      "entry_price": 66.26,
+      "exit_price": 68.09,
+      "market_return_pct": 2.7618,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.459631,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.46423,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.463923,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "BCH/USDT",
+      "created_at": 1790802879.9037485,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1471.7,
+      "entry_price": 304.73,
+      "exit_price": 307.82,
+      "market_return_pct": 1.014,
+      "regime": "YATAY",
+      "models": {
+        "450_8": {
+          "probability": 0.47931,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.499652,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.500463,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "TRUMP/USDT",
+      "created_at": 1790802890.5490346,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1471.52,
+      "entry_price": 2.025,
+      "exit_price": 2.045,
+      "market_return_pct": 0.9877,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.437301,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.424761,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.424515,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "ZRO/USDT",
+      "created_at": 1790802905.707301,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1471.27,
+      "entry_price": 1.6645,
+      "exit_price": 1.7664,
+      "market_return_pct": 6.122,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.504593,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.5088,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.509186,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "FIL/USDT",
+      "created_at": 1790802925.4679332,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1470.94,
+      "entry_price": 1.0287,
+      "exit_price": 1.0066,
+      "market_return_pct": -2.1483,
+      "regime": "BEAR",
+      "models": {
+        "450_8": {
+          "probability": 0.465359,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.459872,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.456031,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "PHA/USDT",
+      "created_at": 1790802934.9087665,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1470.78,
+      "entry_price": 0.07718,
+      "exit_price": 0.07262,
+      "market_return_pct": -5.9083,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.582209,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.566901,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.590647,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "0G/USDT",
+      "created_at": 1790802952.463847,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1470.49,
+      "entry_price": 0.3163,
+      "exit_price": 0.2944,
+      "market_return_pct": -6.9238,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.363384,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.382924,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.379136,
+          "direction_correct": true,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "XPL/USDT",
+      "created_at": 1790802963.6649606,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1470.3,
+      "entry_price": 0.09173,
+      "exit_price": 0.09462,
+      "market_return_pct": 3.1506,
+      "regime": "YUKSEK_RISK",
+      "models": {
+        "450_8": {
+          "probability": 0.429393,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.43076,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.42367,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "NIGHT/USDT",
+      "created_at": 1790802978.8621922,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1470.05,
+      "entry_price": 0.03751,
+      "exit_price": 0.0388,
+      "market_return_pct": 3.4391,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.48558,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.491077,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.485844,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    },
+    {
+      "symbol": "CRV/USDT",
+      "created_at": 1790802987.9663565,
+      "settled_at": 1790891181.948256,
+      "hold_minutes": 1469.9,
+      "entry_price": 0.3881,
+      "exit_price": 0.3732,
+      "market_return_pct": -3.8392,
+      "regime": "BULL",
+      "models": {
+        "450_8": {
+          "probability": 0.518109,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "400_5": {
+          "probability": 0.508826,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        },
+        "200_3": {
+          "probability": 0.510189,
+          "direction_correct": false,
+          "signal": false,
+          "net_pnl": 0.0
+        }
+      }
+    }
+  ]
+}

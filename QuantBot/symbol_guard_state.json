@@ -1,0 +1,404 @@
+{
+  "symbols": {
+    "INJ/USDT": {
+      "son_pnl": 9.021578,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-29T00:52:46",
+      "ardisik_zarar": 1,
+      "session_pnl": -2.328322,
+      "aktif": false,
+      "karantina_bitis": "2026-09-29T01:52:46",
+      "neden": "24s resmi net -7.62, zarar sayisi 1",
+      "net_pnl": -7.622552,
+      "temizlenme": "2026-09-11T17:58:20",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=+0.00, zarar_sayisi=0"
+    },
+    "COTI/USDT": {
+      "son_pnl": 6.43088,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-10T19:52:57",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "NEAR/USDT": {
+      "son_pnl": 10.767195,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-10-01T00:08:18",
+      "ardisik_zarar": 0,
+      "session_pnl": -13.913747,
+      "aktif": false,
+      "karantina_bitis": "2026-10-01T03:08:18",
+      "neden": "agir sembol zarari -13.91",
+      "net_pnl": -13.913747
+    },
+    "ETHFI/USDT": {
+      "son_pnl": -9.32328,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-11T20:26:57",
+      "ardisik_zarar": 1,
+      "session_pnl": -18.64656,
+      "aktif": false,
+      "karantina_bitis": "2026-09-11T21:26:57",
+      "neden": "24s resmi net -9.32, zarar sayisi 1",
+      "net_pnl": -9.32328
+    },
+    "DASH/USDT": {
+      "son_pnl": 9.481417,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-18T00:23:33",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "TRUMP/USDT": {
+      "son_pnl": -10.548327,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-30T12:52:31",
+      "ardisik_zarar": 1,
+      "session_pnl": -45.309533,
+      "aktif": false,
+      "karantina_bitis": "2026-09-30T13:52:31",
+      "neden": "24s resmi net -10.01, zarar sayisi 1",
+      "net_pnl": -10.00718,
+      "temizlenme": "2026-09-18T02:36:27",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=-0.19, zarar_sayisi=0"
+    },
+    "BTC/USDT": {
+      "son_pnl": 16.614079,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-21T12:28:59",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false,
+      "karantina_bitis": "2026-09-19T10:58:39",
+      "neden": "24s resmi net -22.85",
+      "net_pnl": -22.85046
+    },
+    "XRP/USDT": {
+      "son_pnl": -14.417778,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-30T12:52:31",
+      "ardisik_zarar": 1,
+      "session_pnl": -28.835556,
+      "aktif": false,
+      "karantina_bitis": "2026-09-30T15:52:31",
+      "neden": "24s resmi net -14.18",
+      "net_pnl": -14.1764
+    },
+    "WLD/USDT": {
+      "son_pnl": -7.758989,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-25T17:01:13",
+      "ardisik_zarar": 1,
+      "session_pnl": -19.44996,
+      "aktif": false,
+      "karantina_bitis": "2026-09-25T18:01:13",
+      "neden": "24s resmi net -7.62, zarar sayisi 1",
+      "net_pnl": -7.6156,
+      "temizlenme": "2026-09-25T17:15:15",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=+0.00, zarar_sayisi=0"
+    },
+    "ADA/USDT": {
+      "son_pnl": -15.205644,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-11T20:26:57",
+      "ardisik_zarar": 1,
+      "session_pnl": -15.205644,
+      "aktif": false,
+      "karantina_bitis": "2026-09-11T23:26:57",
+      "neden": "24s resmi net -15.05",
+      "net_pnl": -15.05484
+    },
+    "BNB/USDT": {
+      "son_pnl": -1.573839,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-29T12:42:31",
+      "ardisik_zarar": 1,
+      "session_pnl": -3.147678,
+      "aktif": false,
+      "karantina_bitis": "2026-09-29T15:42:31",
+      "neden": "24s resmi net -16.11",
+      "net_pnl": -16.1084,
+      "temizlenme": "2026-09-29T12:55:02",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=+0.00, zarar_sayisi=0"
+    },
+    "DOT/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-30T13:52:31",
+      "neden": "24s resmi net -9.70, zarar sayisi 1",
+      "net_pnl": -9.6968,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-30T12:52:31",
+      "temizlenme": "2026-09-17T15:26:36",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=+0.00, zarar_sayisi=0",
+      "son_pnl": -9.837424,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "session_pnl": -19.674848
+    },
+    "BCH/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-29T01:52:46",
+      "neden": "24s resmi net -8.39, zarar sayisi 1",
+      "net_pnl": -8.394325,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-29T00:52:46",
+      "temizlenme": "2026-09-18T11:49:10",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=+0.00, zarar_sayisi=0",
+      "son_pnl": -0.76701,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "session_pnl": 0.0
+    },
+    "AVA/USDT": {
+      "son_pnl": 8.064524,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-17T14:30:04",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "UNI/USDT": {
+      "son_pnl": -7.768408,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-24T14:52:08",
+      "ardisik_zarar": 1,
+      "session_pnl": -7.768408,
+      "aktif": false,
+      "karantina_bitis": "2026-09-24T15:52:08",
+      "neden": "24s resmi net -7.70, zarar sayisi 1",
+      "net_pnl": -7.695728
+    },
+    "ARB/USDT": {
+      "son_pnl": -8.5886,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-24T14:52:08",
+      "ardisik_zarar": 1,
+      "session_pnl": -8.5886,
+      "aktif": false,
+      "karantina_bitis": "2026-09-24T15:52:08",
+      "neden": "24s resmi net -8.43, zarar sayisi 1",
+      "net_pnl": -8.43336
+    },
+    "PENGU/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-24T13:14:52",
+      "neden": "24s resmi net -11.48, zarar sayisi 1",
+      "net_pnl": -11.480712,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-24T12:14:52",
+      "son_pnl": -0.003831,
+      "son_kapanma_sebebi": "Binance algo emri"
+    },
+    "LINK/USDT": {
+      "son_pnl": -14.246613,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-30T12:52:31",
+      "ardisik_zarar": 1,
+      "session_pnl": -28.357513,
+      "aktif": false,
+      "karantina_bitis": "2026-09-30T15:52:31",
+      "neden": "24s resmi net -13.91",
+      "net_pnl": -13.91334
+    },
+    "CELR/USDT": {
+      "son_pnl": 4.392623,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-21T13:19:56",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "ZAMA/USDT": {
+      "son_pnl": 5.737819,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-21T12:41:57",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "BANK/USDT": {
+      "son_pnl": 6.284696,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-21T13:30:24",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "VVV/USDT": {
+      "son_pnl": -8.337603,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-21T23:56:18",
+      "ardisik_zarar": 1,
+      "session_pnl": -8.337603,
+      "aktif": false,
+      "karantina_bitis": "2026-09-22T00:56:18",
+      "neden": "24s resmi net -8.24, zarar sayisi 1",
+      "net_pnl": -8.239391
+    },
+    "BR/USDT": {
+      "son_pnl": 3.82724,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-21T14:04:54",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "ENA/USDT": {
+      "son_pnl": 8.101233,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-10-01T00:08:24",
+      "ardisik_zarar": 0,
+      "session_pnl": -9.27105,
+      "aktif": false,
+      "karantina_bitis": "2026-10-01T01:08:24",
+      "neden": "sembol net zarari -9.27",
+      "net_pnl": -9.27105
+    },
+    "ZRO/USDT": {
+      "son_pnl": -0.116389,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-23T16:06:35",
+      "aktif": false
+    },
+    "ETC/USDT": {
+      "son_pnl": -23.780101,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-24T14:52:08",
+      "ardisik_zarar": 1,
+      "session_pnl": -23.780101,
+      "aktif": false,
+      "karantina_bitis": "2026-09-24T17:52:08",
+      "neden": "24s resmi net -23.45",
+      "net_pnl": -23.45356
+    },
+    "MUBARAK/USDT": {
+      "son_pnl": -4.20065,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-23T17:14:24",
+      "ardisik_zarar": 2,
+      "session_pnl": -8.4013,
+      "aktif": false,
+      "karantina_bitis": "2026-09-23T18:14:24",
+      "neden": "sembol net zarari -8.40",
+      "net_pnl": -8.4013
+    },
+    "ASTER/USDT": {
+      "son_pnl": -13.816892,
+      "son_kapanma_sebebi": "🛑 HARD STOP (Zarar: %-4.19, PNL: -13.27$)",
+      "guncelleme": "2026-10-02T01:18:58",
+      "ardisik_zarar": 1,
+      "session_pnl": -13.816892,
+      "aktif": true,
+      "karantina_bitis": "2026-10-02T04:18:58",
+      "neden": "24s resmi net -13.41",
+      "net_pnl": -13.4136
+    },
+    "AAVE/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-30T22:31:55",
+      "neden": "24s resmi net -10.53, zarar sayisi 1",
+      "net_pnl": -10.531,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-30T21:31:55",
+      "son_pnl": -10.713771,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "session_pnl": -10.713771
+    },
+    "APT/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-24T17:52:08",
+      "neden": "24s resmi net -14.22",
+      "net_pnl": -14.21712,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-24T14:52:08"
+    },
+    "SOL/USDT": {
+      "son_pnl": -18.52918,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-24T14:52:08",
+      "ardisik_zarar": 1,
+      "session_pnl": -18.52918,
+      "aktif": false,
+      "karantina_bitis": "2026-09-24T17:52:08",
+      "neden": "24s resmi net -18.09",
+      "net_pnl": -18.088
+    },
+    "ZEC/USDT": {
+      "son_pnl": -10.507471,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-24T14:52:08",
+      "ardisik_zarar": 1,
+      "session_pnl": -10.507471,
+      "aktif": false,
+      "karantina_bitis": "2026-09-24T15:52:08",
+      "neden": "24s resmi net -10.41, zarar sayisi 1",
+      "net_pnl": -10.410969
+    },
+    "ONDO/USDT": {
+      "son_pnl": 10.855493,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-26T18:51:48",
+      "ardisik_zarar": 1,
+      "session_pnl": 0.0,
+      "aktif": false,
+      "karantina_bitis": "2026-09-26T19:51:48",
+      "neden": "24s resmi net -8.36, zarar sayisi 1",
+      "net_pnl": -8.362,
+      "temizlenme": "2026-09-26T19:04:49",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=+0.00, zarar_sayisi=0"
+    },
+    "LSK/USDT": {
+      "son_pnl": 6.915857,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-24T11:49:16",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    },
+    "AVAX/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-25T13:30:55",
+      "neden": "24s resmi net -9.39, zarar sayisi 1",
+      "net_pnl": -9.394,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-25T12:30:55",
+      "temizlenme": "2026-09-25T12:45:46",
+      "temizlenme_nedeni": "resmi zarar artik esik alti: net=+0.00, zarar_sayisi=0"
+    },
+    "TRX/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-26T20:44:12",
+      "neden": "24s resmi net -11.74, zarar sayisi 1",
+      "net_pnl": -11.74149,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-26T19:44:12"
+    },
+    "DOGE/USDT": {
+      "aktif": false,
+      "karantina_bitis": "2026-09-29T03:52:46",
+      "neden": "24s resmi net -15.04",
+      "net_pnl": -15.04268,
+      "ardisik_zarar": 1,
+      "guncelleme": "2026-09-29T00:52:46"
+    },
+    "QNT/USDT": {
+      "son_pnl": -1.243797,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-29T18:30:57",
+      "ardisik_zarar": 2,
+      "session_pnl": -2.487594,
+      "aktif": false,
+      "karantina_bitis": "2026-09-29T19:30:57",
+      "neden": "2 ardisik zarar",
+      "net_pnl": -2.487594
+    },
+    "NMR/USDT": {
+      "son_pnl": 0.359981,
+      "son_kapanma_sebebi": "Binance algo emri",
+      "guncelleme": "2026-09-29T22:45:25",
+      "ardisik_zarar": 0,
+      "session_pnl": 0.0,
+      "aktif": false
+    }
+  }
+}

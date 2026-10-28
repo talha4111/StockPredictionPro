@@ -101,3 +101,8 @@ window_validate_*.err
 sektor_pe_cache.json
 sanal_kasa_*.json
 offline_cache/
+
+QuantBot/.git_backup_local/
+QuantBot/*_meta.json
+QuantBot/backtest_reports/
+

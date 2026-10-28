@@ -1,0 +1,21 @@
+/root/QuantBot/bot.log {
+    daily
+    size 50M
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}
+
+/root/QuantBot/demo_trade_journal.log {
+    daily
+    size 20M
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}

@@ -1,0 +1,51 @@
+# Güvenlik
+.env
+ayar.json
+aktif_detay.json
+aktif_islemler.json
+performans.json
+runtime_status.json
+runtime_status_*.json
+forward_test_report.json
+demo_analysis_report.json
+demo_trade_journal*.jsonl
+
+# AI Modelleri (sunucuda otomatik eğitilir)
+beyin_*.pkl
+beyin_*_meta.json
+stock_beyin_*.pkl
+stock_beyin_*_meta.json
+
+# Veritabanı & Loglar
+*.db
+*.csv
+*.log
+bot_rapor.txt
+nohup.out
+
+# Python cache
+__pycache__/
+*.pyc
+.cache/
+
+# Sanal ortam
+venv/
+
+# Geçici helper scriptler
+kill_zombie_helper.py
+check_db.py
+check_demo_orders*.py
+check_demo_pos*.py
+close_mito.py
+force_close*.py
+get_bal.py
+hard_reset_testnet.py
+repair_aktif_detay.py
+set_demo_offset.py
+tam_bakiye_reset.py
+test_bal.py
+test_demo_bal.py
+test_tsl_precision.py
+testnet_adjust.py
+gunluk_risk.json
+sanal_kasa_kripto.json
