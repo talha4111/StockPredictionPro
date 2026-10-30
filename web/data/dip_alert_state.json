@@ -1,21 +1,21 @@
 {
   "MU": {
-    "state_code": "ALIM_FIRSATI",
+    "state_code": "PUSUDA_IZLE",
     "exit_code": null,
-    "price": 934.26,
-    "timestamp": "2026-10-29T23:05:57.991668"
+    "price": 866.11,
+    "timestamp": "2026-10-30T18:25:18.553925"
   },
   "COHR": {
     "state_code": "PUSUDA_IZLE",
-    "exit_code": null,
-    "price": 210.31,
-    "timestamp": "2026-10-23T17:42:12.551386"
+    "exit_code": "BILANCO_UYARISI",
+    "price": 206.36000061035156,
+    "timestamp": "2026-10-30T18:25:20.612949"
   },
   "MRVL": {
-    "state_code": "ALIM_FIRSATI",
+    "state_code": "PUSUDA_IZLE",
     "exit_code": null,
-    "price": 218.2,
-    "timestamp": "2026-10-29T23:06:00.556138"
+    "price": 191.09,
+    "timestamp": "2026-10-30T18:25:21.270391"
   },
   "RKLB": {
     "state_code": "PUSUDA_IZLE",
