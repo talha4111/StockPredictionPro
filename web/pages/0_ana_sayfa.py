@@ -1,6 +1,6 @@
 """
-Sayfa 0: 📱 Mobil & Ana Kontrol Paneli (Mobile Home)
-Portföy takip kartları, hızlı hisse arama, günün fırsatları ve VIX nabzı.
+Sayfa 0: 🏠 Ana Sayfa & AI Komuta Merkezi
+Portföy takip kartları, hızlı hisse arama, günün fırsatları, aktif piyasa rejimi ve Üçlü Bariyer AI nabzı.
 """
 import json
 import os
@@ -11,6 +11,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+from web.components.dip_hunter import analyze_stock_dip, load_dip_config, save_dip_config
+from web.components.investment_committee import get_market_regime_summary
 from web.components.mobile import (
     COMPANY_NAMES,
     badge_info,
@@ -19,11 +21,26 @@ from web.components.mobile import (
     get_top_opportunities,
     get_vix_status,
 )
-from web.components.investment_committee import get_market_regime_summary
-from web.components.dip_hunter import analyze_stock_dip, load_dip_config, save_dip_config
+from web.components.ui import (
+    ACCENT,
+    AMBER,
+    BLUE,
+    BORDER,
+    CARD,
+    CARD_2,
+    GREEN,
+    MUTED,
+    RED,
+    TEXT,
+    badge,
+    chg_html,
+    esc,
+    page_header,
+    regime_strip,
+    section,
+)
 
 WATCHLIST_PATH = os.path.join(PROJECT_ROOT, "web", "data", "watchlist.json")
-LAST_UPDATE_PATH = os.path.join(PROJECT_ROOT, "web", "data", "last_update.json")
 
 
 def load_watchlist():
@@ -61,167 +78,15 @@ def git_analiz(sembol: str):
         pass
 
 
-# ─── MOBİL ANA SAYFA CSS ───
-st.markdown("""
-<style>
-    /* Üst Başlık & VIX Şeridi */
-    .mobile-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.2rem 0 0.8rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        margin-bottom: 1rem;
-    }
-    .mobile-title {
-        font-size: 1.35rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #64ffda 0%, #00b0ff 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-    }
-    .vix-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    /* Hisse Kartı (Fintech Style) */
-    .stock-card {
-        background: linear-gradient(135deg, #0e1e38 0%, #132744 100%);
-        border: 1px solid rgba(100, 255, 218, 0.12);
-        border-radius: 14px;
-        padding: 12px 14px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: transform 0.15s ease, border-color 0.15s ease;
-    }
-    .stock-card:hover {
-        border-color: rgba(100, 255, 218, 0.4);
-    }
-    .stock-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .stock-symbol {
-        font-size: 1.15rem;
-        font-weight: 800;
-        color: #ffffff;
-        letter-spacing: 0.5px;
-    }
-    .stock-name {
-        font-size: 0.75rem;
-        color: #8892b0;
-        max-width: 130px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .stock-price-col {
-        text-align: right;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    .stock-price {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #f1f5f9;
-    }
-    .stock-change-pos {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #00e676;
-    }
-    .stock-change-neg {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #ff5252;
-    }
-    .stock-badge {
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-align: center;
-        white-space: nowrap;
-        margin-left: 10px;
-    }
-
-    /* Fırsat Yatay Kartları */
-    .opp-card {
-        background: linear-gradient(145deg, #0d1e36 0%, #152d4d 100%);
-        border: 1px solid rgba(0, 230, 118, 0.25);
-        border-radius: 12px;
-        padding: 12px;
-        text-align: center;
-        min-height: 110px;
-    }
-    .opp-sym {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #ffffff;
-    }
-    .opp-score {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #64ffda;
-        margin: 4px 0;
-    }
-    .opp-sub {
-        font-size: 0.72rem;
-        color: #8892b0;
-    }
-
-    /* Model Nabzı Şerit Kartı */
-    .model-strip {
-        background: linear-gradient(135deg, #10233f 0%, #19385c 100%);
-        border: 1px solid rgba(100, 255, 218, 0.15);
-        border-radius: 12px;
-        padding: 12px 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 6px;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# ─── 1. ÜST ŞERİT (App Başlığı + Canlı VIX) ───
+# ─── 1. ÜST BAŞLIK & AKTİF PİYASA REJİMİ ───
 vix_val, vix_text, vix_color = get_vix_status()
-st.markdown(f"""
-<div class="mobile-header">
-    <div class="mobile-title">🏦 StockPredictionPro · AI Komuta Merkezi</div>
-    <div class="vix-pill" style="background: rgba(0,0,0,0.3); color: {vix_color};">
-        <span>VIX {vix_val:.1f}</span>
-        <span>{vix_text.split()[-1]}</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+page_header(
+    "🏦 StockPredictionPro · AI Komuta Merkezi",
+    "Takip ettiğin hisselerin anlık ucuzluk bölgesi, 15 günlük yapay zeka hedef olasılığı ve piyasa yönü tek ekranda.",
+)
 
-# ─── 1B. AKTİF PİYASA REJİMİ & YENİ SİSTEMLERE HIZLI GEÇİŞ ───
 regime_info = get_market_regime_summary()
-rc = regime_info["regime_color"]
-st.markdown(f"""
-<div style="background: #0d1b2a; border-left: 5px solid {rc}; border: 1px solid #233554;
-            border-radius: 10px; padding: 10px 14px; margin-bottom: 0.8rem;">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-        <span style="color:{rc}; font-weight:800; font-size:0.9rem;">🧭 Aktif Piyasa Rejimi: {regime_info['regime_badge']}</span>
-        <span style="color:#8892b0; font-size:0.76rem;">S&P 500 (2H): %{regime_info['spy_2w_ret']:+.1f} | Çip ETF SMH (2H): %{regime_info['smh_2w_ret']:+.1f}</span>
-    </div>
-    <div style="color:#ccd6f6; font-size:0.84rem; margin-top:4px;">{regime_info['summary']}</div>
-    <div style="color:#64ffda; font-size:0.8rem; margin-top:3px;">💡 <b>Oyun Planı:</b> {regime_info['hunter_rule']}</div>
-</div>
-""", unsafe_allow_html=True)
+regime_strip(regime_info)
 
 nav_c1, nav_c2, nav_c3 = st.columns(3)
 with nav_c1:
@@ -231,41 +96,38 @@ with nav_c2:
     if st.button("💼 Portföy & Risk Merkezi", use_container_width=True, key="home_nav_port"):
         st.switch_page("pages/8_portfoy_defteri.py")
 with nav_c3:
-    if st.button("🏛️ Yatırım Komitesi & Analiz", use_container_width=True, key="home_nav_ic"):
+    if st.button("🔍 Hisse Analizi & Komite", use_container_width=True, key="home_nav_ic"):
         st.switch_page("pages/2_tek_hisse_analiz.py")
 
-st.write("")
-
 # ─── 2. HIZLI HİSSE ARAMA ───
-col_s1, col_s2 = st.columns([3, 1])
+section("🔍 Hızlı Hisse Sorgula")
+col_s1, col_s2 = st.columns([3.2, 1])
 with col_s1:
     search_query = st.text_input(
         "Hisse ara",
-        placeholder="🔍 Hisse ara (MU, NVDA, AVGO...)",
+        placeholder="Hisse kodu yazın (Örn: MU, MRVL, COHR, BE, RKLB, VST, AVGO, NVDA...)",
         label_visibility="collapsed",
         key="mobile_search_input",
     )
 with col_s2:
-    if st.button("Analiz", type="primary", use_container_width=True, key="mobile_search_btn"):
+    if st.button("🚀 Analiz Et", type="primary", use_container_width=True, key="mobile_search_btn"):
         if search_query:
             git_analiz(search_query)
 
-# Hızlı hap butonlar
-quick_tickers = ["MU", "NVDA", "AVGO", "BE", "EOG", "COHR"]
+quick_tickers = ["MU", "MRVL", "COHR", "BE", "RKLB", "VST", "AVGO", "NVDA"]
 q_cols = st.columns(len(quick_tickers))
 for idx, q_sym in enumerate(quick_tickers):
     with q_cols[idx]:
         if st.button(q_sym, key=f"q_{q_sym}", use_container_width=True):
             git_analiz(q_sym)
 
-st.write("")
-
-# ─── 3. PORTFÖYÜM & YAPAY ZEKA (ÜÇLÜ BARİYER) CANLI ÖZETİ ───
+# ─── 3. TAKİP LİSTEM & YAPAY ZEKA (ÜÇLÜ BARİYER) CANLI ÖZETİ ───
 dip_cfg = load_dip_config()
 watchlist = dip_cfg.get("symbols") or load_watchlist()
 
-st.markdown("### 💼 Takip Listem & Yapay Zeka (15 Günlük Hedef/Stop) Özeti")
-st.caption("Her hisse için Alım Avcısı ucuzluk bölgesi ve yeni Üçlü Bariyer Yapay Zeka motorunun 15 günlük hedef başarı olasılığı:")
+section("💼 Takip Listem & Yapay Zeka (15 Günlük Hedef / Stop) Özeti")
+st.caption("Her hisse için Alım Avcısı ucuzluk bölgesi ve Üçlü Bariyer Yapay Zeka motorunun 15 günlük hedef başarı olasılığı:")
+
 
 @st.cache_data(ttl=120, show_spinner=False)
 def _home_dip_ai_scan(sym_tuple: tuple, vix_v: float) -> dict[str, dict]:
@@ -275,6 +137,7 @@ def _home_dip_ai_scan(sym_tuple: tuple, vix_v: float) -> dict[str, dict]:
         if r:
             out[s] = r
     return out
+
 
 with st.spinner("Canlı piyasa ve Yapay Zeka (Üçlü Bariyer) olasılıkları hesaplanıyor..."):
     quotes = get_cached_quotes(tuple(watchlist))
@@ -289,61 +152,66 @@ for sym in watchlist:
 
     price = dip_r.get("current_price") or (q["price"] if q["price"] > 0 else (db.get("db_fiyat") or 0.0))
     chg_pct = dip_r.get("daily_change_pct") if dip_r else q["change_pct"]
-    chg_class = "stock-change-pos" if chg_pct >= 0 else "stock-change-neg"
-    chg_sign = "+" if chg_pct >= 0 else ""
 
     if dip_r:
         b_label = dip_r["state_badge"]
         b_color = dip_r["state_color"]
-        b_bg = f"{b_color}22"
     else:
         decision = db.get("decision") or "IZLE"
-        b_label, b_color, b_bg = badge_info(decision)
+        b_label, b_color, _ = badge_info(decision)
     comp_name = COMPANY_NAMES.get(sym, sym)
 
-    ai_sub_html = ""
-    if ai_p.get("available"):
-        wp = ai_p["win_prob_pct"]
-        ac = ai_p["ai_color"]
-        ai_sub_html = (
-            f"<div style='margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.07); "
-            f"display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; font-size:0.78rem;'>"
-            f"<span style='color:{ac}; font-weight:700;'>{ai_p['ai_badge']}</span>"
-            f"<span style='color:#ccd6f6;'>🟢 1. Alım: <b>${dip_r['zone1_low']:.2f}–${dip_r['zone1_high']:.2f}</b> · "
-            f"🎯 Hedef: <b>${dip_r['target1']:.2f}</b> · "
-            f"📊 Geçmiş Benzer Gün: <b>%{ai_p['analog_win_rate_pct']:.0f}</b> ({ai_p['analog_avg_ret_pct']:+.1f}%)</span>"
-            f"</div>"
-        )
+    ai_badge_str = ""
+    sub_row_html = ""
+    if dip_r:
+        if ai_p.get("available"):
+            ac = ai_p.get("ai_color", BLUE)
+            ai_badge_str = badge(ai_p["ai_badge"], ac)
+            sub_row_html = (
+                f"<div style='margin-top:8px; padding-top:8px; border-top:1px solid {BORDER}; "
+                f"display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:0.8rem; color:{TEXT};'>"
+                f"<span>🗣️ {esc(dip_r['headline'])}</span>"
+                f"<span style='color:{MUTED};'>🟢 1. Alım: <b style='color:{GREEN};'>${dip_r['zone1_low']:.2f}–${dip_r['zone1_high']:.2f}</b> · "
+                f"⛔ Stop: <b style='color:{RED};'>${dip_r['stop_level']:.2f}</b> · "
+                f"🎯 Hedef: <b style='color:{BLUE};'>${dip_r['target1']:.2f}</b> · "
+                f"📊 İkiz Kazanma: <b>%{ai_p['analog_win_rate_pct']:.0f}</b> ({ai_p['analog_avg_ret_pct']:+.1f}%)</span>"
+                f"</div>"
+            )
+        else:
+            sub_row_html = (
+                f"<div style='margin-top:8px; padding-top:8px; border-top:1px solid {BORDER}; font-size:0.8rem; color:{MUTED};'>"
+                f"🗣️ {esc(dip_r['headline'])} · 1. Alım: ${dip_r['zone1_low']:.2f}–${dip_r['zone1_high']:.2f} · Hedef: ${dip_r['target1']:.2f}"
+                f"</div>"
+            )
 
-    card_col, btn_col = st.columns([4, 1])
+    card_col, btn_col = st.columns([4.4, 1])
     with card_col:
-        price_str = f"${price:.2f}" if price > 0 else "N/A"
-        chg_str = f"{chg_sign}{chg_pct:.2f}%" if price > 0 else "—"
-        st.markdown(f"""
-        <div class="stock-card" style="display:block;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                <div class="stock-info">
-                    <span class="stock-symbol">{sym} <span style="font-size:0.78rem; color:#8892b0; font-weight:500;">· {comp_name}</span></span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <div class="stock-price-col">
-                        <span class="stock-price">{price_str}</span>
-                        <span class="{chg_class}">{chg_str}</span>
+        price_str = f"${price:,.2f}" if price > 0 else "N/A"
+        st.markdown(
+            f"""
+            <div class="spp-card accent" style="--c:{b_color}; padding:13px 16px; margin-bottom:8px;">
+                <div class="spp-row">
+                    <div>
+                        <span class="spp-sym">{esc(sym)}</span>
+                        <span class="spp-name">· {esc(comp_name)}</span>
+                        <span style="margin-left:12px;" class="spp-price">{price_str}</span>
+                        {chg_html(chg_pct) if price > 0 else ''}
                     </div>
-                    <div class="stock-badge" style="color: {b_color}; background: {b_bg}; border: 1px solid {b_color}60;">
-                        {b_label}
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                        {ai_badge_str}
+                        {badge(b_label, b_color)}
                     </div>
                 </div>
+                {sub_row_html}
             </div>
-            {ai_sub_html}
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
     with btn_col:
-        if st.button("İncele", key=f"detay_{sym}", use_container_width=True):
+        if st.button("🔍 İncele", key=f"detay_{sym}", use_container_width=True):
             git_analiz(sym)
 
-# Takip listesi düzenleme expander'ı
-with st.expander("⚙️ Portföy Listesini Düzenle"):
+with st.expander("⚙️ Takip Listesini Düzenle"):
     new_sym = st.text_input("Yeni hisse ekle (örn: TSLA, AAPL):", key="add_sym_input")
     add_col, rem_col = st.columns(2)
     with add_col:
@@ -364,10 +232,8 @@ with st.expander("⚙️ Portföy Listesini Düzenle"):
                 st.warning(f"{remove_sym} çıkarıldı!")
                 st.rerun()
 
-st.divider()
-
 # ─── 4. BUGÜNÜN FIRSATLARI ───
-st.markdown("### 🎯 Bugünün Fırsatları (AL Adayları)")
+section("🎯 Bugünün Fırsatları (Kurumsal AL Adayları)")
 st.caption("Son kurumsal taramada en yüksek faktör puanını alan fırsat hisseleri:")
 
 opps = get_top_opportunities(limit=4)
@@ -378,44 +244,51 @@ if opps:
             sym = opp["sembol"]
             score = opp["skor"]
             fiyat = opp["fiyat"]
-            st.markdown(f"""
-            <div class="opp-card">
-                <div class="opp-sym">{sym}</div>
-                <div class="opp-score">%{score:.1f}</div>
-                <div class="opp-sub">${fiyat:.2f} · {opp['sektor']}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f"""
+                <div class="spp-card accent" style="--c:{GREEN}; text-align:center; padding:12px;">
+                    <div style="font-size:1.1rem; font-weight:800; color:{TEXT};">{esc(sym)}</div>
+                    <div style="font-size:1.35rem; font-weight:800; color:{ACCENT}; margin:4px 0;">%{score:.1f}</div>
+                    <div class="spp-muted">${fiyat:.2f} · {esc(opp['sektor'])}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             if st.button("Analiz Et", key=f"opp_btn_{sym}", use_container_width=True):
                 git_analiz(sym)
 else:
-    st.info("Henüz taranmış AL adayı bulunamadı. Piyasa Tarayıcı'dan yeni tarama başlatabilirsiniz.")
-
-st.divider()
+    st.info("Henüz taranmış AL adayı bulunamadı. Gelişmiş menüden Piyasa Tarayıcı'yı çalıştırabilirsiniz.")
 
 # ─── 5. YAPAY ZEKA & MODEL NABZI ───
-st.markdown("### 🤖 Hibrit Yapay Zeka (Üçlü Bariyer) & Model Nabzı")
-
-st.markdown("""
-<div class="model-strip">
-    <div>
-        <div style="font-weight: 700; color: #f1f5f9; font-size: 0.95rem;">🏆 Aktif AI Motoru: Hibrit Üçlü Bariyer (Lojistik + Sığ RF + Tarihsel İkizler)</div>
-        <div style="font-size: 0.78rem; color: #8892b0;">20 ABD Hissesi · 2.837 Geçmiş Dip Testi · AI Onaylı Kazanma Oranı: <b>%59.8</b> (Baz: %54.9) · 15G Ort. Getiri: <b>+%2.14</b> (Baz: +%1.03)</div>
+section("🤖 Hibrit Yapay Zeka (Üçlü Bariyer) & Model Nabzı")
+st.markdown(
+    f"""
+    <div class="spp-card accent" style="--c:{ACCENT};">
+        <div class="spp-row">
+            <div>
+                <div style="font-weight:700; color:{TEXT}; font-size:0.95rem;">
+                    🏆 Aktif AI Motoru: Hibrit Üçlü Bariyer (Lojistik + Sığ RF + Tarihsel İkizler)
+                </div>
+                <div class="spp-muted" style="margin-top:4px;">
+                    20 ABD Hissesi · 2.837 Geçmiş Dip Testi · AI Onaylı Kazanma Oranı: <b>%59.8</b> (Baz: %54.9) · 15G Ort. Getiri: <b>+%2.14</b> (Baz: +%1.03)
+                </div>
+            </div>
+            <div>{badge("2.1x Getiri Avantajı", GREEN)}</div>
+        </div>
     </div>
-    <div style="font-size: 1.05rem; color: #00e676; font-weight: 800; white-space: nowrap; margin-left: 8px;">
-        2.1x Getiri Avantajı
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
 m_btn1, m_btn2 = st.columns(2)
 with m_btn1:
-    if st.button("🧪 Model Arenası", use_container_width=True):
+    if st.button("🧪 Model Arenası (Shadow Test)", use_container_width=True):
         try:
             st.switch_page("pages/6_shadow_test.py")
         except Exception:
             pass
 with m_btn2:
-    if st.button("📊 Tüm Piyasayı Tara", use_container_width=True):
+    if st.button("📊 Tüm Piyasayı Tara (S&P 500)", use_container_width=True):
         try:
             st.switch_page("pages/1_piyasa_tarayici.py")
         except Exception:

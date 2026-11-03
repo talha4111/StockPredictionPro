@@ -1,19 +1,22 @@
 """
-Sayfa 8: 💼 Portföy Defteri (FIFO + TL + Vergi)
-Midas uyumlu FIFO lot eritme, Dolar & TL kâr/zarar takibi,
+Sayfa 8: 💼 Portföy & Risk Merkezi (FIFO + Stres Testi + TL + Vergi)
+Midas uyumlu FIFO lot eritme, Dolar & TL kâr/zarar takibi, VaR/Korelasyon risk analizi,
 vergi taslağı ve Google Sheets kalıcı depolama.
 """
 from datetime import datetime
 import os
 import sys
+
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-import plotly.express as px
+from web.components.dip_hunter import analyze_stock_exit, load_dip_config
+from web.components.mobile import get_cached_quotes
 from web.components.portfolio_tracker import (
     add_transaction,
     calculate_fifo_portfolio,
@@ -21,23 +24,38 @@ from web.components.portfolio_tracker import (
     get_current_usdtry,
     load_transactions,
 )
-from web.components.mobile import get_cached_quotes
 from web.components.stress_test import calculate_portfolio_metrics, run_stress_scenarios
+from web.components.ui import (
+    ACCENT,
+    AMBER,
+    BLUE,
+    BORDER,
+    CARD_2,
+    GREEN,
+    MUTED,
+    RED,
+    TEXT,
+    badge,
+    esc,
+    page_header,
+    section,
+    stat_grid,
+)
 
 # ─── SAYFA BAŞLIĞI ───
-st.markdown("## 💼 Gerçek Portföy Defteri (FIFO & Vergi)")
-st.caption("Midas alım/satımlarınızı kaydedin; FIFO lot erimesini, TL bazlı reel getiriyi ve vergi taslağınızı görün.")
+page_header(
+    "💼 Portföy & Risk Merkezi",
+    "Midas alım/satımlarınızı kaydedin; FIFO lot erimesini, yatırım tezinizi, korelasyon/kriz riskini ve vergi taslağınızı tek ekranda yönetin.",
+)
 
-# Anlık Kur
+# Anlık Kur & Portföy Hesabı
 usdtry = get_current_usdtry()
 transactions = load_transactions()
 open_positions, closed_trades = calculate_fifo_portfolio(transactions)
 
-# Canlı Fiyatları Çek
 open_symbols = tuple(open_positions.keys())
 live_quotes = get_cached_quotes(open_symbols) if open_symbols else {}
 
-# Genel Metrikler
 toplam_maliyet_usd = sum(p["toplam_maliyet_usd"] for p in open_positions.values())
 toplam_maliyet_tl = sum(p["toplam_maliyet_tl"] for p in open_positions.values())
 
@@ -54,35 +72,36 @@ unrealized_pct = (unrealized_pnl_usd / toplam_maliyet_usd * 100) if toplam_maliy
 realized_pnl_usd = sum(t["kar_usd"] for t in closed_trades)
 realized_pnl_tl = sum(t["kar_tl"] for t in closed_trades)
 
-# ─── ÜST ÖZET KARTLARI ───
-m1, m2, m3, m4 = st.columns(4)
-with m1:
-    st.metric("Toplam Varlık ($)", f"${toplam_guncel_usd:,.2f}", delta=f"{unrealized_pct:+.2f}%")
-with m2:
-    st.metric("Toplam Varlık (₺)", f"{toplam_guncel_tl:,.0f} ₺", delta=f"{unrealized_pnl_tl:+,.0f} ₺")
-with m3:
-    st.metric("Gerçekleşmiş Kâr ($)", f"${realized_pnl_usd:+,.2f}", help="Kapatılan pozisyonların toplam kâr/zararı")
-with m4:
-    st.metric("Anlık Kur (USD/TRY)", f"{usdtry:.4f} ₺", help="Piyasa kuru")
-
-st.divider()
+# ─── ÜST ÖZET KARTLARI (4'LÜ STAT GRID) ───
+pnl_col = GREEN if unrealized_pnl_usd >= 0 else RED
+real_col = GREEN if realized_pnl_usd >= 0 else RED
+st.markdown(
+    stat_grid([
+        ("💵 Toplam Varlık ($)", f"${toplam_guncel_usd:,.2f}", f"Açık K/Z: {unrealized_pnl_usd:+,.2f}$ ({unrealized_pct:+.2f}%)", pnl_col),
+        ("🇹🇷 Toplam Varlık (₺)", f"{toplam_guncel_tl:,.0f} ₺", f"Açık K/Z: {unrealized_pnl_tl:+,.0f} ₺", pnl_col),
+        ("💰 Gerçekleşmiş Kâr ($)", f"${realized_pnl_usd:+,.2f}", f"TL Karşılığı: {realized_pnl_tl:+,.0f} ₺", real_col),
+        ("💱 Canlı Kur (USD/TRY)", f"{usdtry:.4f} ₺", f"{len(open_positions)} açık hisse · {len(closed_trades)} kapanan işlem", ACCENT),
+    ]),
+    unsafe_allow_html=True,
+)
+st.write("")
 
 # ─── SEKMELER ───
 tab1, tab_stres, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Açık Pozisyonlar & Lotlar",
-    "⚠️ Yoğunlaşma & Stres Testi",
+    "📊 Açık Pozisyonlar & Tez Takibi",
+    "🛡️ Risk, Korelasyon & Stres Testi",
     "➕ Yeni İşlem Ekle",
     "💰 Kapanan İşlemler (FIFO)",
     "📜 Vergi Taslağı",
     "☁️ Bulut Senkronizasyonu",
 ])
 
-# ─── TAB 1: AÇIK POZİSYONLAR & LOT RÖNTGENİ ───
+# ─── TAB 1: AÇIK POZİSYONLAR, FIFO LOT RÖNTGENİ & TEZ TAKİBİ ───
 with tab1:
     if not open_positions:
-        st.info("Henüz açık pozisyonunuz bulunmuyor. '➕ Yeni İşlem Ekle' sekmesinden alımlarınızı kaydedebilirsiniz.")
+        st.info("Henüz açık pozisyonunuz bulunmuyor. '➕ Yeni İşlem Ekle' sekmesinden Midas alımlarınızı kaydedebilirsiniz.")
     else:
-        st.markdown("### 📈 Açık Pozisyon Özeti")
+        section("📈 Açık Pozisyon Özeti")
         summary_rows = []
         for sym, p in open_positions.items():
             cur_p = live_quotes.get(sym, {}).get("price") or p["ortalama_fiyat_usd"]
@@ -105,7 +124,7 @@ with tab1:
 
         st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
 
-        st.markdown("### 🔍 FIFO Lot Röntgeni (Midas Eritme Sırası)")
+        section("🔍 FIFO Lot Röntgeni (Midas Eritme Sırası)")
         st.caption("Midas'ta satış yaptığınızda ilk satılan lot en eski olandır. Aşağıda lotlarınızın bekleme sırasını görebilirsiniz:")
 
         for sym, p in open_positions.items():
@@ -129,16 +148,12 @@ with tab1:
                     })
                 st.dataframe(pd.DataFrame(lot_rows), use_container_width=True, hide_index=True)
 
-        # ─── MOD #6 & #12: YATIRIM TEZİ & OTOMATİK HEDEF TAKİBİ (THESIS MONITOR) ───
-        st.divider()
-        st.markdown("### 🎯 Yatırım Tezi & Otomatik Hedef Takibi (Thesis Monitor)")
+        section("🎯 Yatırım Tezi & Otomatik Hedef Takibi (Thesis Monitor)")
         st.caption("Elindeki hisselerin kâr koruma sınırını, ilk satış hedefini ve yatırım tezinin bozulup bozulmadığını canlı izler.")
 
-        from web.components.dip_hunter import analyze_stock_exit, load_dip_config
         for sym, p in open_positions.items():
             ex_info = analyze_stock_exit(sym, user_pos=p)
             if ex_info:
-                # Son alış notlarını birleştir
                 sym_notes = [
                     t.get("notlar", "").strip()
                     for t in transactions
@@ -146,39 +161,37 @@ with tab1:
                 ]
                 note_text = sym_notes[-1] if sym_notes else "Kademeli büyüme & değerleme tezi"
                 b_col = ex_info["exit_color"]
-                st.markdown(f"""
-                <div style="background:#0d1b2a; border-left:5px solid {b_col}; border:1px solid #233554;
-                            border-radius:10px; padding:12px 15px; margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                        <span style="font-size:1.1rem; font-weight:800; color:#fff;">{sym} — Tez Durumu</span>
-                        <span style="background:{b_col}22; border:1px solid {b_col}; color:{b_col};
-                                     padding:4px 12px; border-radius:16px; font-size:0.8rem; font-weight:700;">
-                            {ex_info['exit_badge']}
-                        </span>
+                st.markdown(
+                    f"""
+                    <div class="spp-card accent" style="--c:{b_col};">
+                        <div class="spp-row">
+                            <span style="font-size:1.1rem; font-weight:800; color:{TEXT};">{esc(sym)} — Tez Durumu</span>
+                            {badge(ex_info['exit_badge'], b_col)}
+                        </div>
+                        <div class="spp-muted" style="margin-top:6px;">
+                            📓 <b>Kayıtlı Alım Notun / Tezin:</b> <i>"{esc(note_text)}"</i>
+                        </div>
+                        <div style="color:{TEXT}; font-size:0.9rem; margin-top:6px;">
+                            {ex_info['action_advice']}
+                        </div>
+                        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:0.84rem; color:{ACCENT};">
+                            <span>💰 <b>1. Kâr Hedefi:</b> ${ex_info['take_profit_1']:.2f}</span>
+                            <span>🔥 <b>2. Ana Zirve Hedefi:</b> ${ex_info['take_profit_2']:.2f}</span>
+                            <span>🛡️ <b>Kâr Koruma / Destek Sınırı:</b> ${ex_info['profit_shield_line']:.2f}</span>
+                        </div>
                     </div>
-                    <div style="color:#8892b0; font-size:0.84rem; margin-top:6px;">
-                        📓 <b>Kayıtlı Alım Notun / Tezin:</b> <i>"{note_text}"</i>
-                    </div>
-                    <div style="color:#ccd6f6; font-size:0.9rem; margin-top:6px;">
-                        {ex_info['action_advice']}
-                    </div>
-                    <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:8px; font-size:0.84rem; color:#64ffda;">
-                        <span>💰 <b>1. Kâr Hedefi:</b> ${ex_info['take_profit_1']:.2f}</span>
-                        <span>🔥 <b>2. Ana Zirve Hedefi:</b> ${ex_info['take_profit_2']:.2f}</span>
-                        <span>🛡️ <b>Kâr Koruma / Destek Sınırı:</b> ${ex_info['profit_shield_line']:.2f}</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-# ─── TAB 2 (STRES): RİSK KOMUTA MERKEZİ, YOĞUNLAŞMA & STRES TESTİ ───
+# ─── TAB 2: RİSK KOMUTA MERKEZİ, YOĞUNLAŞMA & STRES TESTİ ───
 with tab_stres:
     if not open_positions:
         st.info("Risk ve stres testi için henüz açık pozisyonunuz bulunmuyor.")
     else:
-        st.markdown("### 🛡️ Portföy Risk Komuta Merkezi & Stres Testi")
+        section("🛡️ Portföy Risk Komuta Merkezi & Stres Testi")
         st.caption("Portföyünüzün günlük maksimum kayıp riskini (VaR), takip listenizle olan ikiz hareket (korelasyon) tehlikesini ve kriz senaryolarını inceleyin.")
 
-        from web.components.dip_hunter import load_dip_config
         wl_syms = load_dip_config().get("symbols", ["MU", "COHR", "MRVL", "RKLB", "VST", "AVGO"])
 
         with st.spinner("VaR, beklenen kayıp, korelasyon ve pozisyon büyüklükleri hesaplanıyor..."):
@@ -187,36 +200,21 @@ with tab_stres:
         if stress_metrics:
             p_beta = stress_metrics["portfolio_beta"]
             p_val = stress_metrics["total_value_usd"]
-            weights = stress_metrics["weights"]
-            betas = stress_metrics["betas"]
             corr_mat = stress_metrics["correlation_matrix"]
 
             beta_renk = "🟢 Düşük Risk" if p_beta < 1.0 else ("🟡 Piyasa Paralel" if p_beta < 1.35 else "🔴 Yüksek Oynaklık")
+            beta_col = GREEN if p_beta < 1.0 else (AMBER if p_beta < 1.35 else RED)
 
-            r1, r2, r3, r4 = st.columns(4)
-            with r1:
-                st.metric("Portföy Betası (S&P 500)", f"{p_beta:.2f}x", delta=beta_renk)
-            with r2:
-                st.metric(
-                    "Günlük VaR (%95 Güven)",
-                    f"-${stress_metrics['var_95_usd']:,.0f}",
-                    delta=f"{stress_metrics['var_95_pct']:.1f}% (Normal Kötü Gün)",
-                    delta_color="inverse",
-                )
-            with r3:
-                st.metric(
-                    "Kuyruk Riski (Expected Shortfall)",
-                    f"-${stress_metrics['cvar_95_usd']:,.0f}",
-                    delta=f"{stress_metrics['cvar_95_pct']:.1f}% (Sert Satış Günü)",
-                    delta_color="inverse",
-                )
-            with r4:
-                st.metric(
-                    "1 Yıllık Maksimum Düşüş",
-                    f"%{stress_metrics['max_dd_pct']:.1f}",
-                    delta="Zirveden En Derin Çekilme",
-                    delta_color="inverse",
-                )
+            st.markdown(
+                stat_grid([
+                    ("⚖️ Portföy Betası (S&P 500)", f"{p_beta:.2f}x", beta_renk, beta_col),
+                    ("📉 Günlük VaR (%95 Güven)", f"-${stress_metrics['var_95_usd']:,.0f}", f"{stress_metrics['var_95_pct']:.1f}% (Normal Kötü Gün)", AMBER),
+                    ("⚠️ Kuyruk Riski (ES %95)", f"-${stress_metrics['cvar_95_usd']:,.0f}", f"{stress_metrics['cvar_95_pct']:.1f}% (Sert Satış Günü)", RED),
+                    ("🏔️ 1 Yıllık Maks. Düşüş", f"%{stress_metrics['max_dd_pct']:.1f}", "Zirveden En Derin Çekilme", RED),
+                ]),
+                unsafe_allow_html=True,
+            )
+            st.write("")
 
             if stress_metrics.get("high_corr_pairs"):
                 pairs_txt = ", ".join(
@@ -228,37 +226,35 @@ with tab_stres:
                     f"Bu hisselerin hepsine aynı anda yüklü girmek, tek bir hisseye bütün parayı yatırmakla aynı riski taşır!"
                 )
 
-            # Korelasyon Isı Haritası (Portföy + Takip Listesi)
             if not corr_mat.empty and len(corr_mat) >= 2:
-                st.divider()
-                st.markdown("#### 🔥 Portföy & Takip Listesi Korelasyon (İkiz Hareket) Haritası")
+                section("🔥 Portföy & Takip Listesi Korelasyon (İkiz Hareket) Haritası")
                 st.caption("1.00'e yakın koyu kırmızı kutular, iki hissenin aynı anda düştüğünü (ikiz hareket ettiğini) gösterir.")
                 fig_corr = px.imshow(
-                    corr_mat, text_auto=True, aspect="auto",
-                    color_continuous_scale="RdBu_r", zmin=-1, zmax=1,
-                    template="plotly_dark", height=340
+                    corr_mat,
+                    text_auto=True,
+                    aspect="auto",
+                    color_continuous_scale="RdBu_r",
+                    zmin=-1,
+                    zmax=1,
+                    template="plotly_dark",
+                    height=340,
                 )
-                fig_corr.update_layout(margin=dict(l=10, r=10, t=10, b=10))
+                fig_corr.update_layout(margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_corr, use_container_width=True)
 
-            # Volatiliteye Göre Pozisyon Büyüklüğü Önerisi
             if stress_metrics.get("sizing_table"):
-                st.divider()
-                st.markdown("#### 📏 Oynaklığa (Volatiliteye) Göre İdeal Pozisyon Büyüklüğü Rehberi")
+                section("📏 Oynaklığa (Volatiliteye) Göre İdeal Pozisyon Büyüklüğü Rehberi")
                 st.caption("Çok sert dalgalanan (yüksek beta) hisselere portföyde daha küçük pay ayırarak ani düşüşlerde kasanızı koruyun:")
                 st.dataframe(pd.DataFrame(stress_metrics["sizing_table"]), use_container_width=True, hide_index=True)
 
-            # Kriz Simülasyonu
-            st.divider()
-            st.markdown("#### ⚡ Piyasa ve Sektör Şok Stres Testleri")
+            section("⚡ Piyasa ve Sektör Şok Stres Testleri")
             st.caption("Piyasa -%5, Teknoloji/Çip sektörü -%10 veya -%20 düştüğünde mevcut portföyünüzün tahmini dolar ve TL kaybı:")
-
             sc_results = run_stress_scenarios(p_val, p_beta, usdtry)
             st.dataframe(pd.DataFrame(sc_results), use_container_width=True, hide_index=True)
 
 # ─── TAB 3: YENİ İŞLEM EKLE ───
 with tab2:
-    st.markdown("### ➕ Alış veya Satış İşlemi Kaydet")
+    section("➕ Alış veya Satış İşlemi Kaydet")
     with st.form("yeni_islem_formu", clear_on_submit=True):
         f_col1, f_col2, f_col3 = st.columns(3)
         with f_col1:
@@ -275,7 +271,7 @@ with tab2:
         with f_sub1:
             tx_komisyon = st.number_input("Komisyon ($)", min_value=0.0, value=1.50, step=0.5, help="Midas standart komisyonu: $1.50")
         with f_sub2:
-            tx_not = st.text_input("Not (İsteğe bağlı)", placeholder="Örn: 1. Kademe, Bilanço öncesi kâr satışı vb.")
+            tx_not = st.text_input("Not / Yatırım Tezi (İsteğe bağlı)", placeholder="Örn: 1. Kademe dip alımı, Bilanço öncesi kâr satışı vb.")
 
         submitted = st.form_submit_button("💾 İşlemi Deftere Kaydet", type="primary", use_container_width=True)
         if submitted:
@@ -296,9 +292,8 @@ with tab2:
                     st.success(f"✅ {tx_sembol} {tx_tipi} işlemi başarıyla kaydedildi! ({msg})")
                     st.rerun()
 
-    # Mevcut İşlemleri Listele & Silme
     if transactions:
-        st.markdown("#### 📋 Kayıtlı Son İşlemler")
+        section("📋 Kayıtlı Son İşlemler")
         tx_display = []
         for t in reversed(transactions[-15:]):
             tx_display.append({
@@ -321,9 +316,9 @@ with tab2:
                     st.warning("İşlem silindi!")
                     st.rerun()
 
-# ─── TAB 3: KAPANAN İŞLEMLER (FIFO) ───
+# ─── TAB 4: KAPANAN İŞLEMLER (FIFO) ───
 with tab3:
-    st.markdown("### 💰 Kapatılan Pozisyonlar ve FIFO Kâr Analizi")
+    section("💰 Kapatılan Pozisyonlar ve FIFO Kâr Analizi")
     if not closed_trades:
         st.info("Henüz gerçekleşmiş bir satış işleminiz bulunmuyor.")
     else:
@@ -342,14 +337,16 @@ with tab3:
             })
         st.dataframe(pd.DataFrame(closed_rows), use_container_width=True, hide_index=True)
 
-# ─── TAB 4: VERGİ TASLAĞI ───
+# ─── TAB 5: VERGİ TASLAĞI ───
 with tab4:
-    st.markdown("### 📜 Yurt Dışı Hisse Gelir Vergisi Taslağı (Türkiye)")
-    st.info("""
-    ℹ️ **Vergi Mevzuatı Hatırlatması:** Türkiye'de yurt dışı borsalarda elde edilen hisse alım-satım kazançları 'Değer Artış Kazancı' olarak beyan edilir. 
-    Kazanç, satış tarihindeki TCMB alış kuru ile alış tarihindeki TCMB alış kuru arasındaki TL farkı üzerinden hesaplanır. 
-    Eğer iki tarih arasındaki Yİ-ÜFE artışı %10'u aşmışsa maliyet endekslemesi yapılabilir.
-    """)
+    section("📜 Yurt Dışı Hisse Gelir Vergisi Taslağı (Türkiye)")
+    st.info(
+        """
+        ℹ️ **Vergi Mevzuatı Hatırlatması:** Türkiye'de yurt dışı borsalarda elde edilen hisse alım-satım kazançları 'Değer Artış Kazancı' olarak beyan edilir. 
+        Kazanç, satış tarihindeki TCMB alış kuru ile alış tarihindeki TCMB alış kuru arasındaki TL farkı üzerinden hesaplanır. 
+        Eğer iki tarih arasındaki Yİ-ÜFE artışı %10'u aşmışsa maliyet endekslemesi yapılabilir.
+        """
+    )
 
     if not closed_trades:
         st.warning("Vergi hesabı için tamamlanmış (satılmış) bir işlem kaydı bulunmuyor.")
@@ -372,25 +369,30 @@ with tab4:
 
             st.caption("⚠️ *Not: Bu hesaplama genel bilgilendirme amaçlı bir ön taslaktır. Kesin vergi beyanınız için mali müşavirinize danışınız.*")
 
-# ─── TAB 5: BULUT SENKRONİZASYONU (GOOGLE SHEETS) ───
+# ─── TAB 6: BULUT SENKRONİZASYONU (GOOGLE SHEETS) ───
 with tab5:
-    st.markdown("### ☁️ Kalıcı Google Sheets Bağlantısı")
-    st.markdown("""
-    Streamlit Cloud'un sunucusu sıfırlansa dahi portföyünüzün **asla silinmemesi** için Google Sheets entegrasyonu mevcuttur.
-    
-    #### 🚀 3 Adımda Bağlantı:
-    1. Google Drive'ınızda yeni bir Google Sheets (E-Tablo) oluşturun ve adını `StockPredictionPro_Portfoy` yapın.
-    2. İlk çalışma sayfasının (sekmesinin) adını **`Islemler`** yapın.
-    3. Streamlit Cloud panelinizde:
-       * **App Settings → Secrets** kısmına Google Sheets bağlantı bilgilerinizi yapıştırın.
-    """)
+    section("☁️ Kalıcı Google Sheets Bağlantısı")
+    st.markdown(
+        """
+        Streamlit Cloud'un sunucusu sıfırlansa dahi portföyünüzün **asla silinmemesi** için Google Sheets entegrasyonu mevcuttur.
+        
+        #### 🚀 3 Adımda Bağlantı:
+        1. Google Drive'ınızda yeni bir Google Sheets (E-Tablo) oluşturun ve adını `StockPredictionPro_Portfoy` yapın.
+        2. İlk çalışma sayfasının (sekmesinin) adını **`Islemler`** yapın.
+        3. Streamlit Cloud panelinizde:
+           * **App Settings → Secrets** kısmına Google Sheets bağlantı bilgilerinizi yapıştırın.
+        """
+    )
 
-    st.code("""
+    st.code(
+        """
 # Streamlit Cloud Secrets Örneği:
 [connections.gsheets]
 spreadsheet = "https://docs.google.com/spreadsheets/d/TABLO_ID_BURAYA/edit"
 type = "service_account"
 # (Google Cloud Service Account JSON bilgileri)
-    """, language="toml")
+        """,
+        language="toml",
+    )
 
     st.success("💡 **İyi Haber:** Google Sheets bağlamasanız bile sistem tüm işlemlerinizi yerel veritabanında güvenle saklamaya devam eder.")

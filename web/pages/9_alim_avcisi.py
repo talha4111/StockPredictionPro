@@ -4,52 +4,57 @@ Hisselerin hem "Alsam mı, daha da düşer mi?" hem de "Ne zaman satayım, bilan
 kararsızlığını çözen, karmaşık teknik terimler yerine tamamen anlaşılır sohbet diliyle
 yol gösteren akıllı karar modülü.
 """
+import json as _json
 import os
 import sys
+
+import pandas as _pd
 import streamlit as st
+import yfinance as yf
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from web.components.dip_hunter import (
-    load_dip_config,
-    save_dip_config,
     analyze_stock_dip,
     analyze_stock_exit,
-    format_plain_telegram_message,
     format_plain_exit_telegram_message,
+    format_plain_telegram_message,
+    load_dip_config,
+    save_dip_config,
     send_telegram_message,
     sync_and_notify_from_ui,
 )
-from web.components.mobile import get_vix_status
+from web.components.investment_committee import analyze_earnings_catalyst, get_market_regime_summary
+from web.components.mobile import COMPANY_NAMES, get_vix_status
 from web.components.portfolio_tracker import calculate_fifo_portfolio
-from web.components.investment_committee import get_market_regime_summary, analyze_earnings_catalyst
+from web.components.ui import (
+    ACCENT,
+    AMBER,
+    BLUE,
+    BORDER,
+    CARD_2,
+    GREEN,
+    MUTED,
+    RED,
+    TEXT,
+    decision_card,
+    esc,
+    page_header,
+    price_chart_with_levels,
+    prob_bar_html,
+    regime_strip,
+    stat_grid,
+)
 
-st.markdown("""
-<div style="margin-bottom: 0.8rem;">
-    <h2 style="margin: 0; font-size: 1.55rem; font-weight: 800; color: #e6f1ff;">
-        🎯 Alım & Satış Avcısı (Akıllı Zamanlama Asistanı)
-    </h2>
-    <p style="margin: 4px 0 0 0; color: #8892b0; font-size: 0.9rem;">
-        "Şimdi alsam mı?" ve "Ne zaman satıp kârı cebime koymalıyım?" sorularını teknik terime boğmadan çözen takip ve Telegram bildirim merkezi.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+page_header(
+    "🎯 Alım & Satış Avcısı",
+    '"Şimdi alsam mı?" ve "Ne zaman satıp kârı cebime koymalıyım?" sorularını teknik terime boğmadan çözen takip ve Telegram bildirim merkezi.',
+)
 
 regime_info = get_market_regime_summary()
-rc = regime_info["regime_color"]
-st.markdown(f"""
-<div style="background: #0d1b2a; border-left: 5px solid {rc}; border: 1px solid #233554;
-            border-radius: 10px; padding: 10px 14px; margin-bottom: 1rem;">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-        <span style="color:{rc}; font-weight:800; font-size:0.92rem;">🧭 Aktif Piyasa Rejimi: {regime_info['regime_badge']}</span>
-        <span style="color:#8892b0; font-size:0.78rem;">S&P 500 (2H): %{regime_info['spy_2w_ret']:+.1f} | Çip ETF SMH (2H): %{regime_info['smh_2w_ret']:+.1f} | VIX: {regime_info['vix_val']:.1f}</span>
-    </div>
-    <div style="color:#ccd6f6; font-size:0.86rem; margin-top:4px;">{regime_info['summary']}</div>
-    <div style="color:#64ffda; font-size:0.83rem; margin-top:4px;">💡 <b>Bu Rejimde Oyun Planı:</b> {regime_info['hunter_rule']}</div>
-</div>
-""", unsafe_allow_html=True)
+regime_strip(regime_info)
 
 cfg = load_dip_config()
 symbols = cfg.get("symbols", ["MU", "COHR", "MRVL", "RKLB", "VST", "AVGO"])
@@ -117,7 +122,7 @@ with c_top2:
                     chat_id_in,
                     "🎯 *StockPredictionPro — Alım & Satış Avcısı Aktif!*\n\n"
                     "Takip ettiğin hisseler ucuzluk bölgesine indiğinde veya elindeki hisselerde "
-                    "kâr alma / bilanço uyarısı geldiğinde sana buradan sade bir dille haber vereceğim."
+                    "kâr alma / bilanço uyarısı geldiğinde sana buradan sade bir dille haber vereceğim.",
                 )
                 if ok:
                     st.success("Test mesajı telefonuna gönderildi!")
@@ -137,7 +142,6 @@ def _cached_dip_analyses(sym_tuple: tuple, vix: float) -> list[dict]:
 
 @st.cache_data(ttl=120, show_spinner=False)
 def _cached_exit_analyses(sym_tuple: tuple, pos_json: str) -> list[dict]:
-    import json as _json
     pos_map = _json.loads(pos_json) if pos_json else {}
     out = []
     for s in sym_tuple:
@@ -145,6 +149,14 @@ def _cached_exit_analyses(sym_tuple: tuple, pos_json: str) -> list[dict]:
         if r:
             out.append(r)
     return out
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _cached_price_df(sym: str) -> _pd.DataFrame:
+    try:
+        return yf.Ticker(sym).history(period="9mo")
+    except Exception:
+        return _pd.DataFrame()
 
 
 # ─── İKİ ANA SEKME: ALIM AVCISI & SATIŞ/KÂR KORUMA AVCISI ───
@@ -169,40 +181,15 @@ with tab_buy:
     cnt_wait = sum(1 for r in results if r["state_code"] == "BEKLEMEDE")
     cnt_danger = sum(1 for r in results if r["state_code"] == "TEHLIKE")
 
-    k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #00c853;">
-            <h3>🟢 ŞİMDİ ALIM FIRSATI</h3>
-            <h1 style="color: #00c853;">{cnt_buy} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Dipten dönüş başladı</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with k2:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #ffa726;">
-            <h3>🟡 UCUZLUK BÖLGESİNDE</h3>
-            <h1 style="color: #ffa726;">{cnt_watch} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Henüz alma, dönüşü bekle</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with k3:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #29b6f6;">
-            <h3>🔵 BEKLEMEDE</h3>
-            <h1 style="color: #29b6f6;">{cnt_wait} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Fiyat henüz yüksek</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with k4:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #ef5350;">
-            <h3>🔴 TEHLİKE / KIRILIM</h3>
-            <h1 style="color: #ef5350;">{cnt_danger} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Düşen bıçak, uzak dur</span>
-        </div>
-        """, unsafe_allow_html=True)
-
+    st.markdown(
+        stat_grid([
+            ("🟢 Şimdi Alım Fırsatı", f"{cnt_buy} Hisse", "Dipten dönüş başladı", GREEN),
+            ("🟡 Ucuzluk Bölgesinde", f"{cnt_watch} Hisse", "Henüz alma, dönüşü bekle", AMBER),
+            ("🔵 Beklemede", f"{cnt_wait} Hisse", "Fiyat henüz yüksek", BLUE),
+            ("🔴 Tehlike / Kırılım", f"{cnt_danger} Hisse", "Düşen bıçak, uzak dur", RED),
+        ]),
+        unsafe_allow_html=True,
+    )
     st.write("")
 
     b_col1, b_col2 = st.columns([1, 1])
@@ -223,134 +210,95 @@ with tab_buy:
                         sent += 1
                 st.success(f"✅ {sent} hissenin anlaşılır alım raporu telefonuna (Telegram) gönderildi!")
 
-    st.divider()
-
     with st.expander("🤖 Yapay Zeka (Üçlü Bariyer) Motoru Geçmiş Test Karnesi & Nasıl Çalışır?", expanded=False):
-        st.markdown("""
-        **QuantBot** içerisindeki **Üçlü Bariyer (Hedef / Stop / Zaman)** ve **Kalibre Olasılık** yapay zeka motorumuz, canlı sisteme bağlanmadan önce **20 ABD hissesinin 5 yıllık gerçek geçmiş verisinde (hiç görmediği 2.837 dip senaryosu üzerinde)** test edildi ve geliştirildi:
-        - **Yapay Zeka Olmadan (Standart Ucuzluk Bölgesi):** Kazanma oranı **%54.9**, işlem başı 15 günlük ortalama getiri **+%1.03**.
-        - **Yapay Zeka Onaylı İşlemler (15 Volatilite-Nötr Gösterge + Hibrit Lojistik/RF Modeli):** Kazanma oranı **%59.8**, işlem başı 15 günlük ortalama getiri **+%2.14** (**2 kattan fazla getiri artışı!**).
-        - **Neye Bakıyor?** Hissenin sadece düşmüş olmasına değil; S&P 500 ve Çip ETF'ine (SMH) göre direncine, 6 aylık ana gücüne, dipteki hacimli alt fitil tepkisine ve o hissenin kendi geçmişindeki en benzer 25 günde (Tarihsel İkizler) ne yaptığına bakarak **"15 günde önce kâr hedefine mi ulaşır, yoksa stop sınırına mı çarpar?"** sorusuna yüzdelik ihtimal verir.
-        """)
+        st.markdown(
+            """
+            **QuantBot** içerisindeki **Üçlü Bariyer (Hedef / Stop / Zaman)** ve **Kalibre Olasılık** yapay zeka motorumuz, canlı sisteme bağlanmadan önce **20 ABD hissesinin 5 yıllık gerçek geçmiş verisinde (hiç görmediği 2.837 dip senaryosu üzerinde)** test edildi ve geliştirildi:
+            - **Yapay Zeka Olmadan (Standart Ucuzluk Bölgesi):** Kazanma oranı **%54.9**, işlem başı 15 günlük ortalama getiri **+%1.03**.
+            - **Yapay Zeka Onaylı İşlemler (15 Volatilite-Nötr Gösterge + Hibrit Lojistik/RF Modeli):** Kazanma oranı **%59.8**, işlem başı 15 günlük ortalama getiri **+%2.14** (**2 kattan fazla getiri artışı!**).
+            - **Neye Bakıyor?** Hissenin sadece düşmüş olmasına değil; S&P 500 ve Çip ETF'ine (SMH) göre direncine, 6 aylık ana gücüne, dipteki hacimli alt fitil tepkisine ve o hissenin kendi geçmişindeki en benzer 25 günde (Tarihsel İkizler) ne yaptığına bakarak **"15 günde önce kâr hedefine mi ulaşır, yoksa stop sınırına mı çarpar?"** sorusuna yüzdelik ihtimal verir.
+            """
+        )
 
+    st.write("")
     priority_order = {"ALIM_FIRSATI": 0, "PUSUDA_IZLE": 1, "TEHLIKE": 2, "BEKLEMEDE": 3}
     sorted_results = sorted(results, key=lambda x: priority_order.get(x["state_code"], 9))
 
     for res in sorted_results:
         sym = res["symbol"]
+        comp = COMPANY_NAMES.get(sym, "")
         price = res["current_price"]
         chg = res["daily_change_pct"]
-        chg_color = "#00c853" if chg >= 0 else "#ef5350"
-        chg_sign = "+" if chg >= 0 else ""
         border_col = res["state_color"]
         ai_pred = res.get("ai_pred") or {}
-        ai_badge_html = ""
-        if ai_pred.get("available"):
-            ac = ai_pred.get("ai_color", "#64ffda")
-            ai_badge_html = (
-                f"<div style='background:{ac}22; border:1px solid {ac}; color:{ac}; "
-                f"padding:5px 12px; border-radius:20px; font-weight:700; font-size:0.8rem;'>"
-                f"{ai_pred['ai_badge']}</div>"
-            )
 
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #0d1b2a 0%, #16263b 100%);
-                    border-left: 6px solid {border_col};
-                    border-top: 1px solid #233554;
-                    border-right: 1px solid #233554;
-                    border-bottom: 1px solid #233554;
-                    border-radius: 12px;
-                    padding: 1.2rem;
-                    margin-bottom: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div>
-                    <span style="font-size: 1.4rem; font-weight: 800; color: #ffffff;">{sym}</span>
-                    <span style="font-size: 1.25rem; font-weight: 700; color: #64ffda; margin-left: 10px;">${price:.2f}</span>
-                    <span style="font-size: 0.9rem; font-weight: 600; color: {chg_color}; margin-left: 6px;">({chg_sign}%{chg:.2f})</span>
-                </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    {ai_badge_html}
-                    <div style="background: {border_col}22; border: 1px solid {border_col}; color: {border_col};
-                                padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.82rem;">
-                        {res['state_badge']}
-                    </div>
-                </div>
-            </div>
-            <p style="color: #ccd6f6; font-size: 0.95rem; margin: 0.7rem 0 0.4rem 0; font-weight: 600;">
-                🗣️ {res['headline']} <span style="color: #8892b0; font-weight: 400; font-size: 0.82rem;">(Son zirvesi ${res['recent_peak']:.2f} seviyesinden %{abs(res['drop_from_peak_pct']):.1f} uzakta)</span>
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.info(res["action_advice"])
-
+        extra_badges = []
+        footer_html = ""
         if ai_pred.get("available"):
             wp = int(ai_pred.get("win_prob_pct", 50))
             sp = int(ai_pred.get("stop_prob_pct", 50))
-            ac = ai_pred.get("ai_color", "#64ffda")
-            st.markdown(f"""
-            <div style="background:#0a192f; border:1px solid #233554; border-radius:10px; padding:10px 14px; margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:700; margin-bottom:5px;">
-                    <span style="color:#00e676;">🎯 15 Günde Önce Kâr Hedefine (${res['target1']:.2f}) Ulaşma İhtimali: %{wp}</span>
-                    <span style="color:#ef5350;">⛔ Önce Kaçış Sınırına (${res['stop_level']:.2f}) Değme Riski: %{sp}</span>
-                </div>
-                <div style="width:100%; height:10px; background:#ef535055; border-radius:6px; overflow:hidden; display:flex;">
-                    <div style="width:{wp}%; height:100%; background:linear-gradient(90deg, #00c853, {ac});"></div>
-                </div>
-                <div style="color:#ccd6f6; font-size:0.83rem; margin-top:6px;">
-                    📊 <b>Geçmiş Benzer Günler:</b> {sym} son 2 yılda benzer duruma <b>{ai_pred['analog_count']} kez</b> geldi;
-                    bunların <b>%{ai_pred['analog_win_rate_pct']:.0f}'inde</b> yukarı tepki verdi (15 günlük ortalama getiri: <b>%{ai_pred['analog_avg_ret_pct']:+.1f}</b>).
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            ac = ai_pred.get("ai_color", BLUE)
+            extra_badges.append((ai_pred.get("ai_badge", "AI"), ac))
+            footer_html = (
+                "<div style='margin-top:12px;'>"
+                + prob_bar_html(
+                    wp,
+                    f"🎯 15 Günde Önce Kâr Hedefine (${res['target1']:.2f}) Ulaşma İhtimali: %{wp}",
+                    f"⛔ Önce Kaçış Sınırına (${res['stop_level']:.2f}) Değme Riski: %{sp}",
+                )
+                + f"<div class='spp-muted' style='margin-top:4px;'>"
+                f"📊 <b>Geçmiş Benzer Günler:</b> {esc(sym)} son 2 yılda benzer duruma <b>{ai_pred['analog_count']} kez</b> geldi; "
+                f"bunların <b>%{ai_pred['analog_win_rate_pct']:.0f}'inde</b> yukarı tepki verdi (15G ort. getiri: <b>{ai_pred['analog_avg_ret_pct']:+.1f}%</b>)."
+                f"</div></div>"
+            )
 
-        s1, s2, s3, s4 = st.columns(4)
-        with s1:
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid #00c85355; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">🟢 1. Parça Alım Yeri</div>
-                <div style="color: #00c853; font-size: 1.05rem; font-weight: 700; margin-top: 4px;">
-                    ${res['zone1_low']:.2f} – ${res['zone1_high']:.2f}
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">İlk ucuzluk bölgesi</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with s2:
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid #64ffda55; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">🛡️ 2. Parça (Çok Düşerse)</div>
-                <div style="color: #64ffda; font-size: 1.05rem; font-weight: 700; margin-top: 4px;">
-                    ${res['zone2_low']:.2f} – ${res['zone2_high']:.2f}
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">Yedek kurşun yeri</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with s3:
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid #ef535055; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">⛔ Kaçış / İptal Sınırı</div>
-                <div style="color: #ef5350; font-size: 1.05rem; font-weight: 700; margin-top: 4px;">
-                    ${res['stop_level']:.2f} altı
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">Kırılırsa alım yapma</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with s4:
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid #29b6f655; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">🎯 Kâr Alma Hedefi</div>
-                <div style="color: #29b6f6; font-size: 1.05rem; font-weight: 700; margin-top: 4px;">
-                    ${res['target1']:.2f} – ${res['target2']:.2f}
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">+%{res['upside_pct']} kazanç potansiyeli</div>
-            </div>
-            """, unsafe_allow_html=True)
+        card_stats = [
+            ("🟢 1. Parça Alım Yeri", f"${res['zone1_low']:.2f} – ${res['zone1_high']:.2f}", "İlk ucuzluk bölgesi", GREEN),
+            ("🛡️ 2. Parça (Çok Düşerse)", f"${res['zone2_low']:.2f} – ${res['zone2_high']:.2f}", "Yedek kurşun yeri", ACCENT),
+            ("⛔ Kaçış / İptal Sınırı", f"${res['stop_level']:.2f} altı", "Kırılırsa alım yapma", RED),
+            ("🎯 Kâr Alma Hedefi", f"${res['target1']:.2f} – ${res['target2']:.2f}", f"+%{res['upside_pct']} kazanç potansiyeli", BLUE),
+        ]
+
+        headline_txt = f"🗣️ {res['headline']} (Son zirvesi ${res['recent_peak']:.2f} seviyesinden %{abs(res['drop_from_peak_pct']):.1f} uzakta)"
+
+        decision_card(
+            symbol=sym,
+            price=price,
+            chg_pct=chg,
+            status_text=res["state_badge"],
+            status_color=border_col,
+            headline=headline_txt,
+            stats=card_stats,
+            extra_badges=extra_badges,
+            name=comp,
+            footer_html=footer_html,
+        )
 
         total_chk = res.get("total_checks", len(res["checklist"]))
-        with st.expander(f"📋 {sym} Güven Kontrol Listesi ({res['passed_count']}/{total_chk} Şart Hazır) & Yapay Zeka Detayları"):
-            for item in res["checklist"]:
-                icon = "✅" if item["ok"] else "⏳"
-                st.markdown(f"{icon} **{item['kriter']}** — *{item['detay']}*")
+        with st.expander(f"📋 {sym} Uzman Tavsiyesi, Güven Kontrol Listesi ({res['passed_count']}/{total_chk} Şart) & Seviye Grafiği"):
+            st.info(res["action_advice"])
+
+            c_chk, c_chart = st.columns([1.15, 1])
+            with c_chk:
+                st.markdown("##### ✅ 5 Adımlı Güven Kontrol Listesi")
+                for item in res["checklist"]:
+                    icon = "✅" if item["ok"] else "⏳"
+                    st.markdown(f"{icon} **{item['kriter']}** — *{item['detay']}*")
+
+            with c_chart:
+                st.markdown("##### 📈 Fiyat & Alım Bölgeleri Grafiği")
+                df_p = _cached_price_df(sym)
+                fig_m = price_chart_with_levels(
+                    df_p,
+                    zone1=(res["zone1_low"], res["zone1_high"]),
+                    zone2=(res["zone2_low"], res["zone2_high"]),
+                    stop=res["stop_level"],
+                    target1=res["target1"],
+                    target2=res["target2"],
+                    height=270,
+                )
+                if fig_m:
+                    st.plotly_chart(fig_m, use_container_width=True, key=f"buy_chart_{sym}")
 
             if ai_pred.get("available"):
                 st.markdown("---")
@@ -365,27 +313,29 @@ with tab_buy:
                     for n_txt in ai_pred.get("negatives", []):
                         st.markdown(f"- 🟠 {n_txt}")
 
-            if st.button(f"📲 Sadece {sym} Alım Raporunu Telegram'a Gönder", key=f"tg_single_buy_{sym}"):
-                if not tg_ready:
-                    st.warning("Telegram ayarları eksik.")
-                else:
-                    msg = format_plain_telegram_message(res)
-                    ok, err = send_telegram_message(cfg["telegram_bot_token"], cfg["telegram_chat_id"], msg)
-                    if ok:
-                        st.success(f"{sym} alım raporu telefonuna gönderildi!")
+            btn_c1, btn_c2 = st.columns(2)
+            with btn_c1:
+                if st.button(f"🔍 {sym} Tam Analiz Sayfasına Git", key=f"go_an_buy_{sym}", use_container_width=True):
+                    st.session_state["selected_symbol"] = sym
+                    st.session_state["auto_analyze"] = True
+                    st.switch_page("pages/2_tek_hisse_analiz.py")
+            with btn_c2:
+                if st.button(f"📲 Sadece {sym} Alım Raporunu Telegram'a Gönder", key=f"tg_single_buy_{sym}", use_container_width=True):
+                    if not tg_ready:
+                        st.warning("Telegram ayarları eksik.")
                     else:
-                        st.error(err)
-
-        st.markdown("<hr style='border-color: #1d3557; margin: 1.2rem 0;'>", unsafe_allow_html=True)
+                        msg = format_plain_telegram_message(res)
+                        ok, err = send_telegram_message(cfg["telegram_bot_token"], cfg["telegram_chat_id"], msg)
+                        if ok:
+                            st.success(f"{sym} alım raporu telefonuna gönderildi!")
+                        else:
+                            st.error(err)
 
 
 # =========================================================================
 # SEKME 2: SATIŞ & KÂR KORUMA AVCISI (NE ZAMAN SATAYIM?)
 # =========================================================================
 with tab_sell:
-    import json as _json
-
-    # Önce Midas portföyündeki açık hisseleri, sonra takip listesindekileri birleştir
     owned_syms = list(open_positions.keys())
     all_exit_syms = list(dict.fromkeys(owned_syms + list(symbols)))
 
@@ -401,40 +351,15 @@ with tab_sell:
     cnt_hold_shield = sum(1 for r in exit_results if r["exit_code"] == "KARI_KORU_TUT")
     cnt_bottom_wait = sum(1 for r in exit_results if r["exit_code"] == "DIPTE_SATILMAZ")
 
-    e1, e2, e3, e4 = st.columns(4)
-    with e1:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #00e676;">
-            <h3>💰 ŞİMDİ KÂR AL</h3>
-            <h1 style="color: #00e676;">{cnt_take_profit} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Fiyat şişti, kârı cebe koy</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with e2:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #ff9100;">
-            <h3>📅 BİLANÇO UYARISI</h3>
-            <h1 style="color: #ff9100;">{cnt_earnings} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Karne gününe &lt;5 gün kaldı</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with e3:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #29b6f6;">
-            <h3>🛡️ KÂRI KORU / TUT</h3>
-            <h1 style="color: #29b6f6;">{cnt_hold_shield} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Yükseliş sürüyor, erken satma</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with e4:
-        st.markdown(f"""
-        <div class="metric-card" style="border-color: #ab47bc;">
-            <h3>⏳ DİPTE SATILMAZ</h3>
-            <h1 style="color: #ab47bc;">{cnt_bottom_wait} Hisse</h1>
-            <span style="color: #8892b0; font-size: 0.75rem;">Ucuz bölgede, tepkiyi bekle</span>
-        </div>
-        """, unsafe_allow_html=True)
-
+    st.markdown(
+        stat_grid([
+            ("💰 Şimdi Kâr Al", f"{cnt_take_profit} Hisse", "Fiyat şişti, kârı cebe koy", GREEN),
+            ("📅 Bilanço Uyarısı", f"{cnt_earnings} Hisse", "Karne gününe <5 gün kaldı", AMBER),
+            ("🛡️ Kârı Koru / Tut", f"{cnt_hold_shield} Hisse", "Yükseliş sürüyor, erken satma", BLUE),
+            ("⏳ Dipte Satılmaz", f"{cnt_bottom_wait} Hisse", "Ucuz bölgede, tepkiyi bekle", MUTED),
+        ]),
+        unsafe_allow_html=True,
+    )
     st.write("")
 
     eb_col1, eb_col2 = st.columns([1, 1])
@@ -455,9 +380,7 @@ with tab_sell:
                         sent_ex += 1
                 st.success(f"✅ {sent_ex} hissenin Satış & Kâr Koruma raporu telefonuna (Telegram) gönderildi!")
 
-    st.divider()
-
-    # Önce Midas portföyünde açık olanları, sonra acil satış/bilanço uyarısı olanları en üste diz
+    st.write("")
     exit_priority = {"BILANCO_UYARISI": 0, "SIMDI_KAR_AL": 1, "KARI_KORU_TUT": 2, "DIPTE_SATILMAZ": 3}
     sorted_exit_results = sorted(
         exit_results,
@@ -466,117 +389,61 @@ with tab_sell:
 
     for res in sorted_exit_results:
         sym = res["symbol"]
+        comp = COMPANY_NAMES.get(sym, "")
         price = res["current_price"]
         chg = res["daily_change_pct"]
-        chg_color = "#00c853" if chg >= 0 else "#ef5350"
-        chg_sign = "+" if chg >= 0 else ""
         border_col = res["exit_color"]
-        owned_tag = (
-            f"<span style='background:#00e67622; border:1px solid #00e676; color:#00e676; "
-            f"padding:3px 10px; border-radius:12px; font-size:0.76rem; font-weight:700; margin-left:10px;'>"
-            f"💼 Midas Portföyünde ({res['total_qty']:g} Lot)</span>"
-            if res["has_position"]
-            else ""
+
+        extra_badges = []
+        fifo_footer = ""
+        if res["has_position"]:
+            extra_badges.append((f"💼 Midas Portföyünde ({res['total_qty']:g} Lot)", GREEN))
+            pnl_col = GREEN if res["pnl_usd"] >= 0 else RED
+            pnl_sign = "+" if res["pnl_usd"] >= 0 else ""
+            fifo_col = GREEN if res["first_fifo_pnl_pct"] >= 0 else RED
+            fifo_footer = (
+                f"<div style='background:{CARD_2}; border:1px dashed {BORDER}; border-radius:10px; "
+                f"padding:10px 12px; margin-top:10px; display:flex; justify-content:space-between; "
+                f"flex-wrap:wrap; gap:10px; font-size:0.82rem; color:{TEXT};'>"
+                f"<div>📦 <b>Pozisyon:</b> {res['total_qty']:g} Lot (Ort: <b>${res['avg_cost']:.2f}</b>)</div>"
+                f"<div>💵 <b>Net K/Z:</b> <span style='color:{pnl_col}; font-weight:700;'>{pnl_sign}${res['pnl_usd']:,.2f} ({pnl_sign}{res['pnl_pct']:.2f}%)</span></div>"
+                f"<div>🥇 <b>İlk FIFO Lot:</b> ${res['first_fifo_lot_price']:.2f} (<span style='color:{fifo_col}; font-weight:700;'>{res['first_fifo_pnl_pct']:+.1f}%</span>)</div>"
+                f"<div>✅ <b>Kârda Lot:</b> {res['profitable_lots_count']}/{res['total_lots_count']}</div>"
+                f"</div>"
+            )
+
+        if res.get("earnings_date_str"):
+            earn_color = AMBER if (res["days_to_earnings"] is not None and res["days_to_earnings"] <= 7) else ACCENT
+            earn_sub = f"{res['days_to_earnings']} gün kaldı"
+            earn_val = res["earnings_date_str"]
+        else:
+            earn_color = MUTED
+            earn_val = "Yakında Yok"
+            earn_sub = "Bilanço sürprizi görünmüyor"
+
+        sell_stats = [
+            ("💰 1. Kâr Alma Yeri", f"${res['take_profit_1']:.2f}", "İlk parça satış / direnç", GREEN),
+            ("🔥 2. Aşırı Şişme Tepesi", f"${res['take_profit_2']:.2f}", "Ana zirve / coşku tavanı", AMBER),
+            ("🛡️ Kâr Koruma Çizgisi", f"${res['profit_shield_line']:.2f}", "Altına inerse kârı koru", BLUE),
+            ("📅 Bilanço (Karne) Günü", earn_val, earn_sub, earn_color),
+        ]
+
+        decision_card(
+            symbol=sym,
+            price=price,
+            chg_pct=chg,
+            status_text=res["exit_badge"],
+            status_color=border_col,
+            headline=f"🗣️ {res['headline']}",
+            stats=sell_stats,
+            extra_badges=extra_badges,
+            name=comp,
+            footer_html=fifo_footer,
         )
 
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #0d1b2a 0%, #16263b 100%);
-                    border-left: 6px solid {border_col};
-                    border-top: 1px solid #233554;
-                    border-right: 1px solid #233554;
-                    border-bottom: 1px solid #233554;
-                    border-radius: 12px;
-                    padding: 1.2rem;
-                    margin-bottom: 0.8rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div>
-                    <span style="font-size: 1.4rem; font-weight: 800; color: #ffffff;">{sym}</span>
-                    <span style="font-size: 1.25rem; font-weight: 700; color: #64ffda; margin-left: 10px;">${price:.2f}</span>
-                    <span style="font-size: 0.9rem; font-weight: 600; color: {chg_color}; margin-left: 6px;">({chg_sign}%{chg:.2f})</span>
-                    {owned_tag}
-                </div>
-                <div style="background: {border_col}22; border: 1px solid {border_col}; color: {border_col};
-                            padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 0.82rem;">
-                    {res['exit_badge']}
-                </div>
-            </div>
-            <p style="color: #ccd6f6; font-size: 0.95rem; margin: 0.7rem 0 0.3rem 0; font-weight: 600;">
-                🗣️ {res['headline']}
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        with st.expander(f"📋 {sym} Satış Tavsiyesi, Kontrol Listesi, Geçmiş Bilanço Karnesi & Telegram"):
+            st.info(res["action_advice"])
 
-        # Eğer kullanıcının Midas portföyünde bu hisse varsa FIFO Lot Röntgenini göster
-        if res["has_position"]:
-            pnl_col = "#00e676" if res["pnl_usd"] >= 0 else "#ef5350"
-            pnl_sign = "+" if res["pnl_usd"] >= 0 else ""
-            fifo_col = "#00e676" if res["first_fifo_pnl_pct"] >= 0 else "#ef5350"
-            st.markdown(f"""
-            <div style="background: #0a192f; border: 1px dashed #64ffda66; border-radius: 10px;
-                        padding: 10px 14px; margin-bottom: 0.8rem; display: flex; justify-content: space-between;
-                        flex-wrap: wrap; gap: 12px; font-size: 0.86rem;">
-                <div>📦 <b>Toplam Pozisyon:</b> {res['total_qty']:g} Lot (Ort. Maliyet: <b>${res['avg_cost']:.2f}</b>)</div>
-                <div>💵 <b>Net Kâr/Zarar:</b> <span style="color:{pnl_col}; font-weight:700;">{pnl_sign}${res['pnl_usd']:,.2f} ({pnl_sign}%{res['pnl_pct']:.2f})</span></div>
-                <div>🥇 <b>İlk Satılacak (FIFO) Lot:</b> ${res['first_fifo_lot_price']:.2f} maliyetli (<span style="color:{fifo_col}; font-weight:700;">%{res['first_fifo_pnl_pct']:+.1f}</span>)</div>
-                <div>✅ <b>Kârda Olan Lotlar:</b> {res['profitable_lots_count']} / {res['total_lots_count']} Lot</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # Sade Türkçe Satış / Kâr Koruma Tavsiyesi
-        st.info(res["action_advice"])
-
-        # 4'lü Satış ve Kâr Koruma Haritası
-        x1, x2, x3, x4 = st.columns(4)
-        with x1:
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid #00e67655; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">💰 1. Kâr Alma Yeri</div>
-                <div style="color: #00e676; font-size: 1.08rem; font-weight: 700; margin-top: 4px;">
-                    ${res['take_profit_1']:.2f}
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">İlk parça satış / direnç yeri</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with x2:
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid #ff910055; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">🔥 2. Aşırı Şişme Tepesi</div>
-                <div style="color: #ff9100; font-size: 1.08rem; font-weight: 700; margin-top: 4px;">
-                    ${res['take_profit_2']:.2f}
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">Ana zirve / coşku tavanı</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with x3:
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid #29b6f655; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">🛡️ Kâr Koruma Çizgisi</div>
-                <div style="color: #29b6f6; font-size: 1.08rem; font-weight: 700; margin-top: 4px;">
-                    ${res['profit_shield_line']:.2f}
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">Altına inerse kârı geri verme</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with x4:
-            if res.get("earnings_date_str"):
-                earn_color = "#ff9100" if (res["days_to_earnings"] is not None and res["days_to_earnings"] <= 7) else "#64ffda"
-                earn_sub = f"{res['days_to_earnings']} gün kaldı"
-                earn_val = res["earnings_date_str"]
-            else:
-                earn_color = "#8892b0"
-                earn_val = "Yakında Yok"
-                earn_sub = "Bilanço sürprizi görünmüyor"
-            st.markdown(f"""
-            <div style="background: #112240; padding: 10px; border-radius: 10px; border: 1px solid {earn_color}55; text-align: center;">
-                <div style="color: #8892b0; font-size: 0.75rem;">📅 Bilanço (Karne) Günü</div>
-                <div style="color: {earn_color}; font-size: 1.08rem; font-weight: 700; margin-top: 4px;">
-                    {earn_val}
-                </div>
-                <div style="color: #8892b0; font-size: 0.7rem;">{earn_sub}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with st.expander(f"📋 {sym} Satış Kontrol Listesi, Geçmiş Bilanço Karnesi & Telegram'a Gönder"):
             for item in res["exit_checklist"]:
                 icon = "⚠️" if item["ok"] else "✅"
                 st.markdown(f"{icon} **{item['kriter']}** — *{item['detay']}*")
@@ -586,7 +453,6 @@ with tab_sell:
                 st.markdown("---")
                 st.markdown(f"#### 📅 {sym} Geçmiş Bilanço Karnesi (Son Bilançolarda Ertesi Gün Ne Yaptı?)")
                 st.caption(e_cat["summary_text"])
-                import pandas as _pd
                 clean_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in e_cat["history_rows"][:6]]
                 st.dataframe(_pd.DataFrame(clean_rows), use_container_width=True, hide_index=True)
 
@@ -600,5 +466,3 @@ with tab_sell:
                         st.success(f"{sym} satış & kâr koruma raporu telefonuna gönderildi!")
                     else:
                         st.error(err)
-
-        st.markdown("<hr style='border-color: #1d3557; margin: 1.2rem 0;'>", unsafe_allow_html=True)
