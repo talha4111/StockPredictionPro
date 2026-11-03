@@ -397,7 +397,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             action_advice = (
                 f"⛔ **Kesinlikle acele edip alım yapma!** Hisse şu an 'düşen bıçak' durumunda. "
                 f"Satışların nerede duracağını görmeden ortalama düşürmeye çalışmak tehlikelidir. "
-                f"Yeniden güvenli olması için fiyatın en az **${zone2_high:.2f}** üzerine çıkıp tutunmasını beklemelisin."
+                f"Yeniden güvenli olması için fiyatın en az **\\${zone2_high:.2f}** üzerine çıkıp tutunmasını beklemelisin."
             )
         elif in_buy_zone and intraday_bounce and (strong_buyers or rsi_daily < 38 or rsi_intra < 40) and ai_win_prob >= 50 and not earnings_imminent:
             state_code = "ALIM_FIRSATI"
@@ -407,10 +407,10 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} indirimli bölgede ve dipten alıcılar devreye girdi!"
             action_advice = (
                 f"✅ **{which_tier} alımı için şartlar olgunlaştı!** Hisse son zirvesinden %{abs(drop_from_peak_pct):.1f} "
-                f"ucuzladı ve **${current_price:.2f}** seviyesinde düşüş hızı kesilip yukarı dönüş başladı. "
+                f"ucuzladı ve **\\${current_price:.2f}** seviyesinde düşüş hızı kesilip yukarı dönüş başladı. "
                 f"Yapay zeka motorumuz da önümüzdeki 15 işlem gününde stopa değmeden önce kâr hedefine ulaşma ihtimalini **%{ai_win_prob}** olarak hesaplıyor. "
                 f"Tüm paranla tek seferde değil, planlanan ilk parçayla giriş yapabilirsin. "
-                f"Olası terslikte kaçış (iptal) sınırımız **${stop_level:.2f}**, ilk kâr alma hedefimiz ise **${target1:.2f}** (+%{upside_pct})."
+                f"Olası terslikte kaçış (iptal) sınırımız **\\${stop_level:.2f}**, ilk kâr alma hedefimiz ise **\\${target1:.2f}** (+%{upside_pct})."
             )
         elif in_buy_zone or near_buy_zone:
             state_code = "PUSUDA_IZLE"
@@ -420,7 +420,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
                 headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} ucuzladı (${current_price:.2f}) ancak {days_to_earnings} gün sonra bilançosu var!"
                 action_advice = (
                     f"⚠️ **Fiyat ucuzladı ama bilanço kumarına sadece {days_to_earnings} gün kaldı!** "
-                    f"Hisse **${zone1_low:.2f} – ${zone1_high:.2f}** ucuzluk bölgesinde olmasına rağmen bilanço öncesi tam parayla girmek yazı-tura atmaktır. "
+                    f"Hisse **\\${zone1_low:.2f} – \\${zone1_high:.2f}** ucuzluk bölgesinde olmasına rağmen bilanço öncesi tam parayla girmek yazı-tura atmaktır. "
                     f"Ya bilançonun açıklanmasını bekle ya da çok küçük bir izleme lotuyla sınırla."
                 )
             else:
@@ -441,7 +441,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             headline = f"{symbol} şu an ${current_price:.2f} seviyesinde, ucuzluk bölgemizin üzerinde."
             action_advice = (
                 f"☕ **Şu an tepeden kovalamıyoruz, sabırla bekliyoruz.** Bu hisseyi güvenle almak için belirlediğimiz "
-                f"ilk ideal ucuzluk bölgesi **${zone1_low:.2f} – ${zone1_high:.2f}** aralığıdır. "
+                f"ilk ideal ucuzluk bölgesi **\\${zone1_low:.2f} – \\${zone1_high:.2f}** aralığıdır. "
                 f"Fiyat bu seviyeye gevşediğinde sistem sana haber verecek."
             )
 
@@ -672,7 +672,7 @@ def analyze_stock_exit(symbol: str, user_pos: dict | None = None) -> dict | None
             else:
                 action_advice = (
                     f"🛡️ **Tavsiye (Trendi Sürmeye Devam):** Yükseliş gücü devam ediyor. "
-                    f"**${profit_shield_line:.2f}** altına kırılmadıkça erken satış yapmaya gerek yok. "
+                    f"**\\${profit_shield_line:.2f}** altına kırılmadıkça erken satış yapmaya gerek yok. "
                     f"İlk kâr alma hedefimiz **${take_profit_1:.2f}**, ana tepe hedefimiz **${take_profit_2:.2f}**."
                 )
 
@@ -687,7 +687,7 @@ def analyze_stock_exit(symbol: str, user_pos: dict | None = None) -> dict | None
             )
             if has_position:
                 action_advice = (
-                    f"⏳ **Tavsiye (Sakın Dipten Satma!):** Elinde ortalama **${avg_cost:.2f}** maliyetli **{total_qty:g} lot** var "
+                    f"⏳ **Tavsiye (Sakın Dipten Satma!):** Elinde ortalama **\\${avg_cost:.2f}** maliyetli **{total_qty:g} lot** var "
                     f"(İlk aldığın lot **${first_fifo_lot_price:.2f}** maliyetli ve hâlâ **%{first_fifo_pnl_pct:+.1f}** kârda!). "
                     f"Şu an hisse yorgun ve ucuz bölgede; burası satış yeri değil, sabır yeridir. "
                     f"Satış düşünmek için fiyatın en azından **${take_profit_1:.2f}** toparlanma hedefine çıkmasını bekle."

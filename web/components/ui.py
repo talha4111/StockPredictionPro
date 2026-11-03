@@ -7,6 +7,7 @@ Böylece sayfalar birbirine benzer, sade ve tutarlı görünür.
 from __future__ import annotations
 
 import html
+import re
 
 import pandas as pd
 import streamlit as st
@@ -49,6 +50,14 @@ def state_label(code: str) -> tuple[str, str]:
 
 def esc(text) -> str:
     return html.escape(str(text)) if text is not None else ""
+
+
+def esc_dollars(text) -> str:
+    """Streamlit markdown renderında fiyatların ($123.45) KaTeX matematik formülü
+    olarak algılanıp kelimelerin bitişmesine ve boşlukların silinmesine engel olur."""
+    if text is None:
+        return ""
+    return re.sub(r'(?<!\\)\$', r'\\$', str(text))
 
 
 # ─── GLOBAL CSS ───

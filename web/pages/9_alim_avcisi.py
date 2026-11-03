@@ -30,6 +30,7 @@ from web.components.investment_committee import analyze_earnings_catalyst, get_m
 from web.components.mobile import COMPANY_NAMES, get_vix_status
 from web.components.portfolio_tracker import calculate_fifo_portfolio
 from web.components.ui import (
+    esc_dollars,
     ACCENT,
     AMBER,
     BLUE,
@@ -289,7 +290,7 @@ with tab_buy:
 
         total_chk = res.get("total_checks", len(res["checklist"]))
         with st.expander(f"📋 {sym} Uzman Tavsiyesi, Güven Kontrol Listesi ({res['passed_count']}/{total_chk} Şart) & Seviye Grafiği"):
-            st.info(res["action_advice"])
+            st.info(esc_dollars(res["action_advice"]))
 
             c_chk, c_chart = st.columns([1.15, 1])
             with c_chk:
@@ -315,7 +316,7 @@ with tab_buy:
 
             if ai_pred.get("available"):
                 st.markdown("---")
-                st.markdown(ai_pred.get("ai_summary_tr", ""))
+                st.markdown(esc_dollars(ai_pred.get("ai_summary_tr", "")))
                 ac1, ac2 = st.columns(2)
                 with ac1:
                     st.markdown("**➕ İhtimali Artıran Güçlü Yanlar:**")
@@ -455,7 +456,7 @@ with tab_sell:
         )
 
         with st.expander(f"📋 {sym} Satış Tavsiyesi, Kontrol Listesi, Geçmiş Bilanço Karnesi & Telegram"):
-            st.info(res["action_advice"])
+            st.info(esc_dollars(res["action_advice"]))
 
             for item in res["exit_checklist"]:
                 icon = "⚠️" if item["ok"] else "✅"

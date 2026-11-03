@@ -418,7 +418,7 @@ def predict_stock_triple_barrier(
 
         ai_summary_tr = (
             f"🧠 **Yapay Zeka (Üçlü Bariyer) Tahmini:** Önümüzdeki **15 işlem günü** içinde {symbol} hissesinin "
-            f"kaçış sınırına (**${ai_stop:.2f}**) düşmeden önce kâr hedefine (**${ai_target:.2f}**) ulaşma olasılığı **%{win_prob_pct}** olarak hesaplandı. "
+            f"kaçış sınırına (**\\${ai_stop:.2f}**) düşmeden önce kâr hedefine (**\\${ai_target:.2f}**) ulaşma olasılığı **%{win_prob_pct}** olarak hesaplandı. "
             f"{analog_sentence}"
         )
 

@@ -18,6 +18,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from web.components.ui import (
+    esc_dollars,
     ACCENT,
     AMBER,
     BLUE,
@@ -319,10 +320,10 @@ def generate_expert_commentary(sembol, price, sma50, sma200, rsi, kalite, deger,
         tp_level = f"${price_val * 1.15:.2f}"
 
     return {
-        "trend_metni": trend_metni,
-        "teshis": teshis,
-        "neden": neden,
-        "tavsiye": tavsiye,
+        "trend_metni": esc_dollars(trend_metni),
+        "teshis": esc_dollars(teshis),
+        "neden": esc_dollars(neden),
+        "tavsiye": esc_dollars(tavsiye),
         "hedef_giris": hedef_giris,
         "stop_level": stop_level,
         "tp_level": tp_level,
@@ -644,7 +645,7 @@ if active_symbol:
         )
 
         if dip_res and dip_res.get("action_advice"):
-            st.info(dip_res["action_advice"])
+            st.info(esc_dollars(dip_res["action_advice"]))
 
         if ai_pred.get("available"):
             section("🤖 Yapay Zeka (Üçlü Bariyer) 15 Günlük Hedef vs Stop Analizi")
@@ -652,7 +653,7 @@ if active_symbol:
                 "QuantBot yapay zeka motorunun 20 ABD hissesi ve bu hissenin kendi geçmişindeki benzer günleri (Tarihsel İkizler) "
                 "tarayarak hesapladığı 15 işlem günlük Hedef / Stop olasılığı:"
             )
-            st.markdown(ai_pred.get("ai_summary_tr", ""))
+            st.markdown(esc_dollars(ai_pred.get("ai_summary_tr", "")))
             ai_c1, ai_c2 = st.columns(2)
             with ai_c1:
                 st.markdown("**➕ Yapay Zekaya Göre Güçlü Yanlar**")
@@ -681,7 +682,7 @@ if active_symbol:
                     {badge(ic_card['verdict_badge'], vc)}
                 </div>
                 <p style="color:{TEXT}; font-size:0.95rem; margin:10px 0 4px 0; line-height:1.55;">
-                    {ic_card['verdict_summary']}
+                    {esc_dollars(ic_card['verdict_summary'])}
                 </p>
             </div>
             """,
@@ -694,7 +695,7 @@ if active_symbol:
                 f"""
                 <div class="spp-card accent" style="--c:{GREEN}; height:100%;">
                     <div style="color:{GREEN}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟢 Boğa (İyi) Senaryosu</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{ic_card['bull_case']}</div>
+                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{esc_dollars(ic_card['bull_case'])}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -704,7 +705,7 @@ if active_symbol:
                 f"""
                 <div class="spp-card accent" style="--c:{BLUE}; height:100%;">
                     <div style="color:{BLUE}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟡 Baz (Normal) Senaryo</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{ic_card['base_case']}</div>
+                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{esc_dollars(ic_card['base_case'])}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -714,14 +715,14 @@ if active_symbol:
                 f"""
                 <div class="spp-card accent" style="--c:{RED}; height:100%;">
                     <div style="color:{RED}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🔴 Ayı (Kötü) Senaryosu</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{ic_card['bear_case']}</div>
+                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{esc_dollars(ic_card['bear_case'])}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
         st.write("")
-        st.error(ic_card["invalidation_rule"])
+        st.error(esc_dollars(ic_card["invalidation_rule"]))
 
     # ─── SEKME 3: 4-FAKTÖR RADARI & TEMEL/TEKNİK VERİLER ───
     with tab_faktor:

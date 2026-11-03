@@ -480,7 +480,7 @@ def build_investment_committee_card(
         )
 
     bull_case = (
-        f"Piyasa rejimi destekler ve alıcılar güçlenirse hissenin önce **${target1:.2f}**, ardından ana zirve olan "
+        f"Piyasa rejimi destekler ve alıcılar güçlenirse hissenin önce **\\${target1:.2f}**, ardından ana zirve olan "
         f"**${target2:.2f}** (**+%{bull_upside}**) seviyesine yürümesi beklenir."
     )
     base_case = (
@@ -488,11 +488,11 @@ def build_investment_committee_card(
         f"**${target1:.2f}** (**+%{base_upside}**) bölgesine doğru kademeli toparlanma."
     )
     bear_case = (
-        f"Sektörel satış dalgası derinleşirse fiyatın 2. kademe destek olan **${dip_res['zone2_low'] if dip_res else current_price*0.91:.2f}** "
-        f"ve kaçış sınırı **${stop_level:.2f}** (**%{bear_downside}**) seviyesine sarkma riski."
+        f"Sektörel satış dalgası derinleşirse fiyatın 2. kademe destek olan **\\${dip_res['zone2_low'] if dip_res else current_price*0.91:.2f}** "
+        f"ve kaçış sınırı **\\${stop_level:.2f}** (**%{bear_downside}**) seviyesine sarkma riski."
     )
     invalidation_rule = (
-        f"🛑 **Tezi Geçersiz Kılan Koşul:** Fiyat **${stop_level:.2f}** altında günlük kapanış yaparsa "
+        f"🛑 **Tezi Geçersiz Kılan Koşul:** Fiyat **\\${stop_level:.2f}** altında günlük kapanış yaparsa "
         f"veya şirket bilançosunda büyüme beklentisini aşağı çekerse yükseliş tezi iptal olur; ısrar edilmez."
     )
 
