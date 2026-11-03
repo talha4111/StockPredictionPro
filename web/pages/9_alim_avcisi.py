@@ -130,24 +130,37 @@ with c_top2:
                     st.error(msg)
 
 
-@st.cache_data(ttl=120, show_spinner=False)
+from concurrent.futures import ThreadPoolExecutor
+
+@st.cache_data(ttl=300, show_spinner=False)
 def _cached_dip_analyses(sym_tuple: tuple, vix: float) -> list[dict]:
-    out = []
-    for s in sym_tuple:
-        r = analyze_stock_dip(s, vix_value=vix)
-        if r:
-            out.append(r)
+    v_rnd = round(float(vix or 18.0), 1)
+    with ThreadPoolExecutor(max_workers=min(6, len(sym_tuple) or 1)) as ex:
+        futs = [ex.submit(analyze_stock_dip, s, vix_value=v_rnd) for s in sym_tuple]
+        out = []
+        for f in futs:
+            try:
+                res = f.result(timeout=10)
+                if res:
+                    out.append(res)
+            except Exception:
+                pass
     return out
 
 
-@st.cache_data(ttl=120, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def _cached_exit_analyses(sym_tuple: tuple, pos_json: str) -> list[dict]:
     pos_map = _json.loads(pos_json) if pos_json else {}
-    out = []
-    for s in sym_tuple:
-        r = analyze_stock_exit(s, user_pos=pos_map.get(s))
-        if r:
-            out.append(r)
+    with ThreadPoolExecutor(max_workers=min(6, len(sym_tuple) or 1)) as ex:
+        futs = [ex.submit(analyze_stock_exit, s, user_pos=pos_map.get(s)) for s in sym_tuple]
+        out = []
+        for f in futs:
+            try:
+                res = f.result(timeout=10)
+                if res:
+                    out.append(res)
+            except Exception:
+                pass
     return out
 
 

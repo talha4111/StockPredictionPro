@@ -26,6 +26,15 @@ _CLOUD_TG_T = "a2ZgZnxAV0NXSmVzcXpxDicdCmIpJSYXAlozHTAcBQdVVD05NC4wChU0JxsYPQ=="
 _CLOUD_TG_C = "ZWZhb3hNW0VcRA=="
 _MEMORY_ALERT_STATE: dict = {}
 
+try:
+    import streamlit as st
+    _cache_data = st.cache_data
+except Exception:
+    def _cache_data(**_kwargs):
+        def _wrap(fn):
+            return fn
+        return _wrap
+
 
 def _decode_cloud_val(enc_str: str) -> str:
     try:
@@ -172,6 +181,7 @@ def _calc_atr(df: pd.DataFrame, period: int = 14) -> float:
     return float(val) if not np.isnan(val) else float(high_low.mean())
 
 
+@_cache_data(ttl=300, show_spinner=False)
 def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
     """
     Bir hisse için hem günlük (6 aylık) hem de gün içi (15 dakikalık) verileri tarar.
@@ -179,6 +189,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
     tamamen sade ve anlaşılır bir dille döndürür.
     """
     symbol = symbol.strip().upper()
+    vix_value = round(float(vix_value or 18.0), 1)
     try:
         tk = yf.Ticker(symbol)
         df_daily = tk.history(period="2y", interval="1d")
