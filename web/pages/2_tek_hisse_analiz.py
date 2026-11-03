@@ -115,32 +115,54 @@ def get_stored_scores(sembol):
     return None
 
 def estimate_standalone_scores(raw_data):
-    """Veritabanında olmayan hisseler için temel ve teknik verilere dayalı yaklaşık faktör skorları üretir."""
-    roe = raw_data.get('roe') or 0.15
-    pm = raw_data.get('profit_margin') or 0.10
-    de = raw_data.get('debt_to_equity') or 1.0
-    kalite = 50.0 + min(25.0, max(-25.0, (roe - 0.15) * 100)) + min(15.0, max(-15.0, (pm - 0.10) * 100))
-    if de < 1.0: kalite += 10.0
-    elif de > 2.5: kalite -= 15.0
-    kalite = max(10.0, min(95.0, kalite))
+    """Canlı temel ve teknik verilere dayalı güncel faktör skorları üretir."""
+    roe = raw_data.get('roe') if raw_data.get('roe') is not None else 0.15
+    pm = raw_data.get('profit_margin') if raw_data.get('profit_margin') is not None else 0.10
+    raw_de = raw_data.get('borc_ozkaynak') if raw_data.get('borc_ozkaynak') is not None else raw_data.get('debt_to_equity')
+    if raw_de is None:
+        de = 0.8
+    else:
+        de = (raw_de / 100.0) if raw_de > 4.0 else float(raw_de)
+    rev_g = raw_data.get('gelir_buyume') or 0.0
+
+    kalite = (
+        52.0
+        + min(22.0, max(-20.0, (roe - 0.12) * 110))
+        + min(18.0, max(-15.0, (pm - 0.08) * 110))
+        + min(10.0, max(-5.0, rev_g * 0.25))
+    )
+    if de < 0.8:
+        kalite += 10.0
+    elif de > 2.5:
+        kalite -= 12.0
+    kalite = max(15.0, min(95.0, kalite))
 
     pe = raw_data.get('pe_orani') or 25.0
-    fcf = (raw_data.get('fcf_getiri') or 3.0) / 100.0
+    fcf = (raw_data.get('fcf_getiri') or 2.5) / 100.0
+    rsi_now = raw_data.get('rsi') or 50.0
     deger = 50.0
-    if pe < 18.0: deger += 25.0
-    elif pe > 40.0: deger -= 25.0
-    if fcf > 0.05: deger += 15.0
-    deger = max(10.0, min(95.0, deger))
+    if 0 < pe < 22.0:
+        deger += 20.0
+    elif pe > 55.0:
+        deger -= 15.0
+    if fcf > 0.03:
+        deger += 12.0
+    # Çok sert düşmüş (RSI < 38) hisselerde teknik ucuzluk (iskonto) katkısı
+    if rsi_now <= 35.0:
+        deger += 18.0
+    elif rsi_now <= 43.0:
+        deger += 10.0
+    deger = max(15.0, min(95.0, deger))
 
     m12 = raw_data.get('momentum_12_1') or 0.0
     m6 = raw_data.get('momentum_6_1') or 0.0
     momentum = 50.0 + min(35.0, max(-35.0, m12 * 70)) + min(15.0, max(-15.0, m6 * 30))
-    momentum = max(10.0, min(95.0, momentum))
+    momentum = max(15.0, min(95.0, momentum))
 
     vol = raw_data.get('realized_vol_63d') or 0.30
     dd = abs(raw_data.get('max_drawdown_1y') or 0.20)
-    risk = 60.0 - min(30.0, (vol - 0.20) * 100) - min(20.0, (dd - 0.15) * 50)
-    risk = max(10.0, min(95.0, risk))
+    risk = 65.0 - min(28.0, max(0.0, (vol - 0.25) * 55)) - min(18.0, max(0.0, (dd - 0.15) * 40))
+    risk = max(15.0, min(95.0, risk))
 
     faktor_skor = round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk * 0.15, 1)
 
@@ -172,16 +194,20 @@ def evaluate_decision_standalone(sonuc):
     if uzamis:
         return 'BEKLE_GERI_CEKILME', 'Fiyat SMA50 üzerinde fazla uzamış veya RSI aşırı alımda'
 
-    if kalite >= 60 and fiyat and sma_200 and fiyat >= sma_200 * 0.95 and -1.5 <= atr_uzaklik <= 1.5 and 35 <= rsi <= 60 and skor >= 60:
-        return 'AL_ADAYI', 'Kaliteli hissede SMA50 desteğine sağlıklı geri çekilme'
+    # Kaliteli bir hisse aşırı satıma (RSI <= 42) veya ciddi iskontoya indiyse bu bir dip alım fırsatıdır
+    if kalite >= 58 and (rsi <= 42 or (-3.5 <= atr_uzaklik <= 1.2)):
+        return 'KALITELI_GERI_CEKILME', 'Kaliteli hissede cazip indirim / dipten kademeli alım fırsatı'
 
-    if trend_up and not uzamis and 0.0 <= atr_uzaklik <= 2.5 and 45 <= rsi <= 70 and skor >= 65:
+    if kalite >= 60 and fiyat and sma_200 and fiyat >= sma_200 * 0.90 and -2.5 <= atr_uzaklik <= 1.5 and 30 <= rsi <= 60 and skor >= 55:
+        return 'AL_ADAYI', 'Kaliteli hissede destek bölgesine sağlıklı geri çekilme'
+
+    if trend_up and not uzamis and 0.0 <= atr_uzaklik <= 2.5 and 45 <= rsi <= 70 and skor >= 62:
         return 'AL_ADAYI', 'Güçlü yükseliş trendi devam ediyor'
 
-    if fiyat and sma_200 and sma_50 and fiyat < sma_200 and sma_50 < sma_200 and skor < 45:
-        return 'REDDET_TREND', 'Fiyat ve SMA50 200 günlük ortalamanın altında, düşüş trendi'
+    if fiyat and sma_200 and sma_50 and fiyat < sma_200 * 0.90 and sma_50 < sma_200 and kalite < 45 and skor < 42:
+        return 'REDDET_TREND', 'Temel kalitesi zayıf ve uzun vadeli düşüş trendinde'
 
-    return 'IZLE', 'Faktör skorları nötr, takip ediliyor'
+    return 'IZLE', 'İndirim bölgesinde dönüş teyidi takip ediliyor'
 
 def generate_expert_commentary(sembol, price, sma50, sma200, rsi, kalite, deger, momentum, risk, f_skor, karar, bilanco_riski):
     """
@@ -226,20 +252,33 @@ def generate_expert_commentary(sembol, price, sma50, sma200, rsi, kalite, deger,
         tp_level = f"${price_val * 1.20:.2f} (+%20 Kâr Al)"
 
     elif price_val < sma200_val:
-        if kalite >= 65.0:
+        if kalite >= 55.0 or rsi_val <= 36.0:
             teshis = f"💎 **Nadir İndirim Fırsatı — Kaliteli Dip Avcılığı:**"
-            neden = f"Hisse 200 günlük ortalamasının (${sma200_val:.2f}) altına inerek teknik olarak düzeltme bölgesine girmiş. Ancak şirketin kurumsal **Kalite puanı (%{kalite:.0f}) ve temel rasyoları mükemmel** seviyede. Büyük fonlar bu çapta şirketler 200 SMA altına indiğinde bunu 'panik indirimi' olarak değerlendirir."
-            tavsiye = f"**Uzman Önerisi:** İlla 50 günlüğün üzerine (${sma50_val:.2f}) çıkmasını beklemek kâr marjınızı düşürebilir. Çöp hisselerden uzak durulur ancak {sembol} gibi devlerde bu seviyeler (${price_val:.2f}) **Kademeli Dip Alımı** için çok caziptir. Bütçenizin %35-%40'ı ile buralardan 1. Kademeyi açabilir, olası piyasa sarkmalarında kalan %60'ı dip desteğine saklayabilirsiniz."
-            hedef_giris = f"${price_val:.2f} (1. Kademe Alım)"
-            stop_level = f"${sma200_val * 0.88:.2f} (Geniş Bant / Uzun Vade)"
-            tp_level = f"${sma200_val * 1.15:.2f} (+%15 Tepki Yükselişi)"
+            neden = (
+                f"Hisse son düşüş dalgasıyla 200 günlük ortalamasının (${sma200_val:.2f}) altına sarkarak teknik olarak aşırı satım / ucuzluk bölgesine (RSI: {rsi_val:.1f}) girmiş durumda. "
+                f"Şirketin kurumsal Kalite puanı (%{kalite:.0f}) sağlam olduğu için bu çapta geri çekilmeler uzun vadeli 'panik indirimi' fırsatı sunar."
+            )
+            tavsiye = (
+                f"**Uzman Önerisi:** Fiyat bu kadar ucuzlamışken tekrar 50 günlük ortalamanın (${sma50_val:.2f}) üzerine çıkmasını beklemek, dipteki en büyük kâr marjını kaçırmanıza neden olur! "
+                f"Bunun yerine {sembol} için bu seviyeler (${price_val:.2f}) **Kademeli Dip Alımı** bölgesidir: Bütçenizin %35-%40'ı ile buralardan 1. Kademeyi açabilir, "
+                f"olası ek sarkmalarda kalan %60'ı bir alt destek kademesine saklayarak ilk etapta ${sma200_val:.2f} (SMA 200) ve ardından ${sma50_val:.2f} tepki yükselişini hedefleyebilirsiniz."
+            )
+            hedef_giris = f"${price_val * 0.97:.2f} – ${price_val * 1.02:.2f} (1. Kademe Dip Alımı)"
+            stop_level = f"${price_val * 0.88:.2f} (Kademeli Zarar Kes)"
+            tp_level = f"${max(sma200_val * 1.05, price_val * 1.16):.2f} (Tepki Hedefi)"
         else:
-            teshis = f"⛔ **Uzak Durun — Düşüş Trendi Aktif:**"
-            neden = f"Fiyat hem 50 günlük (${sma50_val:.2f}) hem de 200 günlük (${sma200_val:.2f}) uzun vadeli trend çizgisinin altında ve hissenin kalite puanı (%{kalite:.0f}) riskli. 'Hisse çok düştü, ucuz' algısı yanıltıcı olabilir; düşen bıçak tutulmaz."
-            tavsiye = f"**Uzman Önerisi:** Kurumsal alıcıların devreye girdiğine dair yeşil bir teyit mumu görmeden ve fiyat en azından 50 günlük ortalamanın üzerine çıkmadan **alım yapmanızı kesinlikle önermiyorum**. Şu aşamada nakitte beklemek en doğru karardır."
-            hedef_giris = f"Giriş önerilmiyor (Düşüş bitene kadar izle)"
-            stop_level = "N/A"
-            tp_level = "N/A"
+            teshis = f"⚠️ **Zayıf Bilanço + Düşüş Trendi — Dipte Dönüş Mumu Bekleyin:**"
+            neden = (
+                f"Fiyat 200 günlük (${sma200_val:.2f}) ortalamasının altında ve şirketin temel kalite puanı (%{kalite:.0f}) nispeten düşük. "
+                f"Temel bilançosu zayıf hisselerde düşüşler daha uzun sürebilir."
+            )
+            tavsiye = (
+                f"**Uzman Önerisi:** Bilanço kalitesi düşük olduğu için düşüş durmadan körlemesine alım yapmak yerine, "
+                f"mevcut dip desteğinde satışların kesildiğini ve **Alım Avcısı'nda yeşil dönüş mumunun yandığını** gördükten sonra küçük kademeyle tepki yükselişi kovalamak daha güvenlidir."
+            )
+            hedef_giris = f"${price_val * 0.95:.2f} civarı (Yeşil dönüş mumu teyidiyle)"
+            stop_level = f"${price_val * 0.90:.2f}"
+            tp_level = f"${sma200_val:.2f}"
 
     else: # IZLE
         teshis = f"⏳ **İzle ve Pusuya Yat — Karar / Konsolidasyon Aşaması:**"
@@ -371,21 +410,28 @@ if (analiz_btn and sembol_input) or (auto_analyze and incoming_symbol):
             raw_result['fiyat'] = quote['price']
 
         stored = get_stored_scores(sembol)
+        standalone = estimate_standalone_scores(raw_result)
         if stored and stored.get('faktor_skor') is not None:
-            kalite = stored.get('kalite_skor') or 50.0
-            deger = stored.get('deger_skor') or 50.0
-            momentum = stored.get('momentum_skor') or 50.0
-            risk = stored.get('risk_skor') or 50.0
-            f_skor = stored.get('faktor_skor') or 50.0
-            score_source = f"Kurumsal Havuz Taraması ({stored.get('as_of_date', 'Güncel')})"
+            # Eski veritabanı kaydı (Örn: Eylül ayı) canlı kalite/değer puanını ezmesin; canlı temel verilerle harmanla
+            kalite = round(max(float(stored.get('kalite_skor') or 50.0), standalone['kalite_skor']), 1)
+            deger = round(max(float(stored.get('deger_skor') or 50.0), standalone['deger_skor']), 1)
+            momentum = round(0.5 * float(stored.get('momentum_skor') or 50.0) + 0.5 * standalone['momentum_skor'], 1)
+            risk = round(0.5 * float(stored.get('risk_skor') or 50.0) + 0.5 * standalone['risk_skor'], 1)
+            f_skor = round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk * 0.15, 1)
+            score_source = "Canlı Bilanço & Kurumsal Havuz Hibrit Modeli"
         else:
-            standalone = estimate_standalone_scores(raw_result)
             kalite = standalone['kalite_skor']
             deger = standalone['deger_skor']
             momentum = standalone['momentum_skor']
             risk = standalone['risk_skor']
             f_skor = standalone['faktor_skor']
             score_source = "Dinamik Temel & Teknik Faktör Modellemesi"
+
+        raw_result['kalite_skor'] = kalite
+        raw_result['deger_skor'] = deger
+        raw_result['momentum_skor'] = momentum
+        raw_result['risk_skor'] = risk
+        raw_result['faktor_skor'] = f_skor
 
         # Gerçek SMA 20'yi hesapla
         sma20_val = "N/A"

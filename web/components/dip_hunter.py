@@ -221,75 +221,97 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
         # ── AKILLI ALIM BÖLGELERİ (KADEME 1, KADEME 2, İPTAL SINIRI, KÂR HEDEFİ) ──
         # Fibonacci geri çekilme seviyeleri + hareketli ortalamalar + son dip harmanı
         swing_range = max(recent_peak - recent_swing_low, atr * 2.5)
+        fib_382 = recent_peak - swing_range * 0.382
         fib_50 = recent_peak - swing_range * 0.50
         fib_618 = recent_peak - swing_range * 0.618
 
-        # Hissenin mevcut konumuna göre dinamik destek tespiti
-        candidates = sorted([sma50, fib_50, fib_618, recent_swing_low * 1.02])
-        # Mevcut fiyata yakın veya altındaki en mantıklı ilk güçlü destek merkezi
-        below_or_near = [c for c in candidates if c <= current_price * 1.03]
-        if below_or_near:
-            zone1_center = max(below_or_near)
+        band_half = max(atr * 0.38, current_price * 0.015)
+
+        # Eğer hisse zirvesinden zaten ciddi düşmüşse (%15+ indirim) ve 20 günlük ortalamanın altındaysa:
+        # Kademe 1 merkezini en dipteki panik iğnesine gömmek yerine mevcut indirimli denge bölgesine kur,
+        # Kademe 2'yi ise en dipteki panik iğnesine (recent_swing_low) yerleştir.
+        already_discounted = (drop_from_peak_pct <= -15.0 and current_price < sma20 and rsi_daily <= 49.0)
+
+        if already_discounted and current_price < fib_50:
+            # Hisse zaten %15-%45 düşmüş; şu anki indirimli bölge 1. Parça (Kademe 1) alım yeridir
+            zone1_center = max(recent_swing_low * 1.01, min(current_price, fib_618))
+            zone1_low = round(min(zone1_center - band_half, current_price - band_half * 0.6), 2)
+            zone1_high = round(max(zone1_center + band_half, current_price + band_half * 0.5), 2)
+            # Kademe 2: Son panik dibi veya onun bir kademe altı
+            zone2_center = min(recent_swing_low * 0.99, zone1_low - atr * 0.75)
         else:
-            zone1_center = recent_swing_low * 1.015
+            # Hisse henüz tepelere yakınsa: İlk güçlü destek (SMA50 / Fib 0.382 / Fib 0.50) 1. alım yeridir
+            upper_supports = sorted([sma50, fib_382, fib_50, fib_618])
+            below_or_near = [c for c in upper_supports if c <= current_price * 1.03]
+            if below_or_near:
+                zone1_center = max(below_or_near)
+            else:
+                zone1_center = min(sma20, recent_peak - atr * 1.4)
 
-        # Eğer zone1_center zirveye çok yakınsa (hisse hiç düşmemişse), en az 1.2 ATR aşağı çek
-        if zone1_center > recent_peak - atr * 1.1:
-            zone1_center = recent_peak - atr * 1.5
+            if zone1_center > recent_peak - atr * 1.0:
+                zone1_center = recent_peak - atr * 1.4
 
-        band_half = max(atr * 0.35, current_price * 0.012)
-        zone1_low = round(zone1_center - band_half, 2)
-        zone1_high = round(zone1_center + band_half, 2)
+            zone1_low = round(zone1_center - band_half, 2)
+            zone1_high = round(zone1_center + band_half, 2)
+            zone2_center = min(recent_swing_low, zone1_low - atr * 0.85)
 
-        # Kademe 2 (Daha derin düşüş / 2. kurşun yeri)
-        zone2_center = min(recent_swing_low, zone1_low - atr * 0.85)
-        zone2_low = round(zone2_center - band_half * 0.9, 2)
-        zone2_high = round(zone2_center + band_half * 0.9, 2)
+        zone2_low = round(zone2_center - band_half * 0.85, 2)
+        zone2_high = round(zone2_center + band_half * 0.85, 2)
 
-        # Kaçış / İptal Sınırı (Bu kırılırsa düşen bıçaktır, alım yapılmaz)
-        stop_level = round(min(zone2_low - atr * 0.6, recent_swing_low * 0.975), 2)
+        # Kaçış / İptal Sınırı (Son 20 günlük gerçek dibin anlamlı altı)
+        stop_level = round(min(zone2_low - atr * 0.5, recent_swing_low * 0.965), 2)
 
         # Kâr Alma Hedefleri
-        target1 = round(max(current_price + atr * 1.8, zone1_high + atr * 2.0, sma20), 2)
-        target2 = round(max(target1 + atr * 1.5, recent_peak * 0.96), 2)
+        target1 = round(max(current_price + atr * 1.8, zone1_high + atr * 1.8, sma20), 2)
+        target2 = round(max(target1 + atr * 1.5, recent_peak * 0.95), 2)
         upside_pct = round(((target1 / current_price) - 1.0) * 100.0, 1)
 
         # ── GÜN İÇİ (15 DK) VE GÜNLÜK DÖNÜŞ ONAYLARI ──
         # 1. Fiyat Ucuzluk Bölgesinde mi?
-        in_buy_zone = (stop_level <= current_price <= zone1_high * 1.01)
-        near_buy_zone = (zone1_high * 1.01 < current_price <= zone1_high * 1.045)
+        in_buy_zone = bool(
+            (stop_level <= current_price <= zone1_high * 1.015)
+            or (already_discounted and current_price >= stop_level)
+        )
+        near_buy_zone = (not in_buy_zone) and (zone1_high * 1.015 < current_price <= zone1_high * 1.05)
         broken_support = current_price < stop_level
 
-        # 2. Gün İçi Panik Satışı Durdu mu ve Dönüş Başladı mı? (15m + 1d analizi)
+        # 2. Gün İçi Panik Satışı Durdu mu ve Dönüş Başladı mı? (15m + 1d birleşik analizi)
         intraday_bounce = False
         rsi_intra = rsi_daily
+        day_low = float(low_s.iloc[-1])
+        day_high = float(high_s.iloc[-1])
+        day_range = max(day_high - day_low, 1e-6)
+        close_pos = (current_price - day_low) / day_range
+        low_5d = float(low_s.tail(5).min())
+        bounce_from_5d_low = (current_price - low_5d) / max(low_5d, 1e-6)
+
+        if close_pos >= 0.52 or daily_change_pct >= 0.6 or bounce_from_5d_low >= 0.025:
+            intraday_bounce = True
+
         if df_intra is not None and len(df_intra) >= 15:
             intra_close = df_intra["Close"]
             rsi_intra_s = _calc_rsi(intra_close, 14)
             if not np.isnan(rsi_intra_s.iloc[-1]):
                 rsi_intra = float(rsi_intra_s.iloc[-1])
-            # Son 3 mumda yükseliş veya aşırı satımdan yukarı kıvrılma
             last_3_closes = intra_close.tail(4).values
             intra_day_low = float(df_intra["Low"].tail(16).min())
             bounce_from_intra_low = (current_price - intra_day_low) / max(intra_day_low, 1e-6)
             if (last_3_closes[-1] > last_3_closes[-2] and rsi_intra >= rsi_intra_s.iloc[-3]) or bounce_from_intra_low >= 0.015:
                 intraday_bounce = True
-        else:
-            # Günlük mumda çekiç / alttan tepki kontrolü
-            day_low = float(low_s.iloc[-1])
-            day_high = float(high_s.iloc[-1])
-            day_range = max(day_high - day_low, 1e-6)
-            close_pos = (current_price - day_low) / day_range
-            if close_pos >= 0.55 or daily_change_pct > 0.5:
-                intraday_bounce = True
 
         # 3. Büyük Alıcılar / Hacim Desteği Var mı?
         avg_vol_20 = float(vol_s.tail(20).mean())
         last_vol = float(vol_s.iloc[-1])
+        prev_vol = float(vol_s.iloc[-2]) if len(vol_s) >= 2 else last_vol
+        eff_vol = max(last_vol, prev_vol * 0.85)
         day_low_today = float(low_s.iloc[-1])
         day_high_today = float(high_s.iloc[-1])
         lower_wick_ratio = (current_price - day_low_today) / max(day_high_today - day_low_today, 1e-6)
-        strong_buyers = (last_vol >= avg_vol_20 * 0.95 and (lower_wick_ratio >= 0.45 or intraday_bounce)) or (rsi_daily < 35 and intraday_bounce)
+        strong_buyers = bool(
+            (eff_vol >= avg_vol_20 * 0.85 and (lower_wick_ratio >= 0.45 or intraday_bounce))
+            or (rsi_daily < 38 and intraday_bounce)
+            or (daily_change_pct >= 1.5 and lower_wick_ratio >= 0.50)
+        )
 
         # 4. Genel Borsa Havası Güvenli mi? (VIX < 32)
         market_calm = vix_value < 32.0
@@ -353,6 +375,8 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
         ]
         passed_count = sum(1 for item in checklist if item["ok"])
 
+        earnings_imminent = bool(days_to_earnings is not None and 0 <= days_to_earnings <= 4)
+
         # ── 4 ANA DURUM KARARI VE SADE TÜRKÇE REHBER ──
         if broken_support:
             state_code = "TEHLIKE"
@@ -364,12 +388,12 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
                 f"Satışların nerede duracağını görmeden ortalama düşürmeye çalışmak tehlikelidir. "
                 f"Yeniden güvenli olması için fiyatın en az **${zone2_high:.2f}** üzerine çıkıp tutunmasını beklemelisin."
             )
-        elif in_buy_zone and intraday_bounce and (strong_buyers or rsi_daily < 38 or rsi_intra < 40) and ai_win_prob >= 48:
+        elif in_buy_zone and intraday_bounce and (strong_buyers or rsi_daily < 38 or rsi_intra < 40) and ai_win_prob >= 50 and not earnings_imminent:
             state_code = "ALIM_FIRSATI"
             state_badge = "🟢 ŞİMDİ ALIM FIRSATI (DÖNÜŞ BAŞLADI)"
             state_color = "#00c853"
             which_tier = "1. Parça (Kademe 1)" if current_price >= zone2_high else "2. Parça (Derin İskonto)"
-            headline = f"{symbol} alım bölgesine indi ve dipten alıcılar devreye girdi!"
+            headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} indirimli bölgede ve dipten alıcılar devreye girdi!"
             action_advice = (
                 f"✅ **{which_tier} alımı için şartlar olgunlaştı!** Hisse son zirvesinden %{abs(drop_from_peak_pct):.1f} "
                 f"ucuzladı ve **${current_price:.2f}** seviyesinde düşüş hızı kesilip yukarı dönüş başladı. "
@@ -381,16 +405,24 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             state_code = "PUSUDA_IZLE"
             state_badge = "🟡 UCUZLUK BÖLGESİNDE — HENÜZ ALMA, İZLE"
             state_color = "#ffa726"
-            headline = f"{symbol} ucuzluk bölgesine girdi (${current_price:.2f}) ama dönüş onayı henüz tamamlanmadı."
-            ai_note = (
-                f" (Yapay zeka 15 günlük hedef olasılığını şu an **%{ai_win_prob}** olarak görüyor)."
-                if ai_pred.get("available") else ""
-            )
-            action_advice = (
-                f"⏳ **Elimiz tetikte ama henüz almıyoruz!** Fiyat istediğimiz **${zone1_low:.2f} – ${zone1_high:.2f}** "
-                f"bölgesine geldi/yaklaştı fakat satış baskısı henüz bitmedi (daha da düşme ihtimali var){ai_note} "
-                f"Gün içinde satışların durup ilk yeşil dönüş mumunun yanmasını bekliyoruz. Dönüş başladığı an bildirim gelecek!"
-            )
+            if earnings_imminent:
+                headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} ucuzladı (${current_price:.2f}) ancak {days_to_earnings} gün sonra bilançosu var!"
+                action_advice = (
+                    f"⚠️ **Fiyat ucuzladı ama bilanço kumarına sadece {days_to_earnings} gün kaldı!** "
+                    f"Hisse **${zone1_low:.2f} – ${zone1_high:.2f}** ucuzluk bölgesinde olmasına rağmen bilanço öncesi tam parayla girmek yazı-tura atmaktır. "
+                    f"Ya bilançonun açıklanmasını bekle ya da çok küçük bir izleme lotuyla sınırla."
+                )
+            else:
+                headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} ucuzluk bölgesinde (${current_price:.2f}) ama dönüş onayı henüz tamamlanmadı."
+                ai_note = (
+                    f" (Yapay zeka 15 günlük hedef olasılığını şu an **%{ai_win_prob}** olarak görüyor)."
+                    if ai_pred.get("available") else ""
+                )
+                action_advice = (
+                    f"⏳ **Fiyat ucuzladı, elimiz tetikte!** Hisse istediğimiz **${zone1_low:.2f} – ${zone1_high:.2f}** "
+                    f"indirim bölgesinde işlem görüyor fakat güçlü alıcı/yapay zeka teyidi henüz tam tamamlanmadı{ai_note} "
+                    f"Satışların durup net dönüş sinyalinin yanmasını bekliyoruz."
+                )
         else:
             state_code = "BEKLEMEDE"
             state_badge = "🔵 BEKLEMEDE (FİYAT HENÜZ YÜKSEK)"
@@ -435,25 +467,30 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
 
 def _get_days_to_earnings(tk: yf.Ticker) -> tuple[int | None, str | None]:
     """Hissenin bir sonraki bilanço (karne) gününe kaç gün kaldığını bulur."""
+    today_d = datetime.now().date()
     try:
         cal = tk.calendar
-        if not cal:
-            return None, None
-        edates = None
-        if isinstance(cal, dict):
-            edates = cal.get("Earnings Date") or cal.get("Earnings High")
-        elif isinstance(cal, pd.DataFrame) and "Earnings Date" in cal.index:
-            edates = cal.loc["Earnings Date"].values
-        if edates:
-            first_dt = edates[0] if isinstance(edates, (list, tuple, np.ndarray)) else edates
-            if hasattr(first_dt, "date"):
-                target_d = first_dt.date()
-            else:
-                target_d = pd.to_datetime(str(first_dt)).date()
-            today_d = datetime.now().date()
-            diff = (target_d - today_d).days
-            if -1 <= diff <= 90:
-                return int(diff), target_d.strftime("%d.%m.%Y")
+        if cal:
+            edates = None
+            if isinstance(cal, dict):
+                edates = cal.get("Earnings Date") or cal.get("Earnings High")
+            elif isinstance(cal, pd.DataFrame) and "Earnings Date" in cal.index:
+                edates = cal.loc["Earnings Date"].values
+            if edates:
+                first_dt = edates[0] if isinstance(edates, (list, tuple, np.ndarray)) else edates
+                target_d = first_dt.date() if hasattr(first_dt, "date") else pd.to_datetime(str(first_dt)).date()
+                diff = (target_d - today_d).days
+                if -1 <= diff <= 90:
+                    return int(diff), target_d.strftime("%d.%m.%Y")
+    except Exception:
+        pass
+    try:
+        ed_df = tk.earnings_dates
+        if ed_df is not None and not ed_df.empty:
+            future_dates = [idx.date() for idx in ed_df.index if -1 <= (idx.date() - today_d).days <= 90]
+            if future_dates:
+                nearest_d = min(future_dates, key=lambda d: (d - today_d).days)
+                return int((nearest_d - today_d).days), nearest_d.strftime("%d.%m.%Y")
     except Exception:
         pass
     return None, None
