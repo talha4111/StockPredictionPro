@@ -37,6 +37,7 @@ from web.components.ui import (
     TEXT,
     badge,
     esc,
+    md_to_html,
     page_header,
     section,
     stat_grid,
@@ -172,12 +173,12 @@ with tab1:
                             📓 <b>Kayıtlı Alım Notun / Tezin:</b> <i>"{esc(note_text)}"</i>
                         </div>
                         <div style="color:{TEXT}; font-size:0.9rem; margin-top:6px;">
-                            {ex_info['action_advice']}
+                            {md_to_html(ex_info['action_advice'])}
                         </div>
                         <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; font-size:0.84rem; color:{ACCENT};">
-                            <span>💰 <b>1. Kâr Hedefi:</b> ${ex_info['take_profit_1']:.2f}</span>
-                            <span>🔥 <b>2. Ana Zirve Hedefi:</b> ${ex_info['take_profit_2']:.2f}</span>
-                            <span>🛡️ <b>Kâr Koruma / Destek Sınırı:</b> ${ex_info['profit_shield_line']:.2f}</span>
+                            <span>💰 <b>1. Kâr Hedefi:</b> &#36;{ex_info['take_profit_1']:.2f}</span>
+                            <span>🔥 <b>2. Ana Zirve Hedefi:</b> &#36;{ex_info['take_profit_2']:.2f}</span>
+                            <span>🛡️ <b>Kâr Koruma / Destek Sınırı:</b> &#36;{ex_info['profit_shield_line']:.2f}</span>
                         </div>
                     </div>
                     """,

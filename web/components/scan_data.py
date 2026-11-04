@@ -49,17 +49,40 @@ def _frame_from_rows(rows: list[dict]) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def _load_remote() -> tuple[pd.DataFrame, str]:
+def _load_remote_payload() -> dict:
     try:
         r = requests.get(REMOTE_URL, timeout=8)
         if r.status_code == 200:
             payload = r.json()
-            df = _frame_from_rows(payload.get("rows", []))
-            if not df.empty:
-                return df, payload.get("generated_at", "")
+            if isinstance(payload, dict):
+                return payload
     except Exception:
         pass
+    return {}
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _load_remote() -> tuple[pd.DataFrame, str]:
+    payload = _load_remote_payload()
+    if payload:
+        df = _frame_from_rows(payload.get("rows", []))
+        if not df.empty:
+            return df, payload.get("generated_at", "")
     return pd.DataFrame(), ""
+
+
+def load_remote_metadata() -> dict:
+    """Uzaktaki scan-data JSON'ından shadow_summary, performance_summary ve last_update bilgilerini döndürür."""
+    payload = _load_remote_payload()
+    if not payload:
+        return {}
+    return {
+        "as_of_date": payload.get("as_of_date"),
+        "generated_at": payload.get("generated_at"),
+        "shadow_summary": payload.get("shadow_summary"),
+        "performance_summary": payload.get("performance_summary"),
+        "last_update": payload.get("last_update"),
+    }
 
 
 @st.cache_data(ttl=120, show_spinner=False)

@@ -35,6 +35,7 @@ from web.components.ui import (
     badge,
     chg_html,
     esc,
+    md_to_html,
     page_header,
     regime_strip,
     section,
@@ -178,23 +179,23 @@ for sym in watchlist:
             sub_row_html = (
                 f"<div style='margin-top:8px; padding-top:8px; border-top:1px solid {BORDER}; "
                 f"display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:0.8rem; color:{TEXT};'>"
-                f"<span>🗣️ {esc(dip_r['headline'])}</span>"
-                f"<span style='color:{MUTED};'>🟢 1. Alım: <b style='color:{GREEN};'>${dip_r['zone1_low']:.2f}–${dip_r['zone1_high']:.2f}</b> · "
-                f"⛔ Stop: <b style='color:{RED};'>${dip_r['stop_level']:.2f}</b> · "
-                f"🎯 Hedef: <b style='color:{BLUE};'>${dip_r['target1']:.2f}</b> · "
+                f"<span>🗣️ {md_to_html(dip_r['headline'])}</span>"
+                f"<span style='color:{MUTED};'>🟢 1. Alım: <b style='color:{GREEN};'>&#36;{dip_r['zone1_low']:.2f}–&#36;{dip_r['zone1_high']:.2f}</b> · "
+                f"⛔ Stop: <b style='color:{RED};'>&#36;{dip_r['stop_level']:.2f}</b> · "
+                f"🎯 Hedef: <b style='color:{BLUE};'>&#36;{dip_r['target1']:.2f}</b> · "
                 f"📊 İkiz Kazanma: <b>%{ai_p['analog_win_rate_pct']:.0f}</b> ({ai_p['analog_avg_ret_pct']:+.1f}%)</span>"
                 f"</div>"
             )
         else:
             sub_row_html = (
                 f"<div style='margin-top:8px; padding-top:8px; border-top:1px solid {BORDER}; font-size:0.8rem; color:{MUTED};'>"
-                f"🗣️ {esc(dip_r['headline'])} · 1. Alım: ${dip_r['zone1_low']:.2f}–${dip_r['zone1_high']:.2f} · Hedef: ${dip_r['target1']:.2f}"
+                f"🗣️ {md_to_html(dip_r['headline'])} · 1. Alım: &#36;{dip_r['zone1_low']:.2f}–&#36;{dip_r['zone1_high']:.2f} · Hedef: &#36;{dip_r['target1']:.2f}"
                 f"</div>"
             )
 
     card_col, btn_col = st.columns([4.4, 1])
     with card_col:
-        price_str = f"${price:,.2f}" if price > 0 else "N/A"
+        price_str = f"&#36;{price:,.2f}" if price > 0 else "N/A"
         st.markdown(
             f"""
             <div class="spp-card accent" style="--c:{b_color}; padding:13px 16px; margin-bottom:8px;">
@@ -257,7 +258,7 @@ if opps:
                 <div class="spp-card accent" style="--c:{GREEN}; text-align:center; padding:12px;">
                     <div style="font-size:1.1rem; font-weight:800; color:{TEXT};">{esc(sym)}</div>
                     <div style="font-size:1.35rem; font-weight:800; color:{ACCENT}; margin:4px 0;">%{score:.1f}</div>
-                    <div class="spp-muted">${fiyat:.2f} · {esc(opp['sektor'])}</div>
+                    <div class="spp-muted">&#36;{fiyat:.2f} · {esc(opp['sektor'])}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,

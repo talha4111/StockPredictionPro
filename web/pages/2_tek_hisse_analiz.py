@@ -18,7 +18,6 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from web.components.ui import (
-    esc_dollars,
     ACCENT,
     AMBER,
     BLUE,
@@ -32,6 +31,8 @@ from web.components.ui import (
     badge,
     decision_card,
     esc,
+    esc_dollars,
+    md_to_html,
     page_header,
     price_chart_with_levels,
     prob_bar_html,
@@ -39,6 +40,7 @@ from web.components.ui import (
     stat_grid,
 )
 from web.components.mobile import COMPANY_NAMES
+from web.components.scan_data import load_latest_scan
 
 try:
     from stock_value_engine import (
@@ -81,7 +83,7 @@ def karar_badge(karar: str) -> str:
     return badge(label, col)
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=60, show_spinner=False)
 def get_live_quote(sembol):
     """En güncel anlık fiyatı ve günlük değişimi çeker (60 sn önbellekli)."""
     try:
@@ -115,8 +117,55 @@ def get_live_quote(sembol):
         return {"price": 0.0, "change": 0.0, "change_pct": 0.0, "prev_close": 0.0, "timestamp": "N/A"}
 
 
+@st.cache_data(ttl=900, show_spinner=False)
+def _cached_macro_context():
+    """VIX, SPY 12 ay getirisi ve sektör rotasyonunu 15 dk önbellekle çeker."""
+    vix_degeri = 18.5
+    spy_getiri = 0.15
+    sektor_perf = {}
+    try:
+        v_res = vix_verisi_oku()
+        if v_res.uygun:
+            vix_degeri = float(v_res.value)
+        s_res = spy_12ay_verisi_oku()
+        if s_res.uygun:
+            spy_getiri = float(s_res.value)
+    except Exception:
+        pass
+    return vix_degeri, spy_getiri, sektor_perf
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _cached_stock_factors(sembol: str, sektor: str, vix_degeri: float, spy_getiri: float) -> dict:
+    """Hisse temel ve teknik faktörlerini 5 dk önbellekle hesaplar."""
+    try:
+        return hisse_faktorlerini_hesapla(sembol, sektor, vix_degeri, spy_getiri, {}) or {}
+    except Exception:
+        return {}
+
+
 def get_stored_scores(sembol):
-    """Veritabanından en son hesaplanmış çapraz-faktör skorlarını çeker."""
+    """Önce en taze otomatik tarama verisinden (scan-data), yoksa yerel DB'den (sadece ana model) skorları çeker."""
+    sembol = sembol.upper().strip()
+    try:
+        df_scan, _ = load_latest_scan()
+        if df_scan is not None and not df_scan.empty and "Sembol" in df_scan.columns:
+            match = df_scan[df_scan["Sembol"] == sembol]
+            if not match.empty:
+                r = match.iloc[0]
+                return {
+                    "faktor_skor": r.get("Faktör Skor (%)"),
+                    "kalite_skor": r.get("Kalite"),
+                    "deger_skor": r.get("Değer"),
+                    "momentum_skor": r.get("Momentum"),
+                    "risk_skor": r.get("Risk"),
+                    "karar": r.get("Karar"),
+                    "kurulum": "MAIN_SCAN",
+                    "as_of_date": r.get("Tarama Tarihi"),
+                }
+    except Exception:
+        pass
+
     if not os.path.exists(DB_PATH):
         return None
     try:
@@ -126,8 +175,8 @@ def get_stored_scores(sembol):
             """
             SELECT ai_skor, quality_score, value_score, momentum_score, risk_score, decision, setup, as_of_date
             FROM hisse_sinyalleri
-            WHERE sembol = ?
-            ORDER BY id DESC LIMIT 1
+            WHERE sembol = ? AND model_role IS NULL
+            ORDER BY as_of_date DESC, id DESC LIMIT 1
         """,
             (sembol,),
         )
@@ -244,43 +293,117 @@ def evaluate_decision_standalone(sonuc):
     return "IZLE", "İndirim bölgesinde dönüş teyidi takip ediliyor"
 
 
-def generate_expert_commentary(sembol, price, sma50, sma200, rsi, kalite, deger, momentum, risk, f_skor, karar, bilanco_riski):
-    """Kullanıcının istediği profesyonel, göstergelere dayalı ve yönlendirici Uzman Raporunu üretir."""
-    price_val = price or 100.0
+def generate_expert_commentary(
+    sembol,
+    price,
+    sma50,
+    sma200,
+    rsi,
+    kalite,
+    deger,
+    momentum,
+    risk,
+    f_skor,
+    karar,
+    bilanco_riski,
+    dip_res: dict | None = None,
+):
+    """Kullanıcının istediği profesyonel, göstergelere dayalı ve Dip Hunter seviyeleriyle %100 tutarlı Uzman Raporunu üretir."""
+    price_val = price or (dip_res or {}).get("current_price") or 100.0
     sma50_val = sma50 if (sma50 and not pd.isna(sma50)) else price_val * 0.96
     sma200_val = sma200 if (sma200 and not pd.isna(sma200)) else price_val * 0.90
-    rsi_val = rsi or 50.0
+    rsi_val = rsi if (rsi is not None and not pd.isna(rsi)) else 50.0
+
+    # Seviyeleri Alım Avcısı (dip_res) ile birebir senkronize et; stop_level ASLA giriş fiyatının üzerinde olamaz!
+    if dip_res:
+        z1_low = float(dip_res["zone1_low"])
+        z1_high = float(dip_res["zone1_high"])
+        z2_low = float(dip_res["zone2_low"])
+        z2_high = float(dip_res["zone2_high"])
+        sl_num = min(float(dip_res["stop_level"]), price_val * 0.94, z1_low * 0.96)
+        tp1_num = max(float(dip_res["target1"]), price_val * 1.06)
+        tp2_num = max(float(dip_res["target2"]), tp1_num * 1.04)
+        upside_pct = round(((tp1_num / price_val) - 1.0) * 100.0, 1)
+    else:
+        z1_low = round(price_val * 0.96, 2)
+        z1_high = round(price_val * 1.00, 2)
+        z2_low = round(min(sma200_val, price_val * 0.90), 2)
+        z2_high = round(min(sma200_val * 1.02, price_val * 0.93), 2)
+        sl_num = round(min(price_val * 0.92, z2_low * 0.96), 2)
+        tp1_num = round(price_val * 1.14, 2)
+        tp2_num = round(price_val * 1.22, 2)
+        upside_pct = 14.0
+
+    sl_pct = round(abs((sl_num / price_val) - 1.0) * 100.0, 1)
 
     if price_val >= sma200_val and price_val >= sma50_val:
-        trend_metni = f"hisse hem 50 günlük (${sma50_val:.2f}) hem de 200 günlük (${sma200_val:.2f}) hareketli ortalamalarının üzerinde **güçlü bir boğa (yükseliş) trendini** koruyor."
+        trend_metni = (
+            f"hisse hem 50 günlük (${sma50_val:.2f}) hem de 200 günlük (${sma200_val:.2f}) "
+            f"hareketli ortalamalarının üzerinde **güçlü bir boğa (yükseliş) trendini** koruyor."
+        )
     elif price_val >= sma200_val and price_val < sma50_val:
-        trend_metni = f"hisse 200 günlük ana trend desteğinin (${sma200_val:.2f}) üzerinde kalmayı sürdürüyor ancak kısa vadede 50 günlük ortalamasının (${sma50_val:.2f}) altına sarkarak **düzeltme/soluklanma evresine** geçmiş durumda."
+        trend_metni = (
+            f"hisse 200 günlük ana trend desteğinin (${sma200_val:.2f}) üzerinde kalmayı sürdürüyor "
+            f"ancak kısa vadede 50 günlük ortalamasının (${sma50_val:.2f}) altına sarkarak **düzeltme/indirim evresine** geçmiş durumda."
+        )
     else:
-        trend_metni = f"hisse hem 50 günlük (${sma50_val:.2f}) hem de 200 günlük (${sma200_val:.2f}) ortalamalarının altında seyrederek **ayı/düşüş baskısı** altında işlem görüyor."
+        trend_metni = (
+            f"hisse hem 50 günlük (${sma50_val:.2f}) hem de 200 günlük (${sma200_val:.2f}) "
+            f"ortalamalarının altında seyrederek **ayı/düşüş baskısı** altında işlem görüyor."
+        )
 
     if bilanco_riski:
         teshis = f"⚠️ **Bilanço Riski Mevcut:** {sembol} önümüzdeki 7 gün içerisinde resmi çeyreklik bilançosunu açıklayacak."
-        neden = f"Yapay zeka ve çip sektörü gibi yüksek beklentili alanlarda bilançolar çok sert fiyat boşluklarına (gap-down) sebep olabilir. Kalite puanı (%{kalite:.0f}) yüksek olsa bile bilanço belirsizliği en büyük risk faktörüdür."
-        tavsiye = f"**Uzman Önerisi:** Şu an bu seviyeden (${price_val:.2f}) yeni pozisyon açılmasını **önermiyorum**. Bilançoyu nakitte izleyip, piyasanın rakamlara vereceği tepkiyi ve yön teyidini gördükten sonra oyuna girmek çok daha güvenli ve rasyonel bir adımdır."
-        hedef_giris = f"${sma50_val * 0.97:.2f} - ${sma50_val:.2f} (Bilanço sonrası teyitli)"
-        stop_level = f"${sma200_val * 0.95:.2f}"
-        tp_level = f"${price_val * 1.15:.2f}"
+        neden = (
+            f"Yapay zeka ve çip sektörü gibi yüksek beklentili alanlarda bilançolar çok sert fiyat boşluklarına (gap-down) sebep olabilir. "
+            f"Kalite puanı (%{kalite:.0f}) yüksek olsa bile bilanço belirsizliği en büyük kısa vadeli risk faktörüdür."
+        )
+        tavsiye = (
+            f"**Uzman Önerisi:** Şu an bu seviyeden (${price_val:.2f}) yeni pozisyon açılmasını **önermiyorum**. "
+            f"Bilançoyu nakitte izleyip, piyasanın rakamlara vereceği tepkiyi ve yön teyidini gördükten sonra "
+            f"**${z1_low:.2f} – ${z1_high:.2f}** bandında oyuna girmek çok daha güvenli ve rasyonel bir adımdır."
+        )
+        hedef_giris = f"${z1_low:.2f} – ${z1_high:.2f} (Bilanço sonrası)"
+        stop_level = f"${sl_num:.2f} (-%{sl_pct} Kaçış Sınırı)"
+        tp_level = f"${tp1_num:.2f} (+%{upside_pct} Hedef)"
 
     elif karar in ["BEKLE_GERI_CEKILME", "UZAMIS_TREND"] or rsi_val >= 68.0:
         teshis = "✋ **Acele Etmeyin — Fiyat Fazla Isınmış (Aşırı Alım):**"
-        neden = f"RSI göstergesi **{rsi_val:.1f}** seviyesine tırmanarak aşırı alım sınırına dayanmış durumda. Ayrıca fiyat (${price_val:.2f}), 50 günlük ana desteğinden (${sma50_val:.2f}) yukarı doğru fazla uzaklaşmış (uzamış trend)."
-        tavsiye = f"**Uzman Önerisi:** Göstergeler hissenin kısa vadede bir kâr satışı veya soluklanma yaşama olasılığının yüksek olduğunu gösteriyor. Treni kaçırma korkusuyla (FOMO) buradan tek seferde alım yapmanızı **tavsiye etmiyorum**. Fiyatın **${sma50_val:.2f} (SMA 50)** desteğine doğru geri çekilmesini ve RSI'ın 50 seviyesine gevşemesini bekleyin. Alım için bu düzeltmeyi kollayın."
-        hedef_giris = f"${sma50_val * 0.98:.2f} - ${sma50_val * 1.02:.2f} (Destek Teması)"
-        stop_level = f"${sma50_val * 0.94:.2f}"
-        tp_level = f"${price_val * 1.18:.2f}"
+        neden = (
+            f"RSI göstergesi **{rsi_val:.1f}** seviyesine tırmanarak aşırı alım sınırına dayanmış durumda. "
+            f"Ayrıca fiyat (${price_val:.2f}), 50 günlük ana desteğinden (${sma50_val:.2f}) yukarı doğru fazla uzaklaşmış."
+        )
+        tavsiye = (
+            f"**Uzman Önerisi:** Göstergeler hissenin kısa vadede bir kâr satışı veya soluklanma yaşama olasılığının yüksek olduğunu gösteriyor. "
+            f"Treni kaçırma korkusuyla (FOMO) buradan tek seferde alım yapmanızı **tavsiye etmiyorum**. "
+            f"Fiyatın **${z1_low:.2f} – ${z1_high:.2f}** (1. Alım Bölgesi) aralığına gevşemesini bekleyin."
+        )
+        hedef_giris = f"${z1_low:.2f} – ${z1_high:.2f} (1. Alım Bölgesi)"
+        stop_level = f"${sl_num:.2f} (Kaçış Sınırı)"
+        tp_level = f"${tp1_num:.2f} – ${tp2_num:.2f}"
 
     elif karar in ["AL_ADAYI", "KALITELI_GERI_CEKILME", "TREND_DEVAMI", "PAPER_TOP20"]:
         teshis = "🎯 **Fırsat Masada — İdeal Alım Pencerelerinden Biri:**"
-        neden = f"Şirketin kurumsal Kalite puanı (%{kalite:.0f}) çok yüksek ve hisse hareketli ortalama desteğine (${sma50_val:.2f}) sağlıklı bir şekilde oturmuş. RSI ({rsi_val:.1f}) aşırı şişkinliğini atmış, risk/kazanç (RR) oranı yatırımcı lehine dönmüş durumda."
-        tavsiye = f"**Uzman Önerisi:** Sistemimiz hisseyi alım için uygun buluyor. Ancak tek kurşun atmak yerine profesyonelce **2 Kademeli Alım** öneriyorum: Bütçenizin %40'ı ile buralardan (${price_val:.2f}) 1. Kademeyi açabilir, olası piyasa sarkmalarında kalan %60'ı ${sma200_val:.2f} (SMA 200) seviyesine saklayabilirsiniz."
-        hedef_giris = f"${price_val:.2f} (Anlık 1. Kademe)"
-        stop_level = f"${sma50_val * 0.93:.2f} (%7 Zarar Kes)"
-        tp_level = f"${price_val * 1.20:.2f} (+%20 Kâr Al)"
+        if price_val < sma50_val * 0.98:
+            iskonto_pct = abs((price_val / sma50_val - 1.0) * 100.0)
+            neden = (
+                f"Şirketin kurumsal Kalite puanı (%{kalite:.0f}) çok yüksek ve hisse 50 günlük ortalamasından (${sma50_val:.2f}) "
+                f"**%{iskonto_pct:.1f} iskonto** yaparak 200 günlük ana trend desteğinin (${sma200_val:.2f}) üzerindeki "
+                f"**${z1_low:.2f} – ${z1_high:.2f}** alım bölgesine çekilmiş. RSI ({rsi_val:.1f}) aşırı şişkinliğini tamamen atmış durumda."
+            )
+        else:
+            neden = (
+                f"Şirketin kurumsal Kalite puanı (%{kalite:.0f}) çok yüksek ve hisse hareketli ortalama desteğinin (${sma50_val:.2f}) "
+                f"üzerinde sağlıklı bir şekilde tutunuyor. RSI ({rsi_val:.1f}) dengeli, risk/kazanç oranı yatırımcı lehine."
+            )
+        tavsiye = (
+            f"**Uzman Önerisi:** Sistemimiz hisseyi alım için uygun buluyor. Ancak tek kurşun atmak yerine profesyonelce **2 Kademeli Alım** öneriyorum: "
+            f"Bütçenizin %40'ı ile **${z1_low:.2f} – ${z1_high:.2f}** (1. Kademe) bölgesinden giriş yapabilir, "
+            f"olası sert piyasa sarkmalarında kalan %60'ı **${z2_low:.2f} – ${z2_high:.2f}** (2. Kademe) desteğine saklayabilirsiniz."
+        )
+        hedef_giris = f"${z1_low:.2f} – ${z1_high:.2f} (1. Kademe)"
+        stop_level = f"${sl_num:.2f} (-%{sl_pct} Zarar Kes)"
+        tp_level = f"${tp1_num:.2f} (+%{upside_pct} İlk Hedef)"
 
     elif price_val < sma200_val:
         if kalite >= 55.0 or rsi_val <= 36.0:
@@ -291,12 +414,12 @@ def generate_expert_commentary(sembol, price, sma50, sma200, rsi, kalite, deger,
             )
             tavsiye = (
                 f"**Uzman Önerisi:** Fiyat bu kadar ucuzlamışken tekrar 50 günlük ortalamanın (${sma50_val:.2f}) üzerine çıkmasını beklemek, dipteki en büyük kâr marjını kaçırmanıza neden olur! "
-                f"Bunun yerine {sembol} için bu seviyeler (${price_val:.2f}) **Kademeli Dip Alımı** bölgesidir: Bütçenizin %35-%40'ı ile buralardan 1. Kademeyi açabilir, "
-                f"olası ek sarkmalarda kalan %60'ı bir alt destek kademesine saklayarak ilk etapta ${sma200_val:.2f} (SMA 200) ve ardından ${sma50_val:.2f} tepki yükselişini hedefleyebilirsiniz."
+                f"Bunun yerine {sembol} için **${z1_low:.2f} – ${z1_high:.2f}** aralığı **1. Kademe Dip Alımı** bölgesidir: Bütçenizin %35-%40'ı ile buralardan 1. Kademeyi açabilir, "
+                f"olası ek sarkmalarda kalan %60'ı **${z2_low:.2f} – ${z2_high:.2f}** (2. Kademe) desteğine saklayarak ilk etapta **${tp1_num:.2f}** tepki yükselişini hedefleyebilirsiniz."
             )
-            hedef_giris = f"${price_val * 0.97:.2f} – ${price_val * 1.02:.2f} (1. Kademe Dip Alımı)"
-            stop_level = f"${price_val * 0.88:.2f} (Kademeli Zarar Kes)"
-            tp_level = f"${max(sma200_val * 1.05, price_val * 1.16):.2f} (Tepki Hedefi)"
+            hedef_giris = f"${z1_low:.2f} – ${z1_high:.2f} (1. Kademe Dip)"
+            stop_level = f"${sl_num:.2f} (-%{sl_pct} Zarar Kes)"
+            tp_level = f"${tp1_num:.2f} (+%{upside_pct} Tepki Hedefi)"
         else:
             teshis = "⚠️ **Zayıf Bilanço + Düşüş Trendi — Dipte Dönüş Mumu Bekleyin:**"
             neden = (
@@ -307,23 +430,30 @@ def generate_expert_commentary(sembol, price, sma50, sma200, rsi, kalite, deger,
                 "**Uzman Önerisi:** Bilanço kalitesi düşük olduğu için düşüş durmadan körlemesine alım yapmak yerine, "
                 "mevcut dip desteğinde satışların kesildiğini ve **Alım Avcısı'nda yeşil dönüş mumunun yandığını** gördükten sonra küçük kademeyle tepki yükselişi kovalamak daha güvenlidir."
             )
-            hedef_giris = f"${price_val * 0.95:.2f} civarı (Yeşil dönüş mumu teyidiyle)"
-            stop_level = f"${price_val * 0.90:.2f}"
-            tp_level = f"${sma200_val:.2f}"
+            hedef_giris = f"${z1_low:.2f} – ${z1_high:.2f} (Dönüş teyidiyle)"
+            stop_level = f"${sl_num:.2f} (-%{sl_pct} Zarar Kes)"
+            tp_level = f"${tp1_num:.2f} (Tepki Hedefi)"
 
     else:
         teshis = "⏳ **İzle ve Pusuya Yat — Karar / Konsolidasyon Aşaması:**"
-        neden = f"Hisse şu an ne net bir alım sinyali ne de acil bir satış baskısı üretiyor. RSI ({rsi_val:.1f}) tamamen nötr bantta. Fiyat ${sma50_val:.2f} ile ${sma200_val:.2f} arasında sıkışmış durumda ve piyasanın genel yönünü bekliyor."
-        tavsiye = f"**Uzman Önerisi:** Sistem şu göstergelere göre henüz kesin alım noktasında değil: Fiyat henüz net bir destek teması yapmadı veya yukarı yönlü hacimli bir kırılım gerçekleştirmedi. Bu yüzden acele etmeyip **biraz izlemenizi ve sabırla beklemenizi tavsiye ediyorum**. Fiyat ${sma50_val:.2f} seviyesini hacimle yukarı kırarsa trene binilebilir veya ${sma200_val:.2f} desteğine değerse dipten toplanabilir."
-        hedef_giris = f"${sma200_val * 1.01:.2f} (Dipten temas) VEYA ${sma50_val * 1.02:.2f} (Yukarı kırılım)"
-        stop_level = f"${sma200_val * 0.95:.2f}"
-        tp_level = f"${price_val * 1.15:.2f}"
+        neden = (
+            f"Hisse şu an ne aşırı şişkin ne de panik dibinde. RSI ({rsi_val:.1f}) nötr bantta; "
+            f"fiyat 50 günlük (${sma50_val:.2f}) ile 200 günlük (${sma200_val:.2f}) ortalamalar arasında dengeleniyor."
+        )
+        tavsiye = (
+            f"**Uzman Önerisi:** Acele etmeyip kademeli planla hareket edin: Fiyat **${z1_low:.2f} – ${z1_high:.2f}** "
+            f"(1. Alım Bölgesi) aralığında tutunup gün içi yeşil dönüş mumu yaktığında 1. kademe açılabilir; "
+            f"kaçış sınırı olarak **${sl_num:.2f}** seviyesi takip edilmelidir."
+        )
+        hedef_giris = f"${z1_low:.2f} – ${z1_high:.2f} (1. Alım Bölgesi)"
+        stop_level = f"${sl_num:.2f} (-%{sl_pct} Zarar Kes)"
+        tp_level = f"${tp1_num:.2f} (+%{upside_pct} Hedef)"
 
     return {
-        "trend_metni": esc_dollars(trend_metni),
-        "teshis": esc_dollars(teshis),
-        "neden": esc_dollars(neden),
-        "tavsiye": esc_dollars(tavsiye),
+        "trend_metni": trend_metni,
+        "teshis": teshis,
+        "neden": neden,
+        "tavsiye": tavsiye,
         "hedef_giris": hedef_giris,
         "stop_level": stop_level,
         "tp_level": tp_level,
@@ -362,7 +492,7 @@ def radar_chart(kalite, deger, momentum, risk):
     return fig
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=300, show_spinner=False)
 def get_price_history_1y(sembol: str) -> pd.DataFrame:
     try:
         return yf.Ticker(sembol).history(period="1y")
@@ -408,23 +538,10 @@ if active_symbol:
 
     with st.spinner(f"🔄 {sembol} için canlı piyasa, faktör, Yatırım Komitesi ve AI verileri hazırlanıyor..."):
         quote = get_live_quote(sembol)
+        vix_degeri, spy_getiri, _ = _cached_macro_context()
 
-        vix_degeri = 18.5
-        spy_getiri = 0.15
-        sektor_perf = {}
-        try:
-            v_res = vix_verisi_oku()
-            if v_res.uygun:
-                vix_degeri = v_res.value
-            s_res = spy_12ay_verisi_oku()
-            if s_res.uygun:
-                spy_getiri = s_res.value
-            sektor_perf = sektor_rotasyonu_radar() or {}
-        except Exception:
-            pass
-
-        sektor = KURUMSAL_HAVUZ.get(sembol, "Teknoloji")
-        raw_result = hisse_faktorlerini_hesapla(sembol, sektor, vix_degeri, spy_getiri, sektor_perf)
+        sektor = KURUMSAL_HAVUZ.get(sembol, "Technology")
+        raw_result = dict(_cached_stock_factors(sembol, sektor, vix_degeri, spy_getiri))
 
         if quote["price"] > 0:
             raw_result["fiyat"] = quote["price"]
@@ -437,7 +554,7 @@ if active_symbol:
             momentum = round(0.5 * float(stored.get("momentum_skor") or 50.0) + 0.5 * standalone["momentum_skor"], 1)
             risk = round(0.5 * float(stored.get("risk_skor") or 50.0) + 0.5 * standalone["risk_skor"], 1)
             f_skor = round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk * 0.15, 1)
-            score_source = "Canlı Bilanço & Kurumsal Havuz Hibrit Modeli"
+            score_source = f"Canlı Bilanço & Kurumsal Havuz Hibrit Modeli ({stored.get('as_of_date', 'Güncel')})"
         else:
             kalite = standalone["kalite_skor"]
             deger = standalone["deger_skor"]
@@ -456,26 +573,7 @@ if active_symbol:
         sma20_val = f"${hist_1y['Close'].rolling(20).mean().iloc[-1]:.2f}" if (not hist_1y.empty and len(hist_1y) >= 20) else f"${quote['price']:.2f}"
 
         karar, karar_nedeni = evaluate_decision_standalone(raw_result)
-        bilanco_var_mi = False
-        try:
-            bilanco_var_mi = bilanco_yakin_mi(sembol)
-        except Exception:
-            pass
-
-        commentary = generate_expert_commentary(
-            sembol=sembol,
-            price=quote["price"],
-            sma50=raw_result.get("sma_50"),
-            sma200=raw_result.get("sma_200"),
-            rsi=raw_result.get("rsi"),
-            kalite=kalite,
-            deger=deger,
-            momentum=momentum,
-            risk=risk,
-            f_skor=f_skor,
-            karar=karar,
-            bilanco_riski=bilanco_var_mi,
-        )
+        bilanco_var_mi = bool(raw_result.get("bilanco_riski"))
 
         from web.components.dip_hunter import analyze_stock_dip, analyze_stock_exit
         from web.components.investment_committee import (
@@ -494,7 +592,7 @@ if active_symbol:
         opp_info = compare_opportunity_cost(sembol)
         ic_card = build_investment_committee_card(
             symbol=sembol,
-            current_price=quote.get("price") or 0.0,
+            current_price=quote.get("price") or (dip_res or {}).get("current_price") or 0.0,
             kalite=kalite,
             deger=deger,
             momentum=momentum,
@@ -503,6 +601,22 @@ if active_symbol:
             exit_res=exit_res,
             earnings_info=earnings_info,
             regime_info=regime_info,
+        )
+
+        commentary = generate_expert_commentary(
+            sembol=sembol,
+            price=quote["price"] or (dip_res or {}).get("current_price"),
+            sma50=raw_result.get("sma_50"),
+            sma200=raw_result.get("sma_200"),
+            rsi=raw_result.get("rsi"),
+            kalite=kalite,
+            deger=deger,
+            momentum=momentum,
+            risk=risk,
+            f_skor=f_skor,
+            karar=karar,
+            bilanco_riski=bilanco_var_mi,
+            dip_res=dip_res,
         )
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -535,7 +649,7 @@ if active_symbol:
     rsi_val = float(raw_rsi) if (raw_rsi is not None and not pd.isna(raw_rsi)) else 50.0
     raw_sma200 = raw_result.get("sma_200")
     sma200 = float(raw_sma200) if (raw_sma200 is not None and not pd.isna(raw_sma200)) else 0.0
-    sma200_str = f"${sma200:.2f}" if sma200 > 0 else "N/A"
+    sma200_str = f"&#36;{sma200:.2f}" if sma200 > 0 else "N/A"
 
     if ai_pred.get("available"):
         wp = int(ai_pred.get("win_prob_pct", 50))
@@ -560,7 +674,7 @@ if active_symbol:
             f"</div></div>"
         )
     else:
-        stat_4 = ("📊 Faktör & RSI", f"%{f_skor:.1f}", f"RSI(14): {rsi_val:.1f} · SMA200: {sma200_str}", ACCENT)
+        stat_4 = ("📊 Faktör & RSI", f"%{f_skor:.1f}", f"RSI(14): {rsi_val:.1f} · SMA200: ${sma200:.2f}" if sma200 > 0 else f"RSI(14): {rsi_val:.1f}", ACCENT)
         footer_bar = ""
 
     top_stats = [
@@ -621,17 +735,17 @@ if active_symbol:
             f"""
             <div class="spp-card accent" style="--c:{ACCENT};">
                 <div style="font-size:1.1rem; font-weight:800; color:{ACCENT}; margin-bottom:8px;">
-                    🧠 Quant & Uzman Değerlendirmesi: {esc(sembol)}
+                    🧠 Quant &amp; Uzman Değerlendirmesi: {esc(sembol)}
                 </div>
                 <p style="font-size:0.95rem; color:{TEXT}; line-height:1.6; margin:0 0 10px 0;">
-                    <b>Mevcut Trend:</b> {esc(sembol)}, {commentary['trend_metni']}
+                    <b>Mevcut Trend:</b> {esc(sembol)}, {md_to_html(commentary['trend_metni'])}
                 </p>
                 <p style="font-size:0.95rem; color:{TEXT}; line-height:1.6; margin:0 0 10px 0;">
-                    {commentary['teshis']}<br>{commentary['neden']}
+                    {md_to_html(commentary['teshis'])}<br>{md_to_html(commentary['neden'])}
                 </p>
                 <div style="background:{CARD_2}; border:1px solid {BORDER}; border-radius:10px; padding:12px 14px; margin:10px 0;">
                     <div style="color:{ACCENT}; font-size:0.95rem; line-height:1.55;">
-                        {commentary['tavsiye']}
+                        {md_to_html(commentary['tavsiye'])}
                     </div>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
@@ -658,18 +772,18 @@ if active_symbol:
             with ai_c1:
                 st.markdown("**➕ Yapay Zekaya Göre Güçlü Yanlar**")
                 for p_txt in ai_pred.get("positives", []):
-                    st.success(f"🟢 {p_txt}")
+                    st.success(esc_dollars(f"🟢 {p_txt}"))
             with ai_c2:
                 st.markdown("**➖ Yapay Zekaya Göre Dikkat Edilecek Riskler**")
                 for n_txt in ai_pred.get("negatives", []):
-                    st.warning(f"🟠 {n_txt}")
+                    st.warning(esc_dollars(f"🟠 {n_txt}"))
 
         if dip_res and dip_res.get("checklist"):
             total_chk = dip_res.get("total_checks", len(dip_res["checklist"]))
             section(f"📋 {sembol} Alım Avcısı Güven Kontrol Listesi ({dip_res['passed_count']}/{total_chk} Şart Hazır)")
             for item in dip_res["checklist"]:
                 icon = "✅" if item["ok"] else "⏳"
-                st.markdown(f"{icon} **{item['kriter']}** — *{item['detay']}*")
+                st.markdown(esc_dollars(f"{icon} **{item['kriter']}** — *{item['detay']}*"))
 
     # ─── SEKME 2: YATIRIM KOMİTESİ & 3 SENARYO ───
     with tab_komite:
@@ -682,7 +796,7 @@ if active_symbol:
                     {badge(ic_card['verdict_badge'], vc)}
                 </div>
                 <p style="color:{TEXT}; font-size:0.95rem; margin:10px 0 4px 0; line-height:1.55;">
-                    {esc_dollars(ic_card['verdict_summary'])}
+                    {md_to_html(ic_card['verdict_summary'])}
                 </p>
             </div>
             """,
@@ -695,7 +809,7 @@ if active_symbol:
                 f"""
                 <div class="spp-card accent" style="--c:{GREEN}; height:100%;">
                     <div style="color:{GREEN}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟢 Boğa (İyi) Senaryosu</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{esc_dollars(ic_card['bull_case'])}</div>
+                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['bull_case'])}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -705,7 +819,7 @@ if active_symbol:
                 f"""
                 <div class="spp-card accent" style="--c:{BLUE}; height:100%;">
                     <div style="color:{BLUE}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟡 Baz (Normal) Senaryo</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{esc_dollars(ic_card['base_case'])}</div>
+                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['base_case'])}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -715,7 +829,7 @@ if active_symbol:
                 f"""
                 <div class="spp-card accent" style="--c:{RED}; height:100%;">
                     <div style="color:{RED}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🔴 Ayı (Kötü) Senaryosu</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{esc_dollars(ic_card['bear_case'])}</div>
+                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['bear_case'])}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -767,7 +881,7 @@ if active_symbol:
                     "Borç/Özkaynak": f"{raw_result.get('borc_ozkaynak', 'N/A')}",
                     "FCF Getirisi": f"%{raw_result.get('fcf_getiri', 'N/A')}",
                     "Gelir Büyümesi": f"%{raw_result.get('gelir_buyume', 'N/A')}",
-                    "Temettü Verimi": f"%{raw_result.get('temettu_verimi', 0.0):.2f}",
+                    "Temettü Verimi": f"%{raw_result.get('temettu_verimi') or 0.0:.2f}",
                     "Toplam Faktör Skoru": f"%{f_skor:.1f}",
                 }
                 st.dataframe(pd.DataFrame(list(temel_data.items()), columns=["Metrik", "Değer"]), use_container_width=True, hide_index=True)
@@ -775,11 +889,11 @@ if active_symbol:
             section("⚖️ 4-Faktör Çatışma & Uyum Analizi")
             if conflict_info["has_conflict"]:
                 for c_txt in conflict_info["conflicts"]:
-                    st.warning(c_txt)
+                    st.warning(esc_dollars(c_txt))
             else:
-                st.success(conflict_info["headline"])
+                st.success(esc_dollars(conflict_info["headline"]))
             for s_txt in conflict_info["strengths"]:
-                st.info(s_txt)
+                st.info(esc_dollars(s_txt))
 
         with st.expander("❓ 4 Faktör Sütunu (Kalite, Değer, Momentum, Risk) Ne Anlama Gelir?", expanded=False):
             st.markdown(
@@ -808,7 +922,7 @@ if active_symbol:
                 f"**+%{earnings_info['pre_earnings_runup_15d_pct']:.1f}** yükselmiş. İyi bilanço gelse bile 'beklenti bitti' satışı (Sell the news) yaşanabilir!"
             )
 
-        st.info(f"📊 **Bilanço İstatistiği:** {earnings_info['summary_text']}")
+        st.info(esc_dollars(f"📊 **Bilanço İstatistiği:** {earnings_info['summary_text']}"))
 
         if earnings_info.get("history_rows"):
             clean_e_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in earnings_info["history_rows"]]
@@ -817,7 +931,7 @@ if active_symbol:
         if opp_info and opp_info.get("stats"):
             section("🔄 Alternatif Fırsat Kıyası (Endeks veya Çip ETF'i Alsaydın Ne Olurdu?)")
             st.caption(f"{sembol} hissesinde tekil şirket riski almak yerine S&P 500 (SPY) veya Yarı İletken ETF'i (SMH) tutmanın 3 aylık karşılaştırması:")
-            st.markdown(opp_info["verdict"])
+            st.markdown(esc_dollars(opp_info["verdict"]))
             opp_rows = []
             for k_sym, k_val in opp_info["stats"].items():
                 label_name = (

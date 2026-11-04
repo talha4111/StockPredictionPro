@@ -507,6 +507,7 @@ def _get_days_to_earnings(tk: yf.Ticker) -> tuple[int | None, str | None]:
     return None, None
 
 
+@_cache_data(ttl=300, show_spinner=False)
 def analyze_stock_exit(symbol: str, user_pos: dict | None = None) -> dict | None:
     """
     Hissenin NE ZAMAN SATILMASI GEREKTİĞİNİ (Satış & Kâr Koruma Avcısı) analiz eder.
@@ -830,7 +831,7 @@ def format_plain_exit_telegram_message(res: dict) -> str:
         f"{earnings_line}\n"
         f"💡 *Tavsiye:* {res['action_advice'].replace('**', '*')}"
     )
-    return msg
+    return msg.replace("\\$", "$")
 
 
 def format_plain_telegram_message(res: dict) -> str:
@@ -894,7 +895,7 @@ def format_plain_telegram_message(res: dict) -> str:
         f"{checks_text}\n\n"
         f"💡 *Tavsiye:* {res['action_advice'].replace('**', '*')}"
     )
-    return msg
+    return msg.replace("\\$", "$")
 
 
 def send_telegram_message(bot_token: str, chat_id: str, text: str) -> tuple[bool, str]:
@@ -904,6 +905,7 @@ def send_telegram_message(bot_token: str, chat_id: str, text: str) -> tuple[bool
     if not bot_token or not chat_id:
         return False, "Telegram Bot Token veya Chat ID eksik."
 
+    text = (text or "").replace("\\$", "$")
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         "chat_id": chat_id,

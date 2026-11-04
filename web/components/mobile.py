@@ -146,23 +146,46 @@ def get_cached_quotes(symbols: tuple):
 
 @st.cache_data(ttl=300)
 def get_db_symbol_data(symbols: tuple):
-    """Veritabanından hisselerin son durumunu, kararını ve skorunu çeker."""
+    """Önce güncel tarama verisinden (scan-data), bulunamazsa veritabanından hisselerin son durumunu çeker."""
     result = {}
-    if not os.path.exists(DB_PATH):
+    if not symbols:
         return result
+
+    try:
+        from web.components.scan_data import load_latest_scan
+        df_scan, _ = load_latest_scan()
+        if df_scan is not None and not df_scan.empty:
+            as_of = str(df_scan["Tarama Tarihi"].iloc[0]) if "Tarama Tarihi" in df_scan.columns else ""
+            sub = df_scan[df_scan["Sembol"].isin(symbols)]
+            for _, row in sub.iterrows():
+                sym = str(row["Sembol"])
+                result[sym] = {
+                    "decision": row.get("Karar") or "IZLE",
+                    "score": float(row.get("Faktör Skor (%)") or 50.0),
+                    "db_fiyat": float(row.get("Fiyat ($)") or 0.0),
+                    "as_of_date": str(row.get("Tarama Tarihi") or as_of),
+                }
+    except Exception:
+        pass
+
+    missing = [s for s in symbols if s not in result]
+    if not missing or not os.path.exists(DB_PATH):
+        return result
+
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        placeholders = ",".join(["?"] * len(symbols))
+        placeholders = ",".join(["?"] * len(missing))
         c.execute(f"""
             SELECT sembol, decision, ai_skor, fiyat, as_of_date
             FROM hisse_sinyalleri
             WHERE sembol IN ({placeholders})
-            ORDER BY id DESC
-        """, list(symbols))
+              AND model_role IS NULL
+            ORDER BY as_of_date DESC, id DESC
+        """, list(missing))
         for r in c.fetchall():
             sym = r[0]
-            if sym not in result:  # en güncelini al
+            if sym not in result:
                 result[sym] = {
                     "decision": r[1] or "IZLE",
                     "score": r[2] or 50.0,

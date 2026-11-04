@@ -24,7 +24,14 @@ LAST_UPDATE_FILE = os.path.join(
 
 
 def _last_update_oku() -> dict | None:
-    """last_update.json dosyasını oku."""
+    """Önce güncel otomatik tarama (scan-data) özetini, yoksa yerel last_update.json dosyasını oku."""
+    try:
+        from web.components.scan_data import load_remote_metadata
+        rmeta = load_remote_metadata()
+        if rmeta and isinstance(rmeta.get("last_update"), dict):
+            return rmeta["last_update"]
+    except Exception:
+        pass
     if os.path.exists(LAST_UPDATE_FILE):
         try:
             with open(LAST_UPDATE_FILE, "r", encoding="utf-8") as f:
@@ -169,11 +176,20 @@ st.divider()
 
 summary = None
 try:
-    import stock_shadow_paper
-    if os.path.exists(DB_PATH):
-        summary = stock_shadow_paper.shadow_performance_summary(DB_PATH)
-except Exception as e:
-    st.error(f"Veri çekme hatası: {e}")
+    from web.components.scan_data import load_remote_metadata
+    rmeta = load_remote_metadata()
+    if rmeta and isinstance(rmeta.get("shadow_summary"), dict):
+        summary = rmeta["shadow_summary"]
+except Exception:
+    summary = None
+
+if not summary:
+    try:
+        import stock_shadow_paper
+        if os.path.exists(DB_PATH):
+            summary = stock_shadow_paper.shadow_performance_summary(DB_PATH)
+    except Exception as e:
+        st.error(f"Veri çekme hatası: {e}")
 
 # ─── ÜST DURUM KARTLARI ───
 s1, s2, s3, s4 = st.columns(4)

@@ -253,7 +253,8 @@ KURUMSAL_HAVUZ = {
     'ORCL':  'Technology', 'IBM':   'Technology', 'QCOM':  'Technology',
     'TXN':   'Technology', 'NOW':   'Technology', 'AMAT':  'Technology',
     'MU':    'Technology', 'LRCX':  'Technology', 'KLAC':  'Technology',
-    'MRVL':  'Technology', 'SNPS':  'Technology',
+    'MRVL':  'Technology', 'SNPS':  'Technology', 'COHR':  'Technology',
+    'CRWD':  'Technology', 'PANW':  'Technology', 'DELL':  'Technology', 'PLTR':  'Technology',
     # --- İletişim / Medya (Communication Services) ---
     'GOOGL': 'Communication', 'META': 'Communication', 'NFLX': 'Communication',
     'DIS':   'Communication', 'CMCSA': 'Communication', 'TMUS': 'Communication',
@@ -284,13 +285,13 @@ KURUMSAL_HAVUZ = {
     # --- Endüstriyel (Industrials) ---
     'CAT':   'Industrials', 'HON':  'Industrials', 'UNP':  'Industrials',
     'RTX':   'Industrials', 'BA':   'Industrials', 'GE':   'Industrials',
-    'DE':    'Industrials', 'LMT':  'Industrials',
+    'DE':    'Industrials', 'LMT':  'Industrials', 'BE':    'Industrials', 'RKLB':  'Industrials', 'VRT':   'Industrials',
     # --- Malzeme (Materials) ---
     'LIN':   'Materials', 'APD':  'Materials', 'SHW':  'Materials',
     # --- Gayrimenkul (Real Estate) ---
     'AMT':   'Real Estate', 'PLD':  'Real Estate', 'CCI':  'Real Estate',
     # --- Kamu Hizmetleri (Utilities) ---
-    'NEE':   'Utilities', 'DUK':  'Utilities', 'SO':   'Utilities',
+    'NEE':   'Utilities', 'DUK':  'Utilities', 'SO':   'Utilities', 'VST':   'Utilities', 'CEG':   'Utilities',
 }
 
 # Sektör ETF'leri (Sektör Rotasyonu Radarı için)

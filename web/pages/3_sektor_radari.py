@@ -49,18 +49,30 @@ THEMATIC_BASKETS = {
 
 @st.cache_data(ttl=900)
 def sektor_performans_tablosu():
-    """11 sektör ETF'inin 1H, 1A, 3A performansını ve RSI'ını hesaplar (15 dk önbellekli)."""
+    """11 sektör ETF'inin 1H, 1A, 3A performansını ve RSI'ını paralel hesaplar (15 dk önbellekli)."""
     results = []
+    etf_list = list(SECTOR_ETFS.keys())
+    raw_batch = None
+    try:
+        raw_batch = yf.download(etf_list, period="3mo", progress=False, threads=True, group_by="ticker")
+    except Exception:
+        raw_batch = None
+
     for ticker, name in SECTOR_ETFS.items():
         try:
-            data = yf.Ticker(ticker).history(period="3mo")
+            data = pd.DataFrame()
+            if raw_batch is not None and not raw_batch.empty:
+                if ticker in raw_batch.columns.get_level_values(0):
+                    data = raw_batch[ticker].dropna(subset=["Close"])
+            if data.empty or len(data) < 20:
+                data = yf.Ticker(ticker).history(period="3mo")
             if len(data) < 20:
                 continue
 
-            current = data['Close'].iloc[-1]
-            wk_ago = data['Close'].iloc[-6] if len(data) >= 6 else data['Close'].iloc[0]
-            mo_ago = data['Close'].iloc[-21] if len(data) >= 21 else data['Close'].iloc[0]
-            q_start = data['Close'].iloc[0]
+            current = float(data['Close'].iloc[-1])
+            wk_ago = float(data['Close'].iloc[-6]) if len(data) >= 6 else float(data['Close'].iloc[0])
+            mo_ago = float(data['Close'].iloc[-21]) if len(data) >= 21 else float(data['Close'].iloc[0])
+            q_start = float(data['Close'].iloc[0])
 
             wk_ret = ((current - wk_ago) / wk_ago) * 100
             mo_ret = ((current - mo_ago) / mo_ago) * 100
@@ -71,7 +83,7 @@ def sektor_performans_tablosu():
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
-            rsi = 100 - (100 / (1 + rs)).iloc[-1]
+            rsi = float((100 - (100 / (1 + rs))).iloc[-1])
 
             results.append({
                 "Sektör": name,
@@ -153,67 +165,38 @@ COMPANY_NAMES = {
 
 @st.cache_data(ttl=300)
 def tematik_sepet_tablosu(basket_name, tickers):
-    """Tematik sepetteki hisseleri hızlı ve güvenilir şekilde tarar (5 dk önbellekli)."""
-    # 1. DB'den sistem karar ve skorlarını çek
-    db_data = {}
-    if os.path.exists(DB_PATH):
-        try:
-            conn = sqlite3.connect(DB_PATH)
-            c = conn.cursor()
-            placeholders = ','.join(['?'] * len(tickers))
-            c.execute(f"""
-                SELECT sembol, decision, ai_skor, fiyat
-                FROM hisse_sinyalleri
-                WHERE sembol IN ({placeholders})
-                GROUP BY sembol
-            """, tickers)
-            for r in c.fetchall():
-                db_data[r[0]] = {'decision': r[1], 'score': r[2], 'db_fiyat': r[3]}
-            conn.close()
-        except Exception:
-            pass
+    """Tematik sepetteki hisseleri güncel tarama ve toplu fiyat çekimiyle hızlıca tarar (5 dk önbellekli)."""
+    from web.components.mobile import get_db_symbol_data, get_cached_quotes
 
-    # 2. Canlı fiyatları fast_info / history ile çek
+    t_tuple = tuple(tickers)
+    db_data = get_db_symbol_data(t_tuple)
+    quotes = get_cached_quotes(t_tuple)
+
     results = []
+    badge_map = {
+        'AL_ADAYI': '🟢 AL ADAYI',
+        'PAPER_TOP20': '🟢 PAPER TOP 20',
+        'KALITELI_GERI_CEKILME': '🟡 GERİ ÇEKİLME',
+        'BEKLE': '🟡 BEKLE',
+        'IZLE': '🔵 İZLE',
+        'REDDET': '🔴 UZAK DUR',
+        'OLAY_RISKI': '🟣 BİLANÇO/RİSK',
+    }
+
     for t in tickers:
-        price = 0.0
-        change_pct = 0.0
-        try:
-            tk = yf.Ticker(t)
-            fast = getattr(tk, 'fast_info', {})
-            price = fast.get('lastPrice') or getattr(fast, 'last_price', None) or 0.0
-            prev = fast.get('previousClose') or getattr(fast, 'previous_close', None) or 0.0
-            
-            # Bulut ortamında fast_info boş gelirse history ile çek
-            if not price or price <= 0:
-                hist = tk.history(period="3d")
-                if not hist.empty:
-                    price = float(hist['Close'].iloc[-1])
-                    if len(hist) > 1:
-                        prev = float(hist['Close'].iloc[-2])
-            
-            if price and prev and prev > 0:
-                change_pct = ((price - prev) / prev) * 100
-        except Exception:
-            pass
+        q = quotes.get(t, {})
+        price = float(q.get("price", 0.0) or 0.0)
+        change_pct = float(q.get("change_pct", 0.0) or 0.0)
 
         db_item = db_data.get(t, {})
         if (not price or price <= 0) and db_item.get('db_fiyat'):
-            price = db_item['db_fiyat']
+            price = float(db_item['db_fiyat'])
 
-        decision = db_item.get('decision') or 'İZLE'
+        decision = db_item.get('decision') or 'IZLE'
         score = db_item.get('score')
         score_str = f"%{score:.1f}" if score is not None else "—"
 
         chg_emoji = "🟢" if change_pct >= 0 else "🔴"
-        
-        badge_map = {
-            'AL_ADAYI': '🟢 AL ADAYI',
-            'BEKLE': '🟡 BEKLE',
-            'IZLE': '🔵 İZLE',
-            'REDDET': '🔴 UZAK DUR',
-            'OLAY_RISKI': '🟣 BİLANÇO/RİSK',
-        }
         dec_label = badge_map.get(decision, f"🔵 {decision}")
 
         results.append({
@@ -248,6 +231,7 @@ st.markdown("## 🌍 Piyasa Rejimi, Sektör & Makro Radarı")
 st.caption("Piyasanın hangi rejimde (Boğa, Seçici, Düzeltme, Kriz) olduğunu, faiz/korku etkisini ve paranın hangi sektörlere aktığını görün.")
 
 from web.components.investment_committee import get_market_regime_summary
+from web.components.ui import md_to_html
 reg = get_market_regime_summary()
 rc = reg["regime_color"]
 
@@ -262,8 +246,8 @@ st.markdown(f"""
             {reg['regime_badge']}
         </span>
     </div>
-    <p style="color:#ccd6f6; font-size:0.95rem; margin:0.7rem 0 0.4rem 0;">{reg['summary']}</p>
-    <p style="color:#64ffda; font-size:0.9rem; margin:0;">💡 <b>Bu Rejimde Strateji:</b> {reg['hunter_rule']}</p>
+    <p style="color:#ccd6f6; font-size:0.95rem; margin:0.7rem 0 0.4rem 0;">{md_to_html(reg['summary'])}</p>
+    <p style="color:#64ffda; font-size:0.9rem; margin:0;">💡 <b>Bu Rejimde Strateji:</b> {md_to_html(reg['hunter_rule'])}</p>
 </div>
 """, unsafe_allow_html=True)
 

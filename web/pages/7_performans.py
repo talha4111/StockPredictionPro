@@ -37,11 +37,20 @@ with st.expander("❓ Bu Sayfa Ne İşe Yarar ve 'Alpha / Beat' Ne Demektir? (T�
 
 summary = None
 try:
-    import stock_signal_tracker
-    if os.path.exists(DB_PATH):
-        summary = stock_signal_tracker.performans_ozeti(DB_PATH)
-except Exception as e:
-    st.error(f"Performans verisi çekilemedi: {e}")
+    from web.components.scan_data import load_remote_metadata
+    rmeta = load_remote_metadata()
+    if rmeta and isinstance(rmeta.get("performance_summary"), dict):
+        summary = rmeta["performance_summary"]
+except Exception:
+    summary = None
+
+if not summary:
+    try:
+        import stock_signal_tracker
+        if os.path.exists(DB_PATH):
+            summary = stock_signal_tracker.performans_ozeti(DB_PATH)
+    except Exception as e:
+        st.error(f"Performans verisi çekilemedi: {e}")
 
 if summary:
     # ─── ÜST METRİK KARTLARI ───

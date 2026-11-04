@@ -57,7 +57,22 @@ def esc_dollars(text) -> str:
     olarak algılanıp kelimelerin bitişmesine ve boşlukların silinmesine engel olur."""
     if text is None:
         return ""
-    return re.sub(r'(?<!\\)\$', r'\\$', str(text))
+    s = str(text).replace("\\$", "$")
+    return re.sub(r'(?<!\\)\$', r'\\$', s)
+
+
+def md_to_html(text) -> str:
+    """HTML kartları (<div>...</div>, unsafe_allow_html=True) içine gömülen metinlerde:
+    1) \\$ kaçışlarını temizler ve $ işaretlerini &#36; HTML koduna çevirir (KaTeX ve ters eğik çizgi hatasını önler)
+    2) **kalın** ve *italik* Markdown işaretlerini gerçek <b> ve <i> HTML etiketlerine dönüştürür."""
+    if text is None:
+        return ""
+    s = str(text).replace("\\$", "$")
+    s = html.escape(s)
+    s = s.replace("$", "&#36;")
+    s = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", s)
+    s = re.sub(r"\*(.+?)\*", r"<i>\1</i>", s)
+    return s
 
 
 # ─── GLOBAL CSS ───
@@ -158,14 +173,14 @@ def section(title: str):
 
 
 def badge(text: str, color: str) -> str:
-    return f"<span class='spp-badge' style='--c:{color}'>{esc(text)}</span>"
+    return f"<span class='spp-badge' style='--c:{color}'>{esc(text).replace('$', '&#36;')}</span>"
 
 
 def stat_html(label: str, value: str, sub: str = "", color: str = TEXT) -> str:
-    sub_html = f"<div class='s'>{esc(sub)}</div>" if sub else ""
+    sub_html = f"<div class='s'>{esc(sub).replace('$', '&#36;')}</div>" if sub else ""
     return (
-        f"<div class='spp-stat' style='--c:{color}'><div class='l'>{esc(label)}</div>"
-        f"<div class='v'>{esc(value)}</div>{sub_html}</div>"
+        f"<div class='spp-stat' style='--c:{color}'><div class='l'>{esc(label).replace('$', '&#36;')}</div>"
+        f"<div class='v'>{esc(value).replace('$', '&#36;')}</div>{sub_html}</div>"
     )
 
 
@@ -178,7 +193,7 @@ def prob_bar_html(win_pct: int, left_label: str, right_label: str) -> str:
     win_pct = max(0, min(100, int(win_pct)))
     return (
         f"<div class='spp-bar'><div style='width:{win_pct}%'></div></div>"
-        f"<div class='spp-bar-lbl'><span>{esc(left_label)}</span><span>{esc(right_label)}</span></div>"
+        f"<div class='spp-bar-lbl'><span>{esc(left_label).replace('$', '&#36;')}</span><span>{esc(right_label).replace('$', '&#36;')}</span></div>"
     )
 
 
@@ -212,8 +227,8 @@ def decision_card(
                 <div><span class='spp-sym'>{esc(symbol)}</span>{name_html}</div>
                 <div style='display:flex; gap:6px; flex-wrap:wrap; align-items:center;'>{badges}</div>
             </div>
-            <div style='margin-top:4px;'><span class='spp-price'>${price:,.2f}</span>{chg_html(chg_pct)}</div>
-            <div class='spp-headline'>{esc(headline)}</div>
+            <div style='margin-top:4px;'><span class='spp-price'>&#36;{price:,.2f}</span>{chg_html(chg_pct)}</div>
+            <div class='spp-headline'>{md_to_html(headline)}</div>
             {grid}
             {footer_html}
         </div>

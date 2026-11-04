@@ -297,7 +297,7 @@ with tab_buy:
                 st.markdown("##### ✅ 5 Adımlı Güven Kontrol Listesi")
                 for item in res["checklist"]:
                     icon = "✅" if item["ok"] else "⏳"
-                    st.markdown(f"{icon} **{item['kriter']}** — *{item['detay']}*")
+                    st.markdown(f"{icon} **{item['kriter']}** — *{esc_dollars(item['detay'])}*")
 
             with c_chart:
                 st.markdown("##### 📈 Fiyat & Alım Bölgeleri Grafiği")
@@ -321,11 +321,11 @@ with tab_buy:
                 with ac1:
                     st.markdown("**➕ İhtimali Artıran Güçlü Yanlar:**")
                     for p_txt in ai_pred.get("positives", []):
-                        st.markdown(f"- 🟢 {p_txt}")
+                        st.markdown(f"- 🟢 {esc_dollars(p_txt)}")
                 with ac2:
                     st.markdown("**➖ İhtimali Düşüren Riskler:**")
                     for n_txt in ai_pred.get("negatives", []):
-                        st.markdown(f"- 🟠 {n_txt}")
+                        st.markdown(f"- 🟠 {esc_dollars(n_txt)}")
 
             btn_c1, btn_c2 = st.columns(2)
             with btn_c1:
@@ -419,9 +419,9 @@ with tab_sell:
                 f"<div style='background:{CARD_2}; border:1px dashed {BORDER}; border-radius:10px; "
                 f"padding:10px 12px; margin-top:10px; display:flex; justify-content:space-between; "
                 f"flex-wrap:wrap; gap:10px; font-size:0.82rem; color:{TEXT};'>"
-                f"<div>📦 <b>Pozisyon:</b> {res['total_qty']:g} Lot (Ort: <b>${res['avg_cost']:.2f}</b>)</div>"
-                f"<div>💵 <b>Net K/Z:</b> <span style='color:{pnl_col}; font-weight:700;'>{pnl_sign}${res['pnl_usd']:,.2f} ({pnl_sign}{res['pnl_pct']:.2f}%)</span></div>"
-                f"<div>🥇 <b>İlk FIFO Lot:</b> ${res['first_fifo_lot_price']:.2f} (<span style='color:{fifo_col}; font-weight:700;'>{res['first_fifo_pnl_pct']:+.1f}%</span>)</div>"
+                f"<div>📦 <b>Pozisyon:</b> {res['total_qty']:g} Lot (Ort: <b>&#36;{res['avg_cost']:.2f}</b>)</div>"
+                f"<div>💵 <b>Net K/Z:</b> <span style='color:{pnl_col}; font-weight:700;'>{pnl_sign}&#36;{res['pnl_usd']:,.2f} ({pnl_sign}{res['pnl_pct']:.2f}%)</span></div>"
+                f"<div>🥇 <b>İlk FIFO Lot:</b> &#36;{res['first_fifo_lot_price']:.2f} (<span style='color:{fifo_col}; font-weight:700;'>{res['first_fifo_pnl_pct']:+.1f}%</span>)</div>"
                 f"<div>✅ <b>Kârda Lot:</b> {res['profitable_lots_count']}/{res['total_lots_count']}</div>"
                 f"</div>"
             )
@@ -460,7 +460,7 @@ with tab_sell:
 
             for item in res["exit_checklist"]:
                 icon = "⚠️" if item["ok"] else "✅"
-                st.markdown(f"{icon} **{item['kriter']}** — *{item['detay']}*")
+                st.markdown(f"{icon} **{item['kriter']}** — *{esc_dollars(item['detay'])}*")
 
             e_cat = analyze_earnings_catalyst(sym)
             if e_cat and e_cat.get("history_rows"):

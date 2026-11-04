@@ -2,8 +2,8 @@
 Otomatik Piyasa Taraması (GitHub Actions için)
 ==============================================
 1. stock_value_engine.tam_tarama_baslat() ile tüm kurumsal havuzu tarar.
-2. En son tarama sonuçlarını (sadece ana model satırları) web/data/piyasa_tarama_son.json
-   dosyasına yazar. Web arayüzü bu dosyayı okuyarak her zaman taze listeyi gösterir.
+2. En son tarama sonuçlarını (sadece ana model satırları) ve güncel model/performans
+   özetlerini web/data/piyasa_tarama_son.json dosyasına yazar.
 """
 import json
 import os
@@ -20,7 +20,7 @@ OUT_PATH = os.path.join(PROJECT_ROOT, "web", "data", "piyasa_tarama_son.json")
 
 
 def export_latest_scan(db_path: str = DB_PATH, out_path: str = OUT_PATH) -> int:
-    """DB'deki en son as_of_date taramasını (paper shadow hariç) JSON'a yazar."""
+    """DB'deki en son as_of_date taramasını (paper shadow hariç) ve özet metrikleri JSON'a yazar."""
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     last_date = conn.execute(
@@ -49,11 +49,54 @@ def export_latest_scan(db_path: str = DB_PATH, out_path: str = OUT_PATH) -> int:
         seen.add(r["sembol"])
         records.append({k: r[k] for k in r.keys()})
 
+    shadow_sum = None
+    perf_sum = None
+    last_update_meta = None
+    try:
+        import stock_shadow_paper
+        shadow_sum = stock_shadow_paper.shadow_performance_summary(db_path)
+    except Exception:
+        shadow_sum = None
+
+    try:
+        import stock_signal_tracker
+        perf_sum = stock_signal_tracker.performans_ozeti(db_path)
+    except Exception:
+        perf_sum = None
+
+    try:
+        from stock_value_engine import vix_oku
+        vix_val = vix_oku()
+    except Exception:
+        vix_val = None
+
+    try:
+        base_m = (shadow_sum or {}).get("models", {}).get("paper_baseline", {})
+        chal_m = (shadow_sum or {}).get("models", {}).get("paper_m00_r15", {})
+        b_ret = base_m.get("paired_mean_return", 0) or 0
+        c_ret = chal_m.get("paired_mean_return", 0) or 0
+        lider = "Challenger (m00_r15)" if c_ret > b_ret else "Baseline (v3.1)"
+        last_update_meta = {
+            "son_guncelleme": datetime.now(timezone.utc).isoformat(),
+            "lider": lider,
+            "vix": vix_val,
+            "baseline_return": b_ret,
+            "challenger_return": c_ret,
+            "status": (shadow_sum or {}).get("status", "COLLECTING_GENUINELY_NEW_DATA"),
+            "mature_cohorts": (shadow_sum or {}).get("paired_mature_cohorts", 2),
+            "required_cohorts": (shadow_sum or {}).get("required_paired_mature_cohorts", 3),
+        }
+    except Exception:
+        last_update_meta = None
+
     payload = {
         "as_of_date": last_date,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "count": len(records),
         "rows": records,
+        "shadow_summary": shadow_sum,
+        "performance_summary": perf_sum,
+        "last_update": last_update_meta,
     }
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
