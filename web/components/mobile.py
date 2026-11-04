@@ -177,40 +177,26 @@ def get_db_symbol_data(symbols: tuple):
 
 @st.cache_data(ttl=300)
 def get_top_opportunities(limit: int = 5):
-    """En son taramada en yüksek puanlı AL_ADAYI fırsatlarını döndürür."""
-    if not os.path.exists(DB_PATH):
-        return []
+    """En son (otomatik) taramada en yüksek puanlı AL adaylarını döndürür."""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT MAX(as_of_date) FROM hisse_sinyalleri")
-        last_date = c.fetchone()[0]
-        if not last_date:
-            conn.close()
+        from web.components.scan_data import load_latest_scan
+        df, _ = load_latest_scan()
+        if df is None or df.empty:
             return []
-
-        c.execute("""
-            SELECT sembol, sektor, ROUND(ai_skor, 1), decision, ROUND(fiyat, 2)
-            FROM hisse_sinyalleri
-            WHERE as_of_date = ? AND decision IN ('AL_ADAYI', 'PAPER_TOP20', 'KALITELI_GERI_CEKILME')
-            ORDER BY ai_skor DESC
-            LIMIT ?
-        """, (last_date, limit))
-        rows = c.fetchall()
-        conn.close()
+        buy = df[df["Karar"].isin(["AL_ADAYI", "PAPER_TOP20", "KALITELI_GERI_CEKILME"])]
+        buy = buy.sort_values("Faktör Skor (%)", ascending=False).head(limit)
         return [
             {
-                "sembol": r[0],
-                "sektor": r[1],
-                "skor": r[2],
-                "karar": r[3],
-                "fiyat": r[4],
+                "sembol": r["Sembol"],
+                "sektor": r["Sektör"],
+                "skor": r["Faktör Skor (%)"],
+                "karar": r["Karar"],
+                "fiyat": r["Fiyat ($)"],
             }
-            for r in rows
+            for _, r in buy.iterrows()
         ]
     except Exception:
         return []
-
 
 @st.cache_data(ttl=300)
 def get_vix_status():

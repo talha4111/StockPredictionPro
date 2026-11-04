@@ -34,7 +34,7 @@ st.caption("Kurumsal havuzdaki hisseleri 4-Sütunlu faktör modeline göre puanl
 # ─── KULLANICI REHBERİ ───
 with st.expander("❓ Bu Sayfa Nasıl Kullanılır ve Sıralama Neye Göre Yapılır? (Tıkla & Oku)", expanded=False):
     st.markdown("""
-    * **Anında Sonuç:** Sayfa açıldığında veritabanına kayıtlı en son tam tarama sonuçları otomatik listelenir (beklemenize gerek yoktur).
+    * **Otomatik Tarama:** Sistem her iş günü ABD borsası kapandıktan sonra (gece ~01:30 TSİ) tüm havuzu kendisi tarar; sayfa açıldığında en taze liste beklemeden gelir.
     * **Sıralama (Sıra 1, 2, 3...):** Hisseler Faktör Skoruna (%100 üzerinden) göre en iyiden en kötüye doğru dizilir. 1. sıradaki hisse tüm borsada puanı en yüksek olandır.
     * **Filtreler:** Aşağıdaki kutulardan sadece `AL_ADAYI` olanları veya sadece ilgilendiğiniz bir sektörü (örn. `Energy`, `Technology`) seçebilirsiniz.
     * **Yeni Tarama:** Eğer en taze verilerle tüm hisseleri tekrar taratmak isterseniz aşağıdaki **"Yeniden Tam Tarama Başlat"** butonuna basabilirsiniz.
@@ -56,42 +56,18 @@ if vix:
 
 st.sidebar.markdown(f"**Havuz Büyüklüğü:** {len(KURUMSAL_HAVUZ) if ENGINE_AVAILABLE else 'N/A'} hisse")
 
-@st.cache_data(ttl=60)
+from web.components.scan_data import load_latest_scan, scan_age_days, _load_local
+
 def load_db_scan_results():
-    """Veritabanındaki en son as_of_date tarama verilerini anında DataFrame olarak çeker."""
-    if not os.path.exists(DB_PATH):
-        return pd.DataFrame()
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        query = """
-            SELECT 
-                sembol as 'Sembol',
-                sektor as 'Sektör',
-                ROUND(ai_skor, 1) as 'Faktör Skor (%)',
-                decision as 'Karar',
-                ROUND(fiyat, 2) as 'Fiyat ($)',
-                ROUND(rsi, 1) as 'RSI',
-                ROUND(quality_score, 1) as 'Kalite',
-                ROUND(value_score, 1) as 'Değer',
-                ROUND(momentum_score, 1) as 'Momentum',
-                ROUND(risk_score, 1) as 'Risk',
-                as_of_date as 'Tarama Tarihi'
-            FROM hisse_sinyalleri
-            WHERE as_of_date = (SELECT MAX(as_of_date) FROM hisse_sinyalleri)
-            ORDER BY ai_skor DESC
-        """
-        df = pd.read_sql_query(query, conn)
-        conn.close()
-        if not df.empty:
-            df.insert(0, 'Sıra', range(1, len(df) + 1))
-        return df
-    except Exception:
-        return pd.DataFrame()
+    """Otomatik (GitHub) veya yerel en taze tarama listesini döndürür."""
+    df, _src = load_latest_scan()
+    return df
 
-# Session state kontrolü (Filtreleyince tablonun yok olmasını engelleyen kritik yapı)
-if 'scan_data' not in st.session_state or st.session_state['scan_data'] is None:
-    st.session_state['scan_data'] = load_db_scan_results()
-
+# Her sayfa açılışında taze listeyi al (filtreleme sırasında kaybolmaması için session_state'te tut)
+_fresh_df, _scan_source = load_latest_scan()
+_prev = st.session_state.get('scan_data')
+if _prev is None or (not _fresh_df.empty and not _prev.empty and str(_fresh_df['Tarama Tarihi'].iloc[0]) > str(_prev['Tarama Tarihi'].iloc[0])) or (_prev is not None and _prev.empty):
+    st.session_state['scan_data'] = _fresh_df
 # Tarama başlatma butonu
 col_btn1, col_btn2 = st.columns([1, 2])
 with col_btn1:
@@ -116,7 +92,7 @@ if yeni_tarama:
 
             if sinyaller:
                 # Yeni verileri çek ve session state'e yaz
-                st.session_state['scan_data'] = load_db_scan_results()
+                _load_local.clear(); st.cache_data.clear(); st.session_state['scan_data'] = load_db_scan_results()
                 progress_container.success(f"✅ Tarama tamamlandı! {len(sinyaller)} hisse başarıyla güncellendi.")
             else:
                 progress_container.warning("Tarama tamamlandı ancak yeni kayıt eklenemedi.")
@@ -129,6 +105,14 @@ df = st.session_state['scan_data']
 if df is not None and not df.empty:
     tarama_tarihi = df['Tarama Tarihi'].iloc[0] if 'Tarama Tarihi' in df.columns else 'Güncel'
     st.caption(f"📅 Görüntülenen Tarama Tarihi: **{tarama_tarihi}** (Toplam **{len(df)}** hisse)")
+    _age = scan_age_days(str(tarama_tarihi))
+    if _age is not None and _age > 4:
+        st.warning(
+            f"⚠️ Bu liste **{_age} gün önceki** bir taramaya ait. Otomatik tarama her iş günü gece çalışır; "
+            f"güncel liste için '🚀 Yeniden Tam Tarama Başlat' butonunu kullanabilirsin."
+        )
+    elif _scan_source == "otomatik":
+        st.success("🟢 Liste otomatik gece taramasından geliyor (her iş günü ABD borsası kapandıktan sonra yenilenir).")
 
     # ─── FİLTRELER ───
     st.divider()

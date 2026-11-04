@@ -1,0 +1,48 @@
+name: Otomatik Piyasa Taramasi
+
+on:
+  schedule:
+    # ABD borsası kapandıktan sonra (Pzt-Cuma 22:30 UTC = 01:30 TSİ) günlük tam tarama
+    - cron: '30 22 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: piyasa-taramasi
+  cancel-in-progress: false
+
+jobs:
+  full_scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install --quiet yfinance pandas numpy scipy requests scikit-learn matplotlib
+
+      - name: Run Full Market Scan
+        run: |
+          python web/scripts/piyasa_tarama_job.py
+
+      - name: Publish scan to scan-data branch (main dalini kirletmeden)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp web/data/piyasa_tarama_son.json /tmp/piyasa_tarama_son.json
+          git checkout --orphan scan-data
+          git rm -rf --quiet . || true
+          mkdir -p web/data
+          cp /tmp/piyasa_tarama_son.json web/data/piyasa_tarama_son.json
+          git add -f web/data/piyasa_tarama_son.json
+          git commit -m "Update market scan $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          git push origin scan-data --force
