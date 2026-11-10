@@ -3,6 +3,8 @@
 *.pem
 ayar.json
 QuantBot/ayar.json
+web/data/telegram_secret.json
+web/data/ai_provider_config.json
 QuantBot/.env
 QuantBot/aktif_detay.json
 QuantBot/aktif_islemler.json

@@ -23,6 +23,7 @@ from web.components.ai_analyst import (
     load_chat_sessions,
     save_ai_provider_config,
     switch_session,
+    test_ai_provider_connection,
 )
 from web.components.investment_committee import get_market_regime_summary
 from web.components.ui import (
@@ -270,11 +271,46 @@ with tab_memory:
 # ═══════════════════════════════════════════════════════════════════════
 with tab_settings:
     section("⚙️ Yapay Zeka Motoru & Opsiyonel Bulut LLM Bağlantısı")
-    st.info(
-        "💡 **Bilgi:** Sistem şu an **Yerleşik Kurumsal Quant & Hafıza Motoru** ile hiçbir harici anahtara ihtiyaç duymadan "
-        "tüm canlı fiyatları, Dip Avcısı seviyelerini, bilançoları ve kalıcı hafızayı sentezleyerek tam kapasite çalışmaktadır. "
-        "İstersen aşağıdan ücretsiz **Google Gemini (AI Studio)** veya **Groq** anahtarı ekleyerek bulut LLM katmanını da aktif edebilirsin."
-    )
+
+    if "ai_settings_saved_msg" in st.session_state:
+        saved_ok, saved_msg = st.session_state.pop("ai_settings_saved_msg")
+        if saved_ok:
+            st.success(saved_msg)
+        else:
+            st.warning(saved_msg)
+
+    if has_cloud_key:
+        active_prov_label = (
+            f"Google Gemini ({ai_cfg.get('gemini_model', 'gemini-2.5-flash')})"
+            if ai_cfg.get("gemini_api_key")
+            else (
+                f"Groq ({ai_cfg.get('groq_model', 'llama-3.3-70b-versatile')})"
+                if ai_cfg.get("groq_api_key")
+                else f"OpenAI ({ai_cfg.get('openai_model', 'gpt-4o')})"
+            )
+        )
+        st.success(
+            f"🟢 **Bulut LLM + Canlı Quant Motoru Aktif!** Şu an **{active_prov_label}** anahtarın tanımlı ve devrede. "
+            f"Soldaki **💬 Uzman Analist Masası** sekmesine geçip sorularını doğrudan sorabilirsin."
+        )
+    else:
+        st.info(
+            "💡 **Bilgi:** Sistem şu an **Yerleşik Kurumsal Quant & Hafıza Motoru** ile hiçbir harici anahtara ihtiyaç duymadan "
+            "tüm canlı fiyatları, Dip Avcısı seviyelerini, bilançoları ve kalıcı hafızayı sentezleyerek tam kapasite çalışmaktadır. "
+            "İstersen aşağıdan ücretsiz **Google Gemini (AI Studio)** veya **Groq** anahtarı ekleyerek bulut LLM katmanını da aktif edebilirsin."
+        )
+
+    gem_models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
+    saved_gem_model = ai_cfg.get("gemini_model", "gemini-2.5-flash")
+    gem_idx = gem_models.index(saved_gem_model) if saved_gem_model in gem_models else 0
+
+    groq_models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    saved_groq_model = ai_cfg.get("groq_model", "llama-3.3-70b-versatile")
+    groq_idx = groq_models.index(saved_groq_model) if saved_groq_model in groq_models else 0
+
+    oai_models = ["gpt-4o", "gpt-4o-mini"]
+    saved_oai_model = ai_cfg.get("openai_model", "gpt-4o")
+    oai_idx = oai_models.index(saved_oai_model) if saved_oai_model in oai_models else 0
 
     with st.form("ai_provider_settings_form"):
         prov = st.selectbox(
@@ -293,21 +329,21 @@ with tab_settings:
         with c_g1:
             gem_key = st.text_input("Google Gemini API Key (Ücretsiz: aistudio.google.com)", value=ai_cfg.get("gemini_api_key", ""), type="password")
         with c_g2:
-            gem_model = st.selectbox("Gemini Modeli", ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"], index=0)
+            gem_model = st.selectbox("Gemini Modeli", gem_models, index=gem_idx)
 
         c_q1, c_q2 = st.columns([2, 1])
         with c_q1:
             groq_key = st.text_input("Groq API Key (Ücretsiz: console.groq.com)", value=ai_cfg.get("groq_api_key", ""), type="password")
         with c_q2:
-            groq_model = st.selectbox("Groq Modeli", ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"], index=0)
+            groq_model = st.selectbox("Groq Modeli", groq_models, index=groq_idx)
 
         c_o1, c_o2 = st.columns([2, 1])
         with c_o1:
             oai_key = st.text_input("OpenAI API Key (Opsiyonel)", value=ai_cfg.get("openai_api_key", ""), type="password")
         with c_o2:
-            oai_model = st.selectbox("OpenAI Modeli", ["gpt-4o", "gpt-4o-mini"], index=0)
+            oai_model = st.selectbox("OpenAI Modeli", oai_models, index=oai_idx)
 
-        if st.form_submit_button("💾 AI Motor Ayarlarını Kaydet", type="primary", use_container_width=True):
+        if st.form_submit_button("💾 AI Motor Ayarlarını Kaydet ve Bağlantıyı Doğrula", type="primary", use_container_width=True):
             new_cfg = {
                 "provider": prov,
                 "gemini_api_key": gem_key.strip(),
@@ -318,5 +354,6 @@ with tab_settings:
                 "openai_model": oai_model,
             }
             save_ai_provider_config(new_cfg)
-            st.success("✅ AI Motor ayarları kalıcı olarak kaydedildi!")
+            ok, status_msg = test_ai_provider_connection(new_cfg)
+            st.session_state["ai_settings_saved_msg"] = (ok, status_msg)
             st.rerun()

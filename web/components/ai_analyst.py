@@ -496,6 +496,15 @@ def load_ai_provider_config() -> dict:
         except Exception:
             pass
 
+    # Aktif Streamlit oturumunda kaydedilmiş güncel ayar varsa öncelik ver
+    try:
+        import streamlit as st
+        sess_cfg = st.session_state.get("ai_provider_config")
+        if isinstance(sess_cfg, dict):
+            cfg.update(sess_cfg)
+    except Exception:
+        pass
+
     # Streamlit secrets veya ortam değişkenlerinden yedek okuma
     try:
         import streamlit as st
@@ -511,28 +520,100 @@ def load_ai_provider_config() -> dict:
 
     if not cfg["gemini_api_key"]:
         env_gem = os.getenv("GEMINI_API_KEY", "").strip()
-        if env_gem:
+        if env_gem and env_gem not in _FAILED_LLM_KEYS:
             cfg["gemini_api_key"] = env_gem
     if not cfg["groq_api_key"]:
         env_groq = os.getenv("GROQ_API_KEY", "").strip()
-        if env_groq:
+        if env_groq and env_groq not in _FAILED_LLM_KEYS:
             cfg["groq_api_key"] = env_groq
     if not cfg["openai_api_key"]:
         env_oai = os.getenv("OPENAI_API_KEY", "").strip()
-        if env_oai:
+        if env_oai and env_oai not in _FAILED_LLM_KEYS:
             cfg["openai_api_key"] = env_oai
 
     return cfg
 
 
 def save_ai_provider_config(new_cfg: dict):
-    """API yapılandırmasını diske kaydeder."""
+    """API yapılandırmasını hem oturum hafızasına hem diske kaydeder."""
+    _FAILED_LLM_KEYS.clear()
+    try:
+        import streamlit as st
+        st.session_state["ai_provider_config"] = dict(new_cfg)
+    except Exception:
+        pass
     os.makedirs(DATA_DIR, exist_ok=True)
     try:
         with open(AI_CONFIG_PATH, "w", encoding="utf-8") as f:
             json.dump(new_cfg, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+
+
+def test_ai_provider_connection(cfg: dict) -> tuple[bool, str]:
+    """Kaydedilen API anahtarını canlı test eder ve kullanıcıya net durum raporu döner."""
+    provider = cfg.get("provider", "auto")
+
+    if provider in ("auto", "gemini") and cfg.get("gemini_api_key"):
+        key = cfg["gemini_api_key"].strip()
+        chosen_model = cfg.get("gemini_model", "gemini-2.5-flash").strip()
+        models_to_try = []
+        for m in [chosen_model, "gemini-2.5-flash", "gemini-2.0-flash"]:
+            if m and m not in models_to_try:
+                models_to_try.append(m)
+
+        last_code = 0
+        for m in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={key}"
+            body = {
+                "contents": [{"role": "user", "parts": [{"text": "OK"}]}],
+                "generationConfig": {"maxOutputTokens": 10},
+            }
+            try:
+                r = requests.post(url, json=body, timeout=10)
+                last_code = r.status_code
+                if r.status_code == 200:
+                    if m != chosen_model:
+                        cfg["gemini_model"] = m
+                        save_ai_provider_config(cfg)
+                        return True, f"✅ Google Gemini API Anahtarı Doğrulandı! (`{chosen_model}` ücretsiz kota sınırında olduğu için otomatik olarak en hızlı **`{m}`** modeline geçildi ve aktif edildi)."
+                    return True, f"✅ Google Gemini API Anahtarı Doğrulandı ve **`{m}`** modeliyle aktif edildi! Artık **💬 Uzman Analist Masası** sekmesinden sorularını sorabilirsin."
+                elif r.status_code in (400, 401, 403):
+                    _FAILED_LLM_KEYS.add(key)
+                    return False, f"⚠️ Girilen Google Gemini API anahtarı geçersiz veya yetkisiz görünüyor (HTTP {r.status_code}). Lütfen aistudio.google.com üzerinden aldığın `AIza...` ile başlayan anahtarı kontrol et."
+            except Exception as e:
+                return False, f"⚠️ Bağlantı testi sırasında ağ hatası oluştu: {e}"
+        return False, f"⚠️ Google Gemini API yanıt vermedi (HTTP {last_code}). Sistem otomatik olarak Yerleşik Kurumsal Quant Motoru ile kesintisiz çalışmaya devam edecek."
+
+    if provider in ("auto", "groq") and cfg.get("groq_api_key"):
+        key = cfg["groq_api_key"].strip()
+        model = cfg.get("groq_model", "llama-3.3-70b-versatile").strip()
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+        body = {"model": model, "messages": [{"role": "user", "content": "OK"}], "max_tokens": 5}
+        try:
+            r = requests.post(url, headers=headers, json=body, timeout=10)
+            if r.status_code == 200:
+                return True, f"✅ Groq API Anahtarı Doğrulandı ve **`{model}`** modeliyle aktif edildi!"
+            return False, f"⚠️ Groq API anahtarı doğrulanamadı (HTTP {r.status_code})."
+        except Exception as e:
+            return False, f"⚠️ Groq bağlantı hatası: {e}"
+
+    if provider in ("auto", "openai") and cfg.get("openai_api_key"):
+        key = cfg["openai_api_key"].strip()
+        model = cfg.get("openai_model", "gpt-4o").strip()
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+        body = {"model": model, "messages": [{"role": "user", "content": "OK"}], "max_tokens": 5}
+        try:
+            r = requests.post(url, headers=headers, json=body, timeout=10)
+            if r.status_code == 200:
+                return True, f"✅ OpenAI API Anahtarı Doğrulandı ve **`{model}`** modeliyle aktif edildi!"
+            return False, f"⚠️ OpenAI API anahtarı doğrulanamadı (HTTP {r.status_code})."
+        except Exception as e:
+            return False, f"⚠️ OpenAI bağlantı hatası: {e}"
+
+    return True, "ℹ️ Harici API anahtarı girilmedi; sistem **Yerleşik Kurumsal Quant & Hafıza Motoru** ile aktif çalışıyor."
 
 
 # ─── 4. AKILLI SEMBOL & NİYET ÇÖZÜMLEYİCİ (NLU) ───
@@ -1525,31 +1606,38 @@ def _call_cloud_llm(sys_prompt: str, user_payload: str, cfg: dict) -> tuple[str 
     """Yapılandırılmışsa Gemini, Groq veya OpenAI API'sini çağırır."""
     provider = cfg.get("provider", "auto")
 
-    # 1. Google Gemini API
+    # 1. Google Gemini API (Otomatik Model Fallback Destekli)
     if provider in ("auto", "gemini") and cfg.get("gemini_api_key"):
         key = cfg["gemini_api_key"].strip()
         if key not in _FAILED_LLM_KEYS:
-            model = cfg.get("gemini_model", "gemini-2.5-flash").strip()
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+            preferred_model = cfg.get("gemini_model", "gemini-2.5-flash").strip()
+            models_to_try = []
+            for m in [preferred_model, "gemini-2.5-flash", "gemini-2.0-flash"]:
+                if m and m not in models_to_try:
+                    models_to_try.append(m)
+
             body = {
                 "system_instruction": {"parts": [{"text": sys_prompt}]},
                 "contents": [{"role": "user", "parts": [{"text": user_payload}]}],
                 "generationConfig": {"temperature": 0.25, "maxOutputTokens": 4096},
             }
-            try:
-                r = requests.post(url, json=body, timeout=15)
-                if r.status_code == 200:
-                    resp_json = r.json()
-                    candidates = resp_json.get("candidates", [])
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        text = "".join(p.get("text", "") for p in parts).strip()
-                        if text:
-                            return text, f"Google Gemini ({model}) + Canlı Quant Telemetri"
-                elif r.status_code in (401, 403):
-                    _FAILED_LLM_KEYS.add(key)
-            except Exception:
-                pass
+            for model in models_to_try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+                try:
+                    r = requests.post(url, json=body, timeout=25)
+                    if r.status_code == 200:
+                        resp_json = r.json()
+                        candidates = resp_json.get("candidates", [])
+                        if candidates:
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            text = "".join(p.get("text", "") for p in parts).strip()
+                            if text:
+                                return text, f"Google Gemini ({model}) + Canlı Quant Telemetri"
+                    elif r.status_code in (401, 403):
+                        _FAILED_LLM_KEYS.add(key)
+                        break
+                except Exception:
+                    continue
 
     # 2. Groq API (Llama-3.3-70B)
     if provider in ("auto", "groq") and cfg.get("groq_api_key"):
