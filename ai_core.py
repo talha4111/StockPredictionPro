@@ -1,12 +1,6 @@
 import numpy as np
 import pandas as pd
-try:
-    from sklearn.ensemble import RandomForestClassifier
-except Exception:
-    class RandomForestClassifier:
-        def __init__(self, *args, **kwargs): pass
-        def fit(self, X, y): return self
-        def predict_proba(self, X): return np.full((len(X), 2), 0.5)
+from sklearn.ensemble import RandomForestClassifier
 import joblib
 import os
 
@@ -23,55 +17,10 @@ class BeyinMotoru:
         self.stock_features = ['Hedef_Ret', 'Ref_Ret', 'RSI', 'MACD', 'Vol_Ret', 'Korelasyon', 'OBV', 'BB_Width', 'MFI', 'VP_Sapma', 'ADX', 'EMA_Slope']
         self.crypto_features = self.stock_features + ['Open_Interest', 'Funding_Rate', 'CHOP', 'Squeeze_ON']
 
-    @staticmethod
-    def _triple_barrier_etiketle(df, horizon_bars, min_target_return):
-        close_p = df['Hedef_Close'].values
-        high_p = df['High'].values if 'High' in df.columns else close_p
-        low_p = df['Low'].values if 'Low' in df.columns else close_p
-        
-        n = len(df)
-        labels = np.full(n, np.nan)
-        actual_returns = np.full(n, np.nan)
-        
-        upper_barrier = close_p * (1 + min_target_return)
-        lower_barrier = close_p * (1 - min_target_return)
-        
-        unresolved = np.ones(n, dtype=bool)
-        
-        for step in range(1, horizon_bars + 1):
-            if step >= n:
-                break
-                
-            curr_high = np.zeros(n)
-            curr_low = np.zeros(n)
-            curr_high[:-step] = high_p[step:]
-            curr_low[:-step] = low_p[step:]
-            
-            valid = unresolved & (np.arange(n) < n - step)
-            
-            hit_l = valid & (curr_low <= lower_barrier)
-            hit_u = valid & (curr_high >= upper_barrier) & ~hit_l
-            
-            labels[hit_l] = 0.0
-            actual_returns[hit_l] = (curr_low[hit_l] - close_p[hit_l]) / close_p[hit_l]
-            unresolved[hit_l] = False
-            
-            labels[hit_u] = 1.0
-            actual_returns[hit_u] = (curr_high[hit_u] - close_p[hit_u]) / close_p[hit_u]
-            unresolved[hit_u] = False
-
-        valid_vertical = unresolved & (np.arange(n) < n - horizon_bars)
-        if np.any(valid_vertical):
-            curr_close = np.zeros(n)
-            curr_close[:-horizon_bars] = close_p[horizon_bars:]
-            actual_returns[valid_vertical] = (curr_close[valid_vertical] - close_p[valid_vertical]) / close_p[valid_vertical]
-            
-        return labels, actual_returns
-
-    def df_hazirla(self, df, horizon_bars=8, min_target_return=0.015):
+    def df_hazirla(self, df):
         """
         Gelen ham DataFrame'i (Kripto veya Hisse) modelin anlayacağı eğitim formatına çevirir.
-        Triple-Barrier Labeling kullanılarak hedef değişkeni (Y) üretilir.
+        Geleceği (1 saat / 4 mum sonrası) tahmin eden hedef değişkenini (Y) üretir.
         """
         # Hisselerde "Hedef_Close", "Ref_Ret" gibi isimlendirmeler olmayabilir, eksikleri tamamla
         if 'Hedef_Close' not in df.columns and 'Close' in df.columns:
@@ -97,17 +46,12 @@ class BeyinMotoru:
         if 'CHOP' not in df.columns: df['CHOP'] = 50.0
         if 'Squeeze_ON' not in df.columns: df['Squeeze_ON'] = 0.0
             
-        # Triple-Barrier Yöntemi ile etiketleme yap
-        etiketler, gercek_getiriler = self._triple_barrier_etiketle(df, horizon_bars, min_target_return)
-        
-        df['Gelecek_Ret'] = gercek_getiriler
-        df['Hedef_Yön'] = etiketler
-        
-        # NaN etiketleri (nötr durumları) ve diğer NaN içeren satırları at
-        df.dropna(subset=['Hedef_Yön'], inplace=True)
+        # Data Leakage olmadan 8 mum sonrasının getiri oranını hesapla (15m x 8 = 2 saat ileri)
+        df['Gelecek_Ret'] = (df['Hedef_Close'].shift(-8) - df['Hedef_Close']) / df['Hedef_Close']
         df.dropna(inplace=True)
         
-        df['Hedef_Yön'] = df['Hedef_Yön'].astype(int)
+        # 0'dan büyükse Yükseliş(1), değilse Düşüş(0)
+        df['Hedef_Yön'] = np.where(df['Gelecek_Ret'] > 0, 1, 0)
         return df
 
     def model_egit(self, sembol, df, is_crypto=True):

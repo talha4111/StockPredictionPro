@@ -1,0 +1,53 @@
+{
+  "active_session_id": "oturum_ana_1",
+  "sessions": [
+    {
+      "id": "oturum_ana_1",
+      "title": "📈 Ana Yatırım & Strateji Masası (Talha)",
+      "created_at": "2026-10-25 23:03",
+      "updated_at": "2026-11-05 00:39",
+      "context_symbols": ["COHR", "MRVL", "BE", "RKLB", "SARAE.IS", "MU"],
+      "messages": [
+        {
+          "role": "user",
+          "timestamp": "25.10.2026 23:03",
+          "content": "SARAE enerji halka arzdan sonra bayağı düştü, ara ara toparlansa da son durumda ciddi manada düşmüş durumda. Geri toparlanma, en azından 70-80'lere gelmesi ne zaman olur?",
+          "symbols": ["SARAE.IS"]
+        },
+        {
+          "role": "assistant",
+          "timestamp": "25.10.2026 23:04",
+          "content": "**Şa-Ra Enerji (`SARAE.IS`)** Temmuz 2026'da **70,00 TL**'den halka arz oldu, **136,10 TL** zirvesini gördükten sonra izahnamede fiyat istikrarı fonu planlanmamış olması ve kurumsal çıkışlarla **26,12 – 27,40 TL** bandına kadar çekildi (bölünme değil, saf fiyat erimesi).\n\n* **Temel Görünüm:** Çarpanlar **F/K ~11-12, PD/DD ~1,6x** ile makul-ucuz bölgeye indi. Ekim 2026'da açıklanan **31 Milyon Euro (~1,72 Milyar TL)** yeni yurtdışı yüksek gerilim işi ve borç kapatma adımları bilançoyu destekliyor.\n* **70-80 TL Toparlanma Takvimi (3 Aşama):**\n  1. **Kasım–Aralık 2026 (1-2 Ay):** Aşırı satım (RSI ~33) ve 9 aylık bilanço katalizörüyle **34 – 42 TL** ilk tepki bandı.\n  2. **2027 1. Çeyrek (3-6 Ay):** Dağınık bireysel lotların toplanacağı **35 – 52 TL** akümülasyon (mal toplama) evresi.\n  3. **2027 İkinci Yarı (6-12 Ay):** Euro bazlı işlerin net kâra yansıması ve faiz indirim döngüsüyle **70 – 80 TL** halka arz bölgesinin yeniden testi.\n* **Kritik Seviyeler:** Ana destek **26,00 TL**; düşüş trendinin kırılım teyidi **30,50 TL** ve **34,00 TL** üstü hacimli kapanışlardır.",
+          "symbols": ["SARAE.IS"],
+          "engine": "Kurumsal Quant & Hafıza Motoru"
+        },
+        {
+          "role": "user",
+          "timestamp": "31.10.2026 21:25",
+          "content": "COHR, MRVL, BE, RKLB bu hisseleri güzelce analiz etmeni istiyorum, iki tanesini alacağım o ikisi neler olmalı? Bunların hepsi de 3-4 haftadır bir düşüşteler yeni toparlanmaya başladılar.",
+          "symbols": ["COHR", "MRVL", "BE", "RKLB"]
+        },
+        {
+          "role": "assistant",
+          "timestamp": "31.10.2026 21:30",
+          "content": "Dört hisseyi de **Dip Avcısı (`dip_hunter`)**, **Üçlü Bariyer AI** ve **Wall Street çarpanlarıyla** kafa kafaya yarıştırdık. Sistemin net olarak seçtiği **2 favori hisse `COHR` ve `MRVL`** oldu:\n\n1. **`COHR` (Coherent) — Değerleme & Aşırı Satım Şampiyonu:**\n   * RSI **25.2** ile derin aşırı satım bölgesinde, İleri F/K **15.1x** ile AI optik (800G/1.6T transceiver) lideri için kelepir seviyede.\n   * Sistemin **1. Kademe alım kutusu ($200.81 – $214.43)** içinde. İlk hedef (TP1): **$260.46**, ana hedef (TP2): **$328.09**, Stop: **$166.45**.\n2. **`MRVL` (Marvell Technology) — Kurumsal Güç & 200 SMA Kalkanı:**\n   * Custom ASIC (AWS Trainium / Google Axion) mimarı, **%52.2 brüt kâr marjı** ve 44 analistin 'Strong Buy' konsensüsü.\n   * 200 günlük ortalama (**$183**) üzerinde taban yaptı, **1. Kademe alım kutusu ($187.39 – $200.52)** içinde. İlk hedef (TP1): **$247.98**, Stop: **$154.27**.\n\n* **Neden `BE` ve `RKLB` Elendi?** `BE` çok yüksek oynaklığa (Beta **3.78**) sahip ve henüz ideal dip onayını tamamlamadı; `RKLB` ise ideal alım kutumuzun ($48–$51) üzerinde ve Fwd P/E çarpanı aşırı primli.",
+          "symbols": ["COHR", "MRVL", "BE", "RKLB"],
+          "engine": "Kurumsal Quant & Hafıza Motoru"
+        },
+        {
+          "role": "user",
+          "timestamp": "05.11.2026 00:35",
+          "content": "COHR bilanço sonuçları ne durumda, hepsi açıklandı mı ve nasıl geldi? Bütün sonuçlar açıklandı mı?",
+          "symbols": ["COHR", "MRVL", "BE", "RKLB"]
+        },
+        {
+          "role": "assistant",
+          "timestamp": "05.11.2026 00:39",
+          "content": "**`COHR` (Coherent) Q1 FY2027 bilançosu** tam anlamıyla kusursuz bir **'Beat & Raise' (Beklenti Üstü Sonuç + Beklenti Üstü Rehberlik)** olarak açıklandı ve analist konferans görüşmesi dahil tüm sonuçlar tamamlandı:\n\n* **Ciro:** **$2.37 Milyar** (Beklenti: $2.30B · Yıllık **+%50-%56** büyüme)\n* **Non-GAAP EPS:** **$2.09** (Beklenti: $1.97 · **+%6.1** sürpriz)\n* **Non-GAAP Brüt Marj:** **%40.6** (Marj genişlemesi sürüyor)\n* **Gelecek Çeyrek (Q2) Beklentisi:** **$2.55B – $2.75B ciro** ve **$2.28 – $2.48 EPS** (Wall Street beklentilerini ezip geçti; 2027 sonunda çeyreklik $3B ciro hedefi teyit edildi).\n* **Diğer Hisselerin Bilanço Takvimi:**\n  * **`BE` (Bloom Energy):** 22 Ekim 2026'da açıkladı.\n  * **`RKLB` (Rocket Lab):** 9 Kasım 2026 Pazartesi kapanış sonrası.\n  * **`MRVL` (Marvell):** 1 Aralık 2026 civarında açıklayacak.",
+          "symbols": ["COHR", "MRVL", "BE", "RKLB"],
+          "engine": "Kurumsal Quant & Hafıza Motoru"
+        }
+      ]
+    }
+  ]
+}

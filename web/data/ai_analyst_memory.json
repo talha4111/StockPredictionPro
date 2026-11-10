@@ -1,0 +1,54 @@
+{
+  "user_profile": {
+    "name": "Talha",
+    "username": "talha6641",
+    "broker": "Midas (ABD Borsaları & BIST)",
+    "commission_usd": 1.5,
+    "lot_rule": "FIFO (First-In, First-Out: Satış yapıldığında en eski alınan lot ilk satılır, spesifik lot seçilemez)",
+    "style": "Büyüme + Yapay Zeka / Yarıiletken / Optik / Enerji Altyapısı odaklı kurumsal değer & momentum swing işlemleri",
+    "core_watchlist": ["MU", "MRVL", "AVGO", "EOG", "BE", "COHR", "RKLB", "NVDA", "VRT", "CEG", "GEV"]
+  },
+  "memory_notes": [
+    {
+      "id": "mem_profile_fifo",
+      "date": "2026-10-04",
+      "category": "STRATEJI_KURALI",
+      "symbols": ["MU"],
+      "title": "Midas FIFO Lot Kuralı & Micron (MU) 5 Kademe Pozisyonu",
+      "content": "Talha'nın Midas'ta 5 adet MU lotu bulunuyor: Lot 1 ($450.00 - kur 38.50), Lot 2 ($780.00 - kur 42.10), Lot 3 ($956.00 - kur 45.20), Lot 4 ($1,014.00 - kur 47.80), Lot 5 ($1,080.00 - kur 48.90). Midas FIFO kuralı gereği satış yapılırsa ilk olarak $450 maliyetli 1. lot satılır ve yüksek TL vergi matrahı doğabilir.",
+      "pinned": true
+    },
+    {
+      "id": "mem_sarae_analysis",
+      "date": "2026-10-25",
+      "category": "BIST_ANALIZ",
+      "symbols": ["SARAE.IS"],
+      "title": "Şa-Ra Enerji (SARAE.IS) Halka Arz Sonrası Çöküş & 70-80 TL Toparlanma Takvimi",
+      "content": "SARAE Temmuz 2026'da 70.00 TL'den halka arz oldu, 136.10 TL zirvesini gördükten sonra fiyat istikrarı fonu olmaması ve kurumsal çıkışlarla Ekim sonunda 26-27 TL bandına (-%60 arz altı, -%80 zirve altı) indi. Bedelsiz bölünme yok, saf fiyat erimesi. Şirket temel olarak güçlü (F/K ~11-12, PD/DD ~1.6x, 31 Milyon Euro yeni yurtdışı yüksek gerilim işi). 70-80 TL'ye dönüş 3 aşamalı: 1) Kasım-Aralık 2026'da 34-42 TL ilk tepki, 2) 2027 1. Çeyrekte 35-52 TL akümülasyon (mal toplama), 3) 2027 Yaz/Sonbahar (6-12 ay vadede) 70-80 TL halka arz bölgesinin testi. Kritik destek: 26.00 TL, dönüş teyidi: 30.50 TL ve 34.00 TL üstü kapanış.",
+      "pinned": true
+    },
+    {
+      "id": "mem_4stock_comparison",
+      "date": "2026-10-31",
+      "category": "PORTFOY_KARARI",
+      "symbols": ["COHR", "MRVL", "BE", "RKLB"],
+      "title": "COHR, MRVL, BE, RKLB Dörtlü Karşılaştırması — Seçilen 2 Favori: COHR ve MRVL",
+      "content": "3-4 haftalık teknoloji düzeltmesi sonrası 4 hisse tarandı: Sistemin seçtiği 2 hisse COHR ($210 civarı, RSI 25.2 aşırı satım, Fwd P/E 15.1x kelepir, Kademe 1: $200-$214, TP1: $260, Stop: $166.45) ve MRVL ($196.40, RSI 29.0, 200 günlük SMA $183 desteği üzerinde, %52 brüt marj, Kademe 1: $187-$200, TP1: $248, Stop: $154.27) oldu. BE yüksek beta (3.78) ve dönüş onayının tamamlanmaması nedeniyle, RKLB ise ideal alım kutusunun ($48-$51) üzerinde olması ve yüksek Fwd P/E çarpanı nedeniyle elendi.",
+      "pinned": true
+    },
+    {
+      "id": "mem_cohr_q1fy27_earnings",
+      "date": "2026-11-05",
+      "category": "BILANCO_SONUCU",
+      "symbols": ["COHR", "MRVL", "BE", "RKLB"],
+      "title": "COHR Q1 FY2027 Bilanço Zaferi (Beat & Raise) ve Diğer Hisselerin Bilanço Takvimi",
+      "content": "Coherent (COHR) 4 Kasım 2026 kapanış sonrası Q1 FY27 bilançosunu açıkladı: Ciro $2.37 Milyar (beklenti $2.30B, YoY +%50-56 büyüme), Non-GAAP EPS $2.09 (beklenti $1.97), Non-GAAP Brüt Marj %40.6. Q2 FY27 için $2.55B-$2.75B ciro ve $2.28-$2.48 EPS ile beklenti üstü rehberlik (guidance) verdi; hisse after-hours'ta $195'ten $209+'a (+%7.17) sıçradı. Diğerlerinde: BE 22 Ekim 2026'da açıkladı, RKLB 9 Kasım 2026'da, MRVL ise 1 Aralık 2026 civarında açıklayacak.",
+      "pinned": true
+    }
+  ],
+  "last_context": {
+    "last_symbols": ["COHR", "MRVL", "BE", "RKLB"],
+    "last_topic": "COHR bilanço sonuçları ve 4'lü hisse (COHR, MRVL, BE, RKLB) karşılaştırması",
+    "updated_at": "2026-11-10T12:45:00"
+  }
+}

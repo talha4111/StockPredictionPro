@@ -89,9 +89,12 @@ page_header(
 regime_info = get_market_regime_summary()
 regime_strip(regime_info)
 
-nav_c1, nav_c2, nav_c3 = st.columns(3)
+nav_c0, nav_c1, nav_c2, nav_c3 = st.columns(4)
+with nav_c0:
+    if st.button("🧠 AI Uzman Analist'e Sor", type="primary", use_container_width=True, key="home_nav_ai"):
+        st.switch_page("pages/10_ai_analist.py")
 with nav_c1:
-    if st.button("🎯 Alım & Satış Avcısı (AI)", type="primary", use_container_width=True, key="home_nav_dip"):
+    if st.button("🎯 Alım & Satış Avcısı (AI)", use_container_width=True, key="home_nav_dip"):
         st.switch_page("pages/9_alim_avcisi.py")
 with nav_c2:
     if st.button("💼 Portföy & Risk Merkezi", use_container_width=True, key="home_nav_port"):

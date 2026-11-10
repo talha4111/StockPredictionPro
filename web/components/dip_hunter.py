@@ -632,7 +632,7 @@ def analyze_stock_exit(symbol: str, user_pos: dict | None = None) -> dict | None
                 )
 
         # Durum 2: Şimdi Kâr Al / Zirvede Yorulma Var
-        elif (rsi_daily >= 70 or rsi_intra >= 73) or (
+        elif (rsi_daily >= 68 or (rsi_intra >= 73 and (rsi_daily >= 58 or current_price >= sma20 * 0.98))) or (
             rally_from_20d_low_pct >= 14.0 and (current_price >= recent_35d_high * 0.96 or intra_exhaustion)
         ):
             exit_code = "SIMDI_KAR_AL"
@@ -700,7 +700,7 @@ def analyze_stock_exit(symbol: str, user_pos: dict | None = None) -> dict | None
                 )
 
         # 4'lü Satış Kontrol Listesi (Sade Türkçe)
-        c1_overbought = bool(rsi_daily >= 68 or rsi_intra >= 70)
+        c1_overbought = bool(rsi_daily >= 68 or (rsi_intra >= 73 and (rsi_daily >= 58 or current_price >= sma20 * 0.98)))
         c2_near_peak = bool(current_price >= recent_35d_high * 0.95 or current_price >= take_profit_1 * 0.98)
         c3_exhaustion = bool(intra_exhaustion)
         c4_earnings_safe = bool(days_to_earnings is None or days_to_earnings > 5)

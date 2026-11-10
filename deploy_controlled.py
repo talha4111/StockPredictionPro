@@ -12,8 +12,6 @@ from remote_config import connect_ssh
 ROOT = Path(__file__).resolve().parent / "QuantBot"
 REMOTE = "/root/QuantBot"
 FILES = (
-    "main.py",
-    "instance_lock.py",
     "ai_core.py",
     "config.py",
     "tarayici.py",
@@ -26,13 +24,6 @@ FILES = (
     "db_logger.py",
     "runtime_status.py",
     "mufettis.py",
-    "promotion_gate.py",
-    "test_ai_core_quality.py",
-    "test_live_model_compare.py",
-    "test_order_sync.py",
-    "test_symbol_guard.py",
-    "test_instance_lock.py",
-    "test_promotion_gate.py",
 )
 
 

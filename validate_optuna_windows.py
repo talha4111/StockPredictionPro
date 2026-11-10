@@ -11,8 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from QuantBot.experiment_manifest import deney_manifesti_yaz
-
 
 CANDIDATES = [
     {"name": "mevcut_500_4", "n_estimators": 500, "max_depth": 4},
@@ -268,68 +266,10 @@ def main() -> int:
     args = parser.parse_args()
 
     root = Path.cwd()
-    if str(root) not in sys.path:
-        sys.path.insert(0, str(root))
-    import crypto_backtest
-
     offsets = parse_offsets(args.offset_days)
     candidates = select_candidates(args.candidates)
     run_dir = root / "QuantBot" / "backtest_reports" / ("window_validate_" + datetime.now().strftime("%Y%m%d_%H%M%S"))
     run_dir.mkdir(parents=True, exist_ok=True)
-
-    print("[DATA] Deney veri snapshot'lari hazırlanıyor...", flush=True)
-    manifest_datasets: dict[str, Any] = {}
-    for offset in offsets:
-        cache = get_window_cache(crypto_backtest, offset)
-        for symbol, frame in cache.items():
-            manifest_datasets[f"offset_{offset}:{symbol}"] = frame
-
-    feature_names = sorted(
-        {
-            str(column)
-            for frame in manifest_datasets.values()
-            for column in frame.columns
-        }
-    )
-    manifest = deney_manifesti_yaz(
-        run_dir / "experiment_manifest.json",
-        experiment_type="multi_window_model_candidate_validation",
-        parameters={
-            "candidates": candidates,
-            "offset_days": offsets,
-            "symbols": list(crypto_backtest.coinler),
-            "timeframe": "1h",
-            "test_hours": int(crypto_backtest.test_saati),
-            "initial_equity": float(crypto_backtest.baslangic_kasa),
-            "rr_stop_multiplier": float(crypto_backtest.rr_stop_carpan),
-            "rr_target_multiplier": float(crypto_backtest.rr_target_carpan),
-        },
-        datasets=manifest_datasets,
-        code_paths=[
-            Path(__file__),
-            root / "crypto_backtest.py",
-            root / "ai_core.py",
-        ],
-        features=feature_names,
-        validation={
-            "method": "fixed historical end-date windows",
-            "selection_metric": "mean_pnl_minus_0.35_std_pnl",
-            "minimum_history_rows": int(crypto_backtest.test_saati + 200),
-        },
-        cost_assumptions={
-            "commission": "not modeled by this legacy root backtest",
-            "slippage": "not modeled by this legacy root backtest",
-            "funding": "proxy feature only; cash-flow cost not modeled",
-        },
-        random_seed=42,
-        trial_count=len(candidates) * len(offsets),
-        root=root,
-        notes=[
-            "Manifest records the exact in-memory feature frames before candidate evaluation.",
-            "Legacy cost omissions are explicit; these results must not be used alone for promotion.",
-        ],
-    )
-    print(f"[MANIFEST] {manifest['experiment_id'][:12]} -> {run_dir / 'experiment_manifest.json'}", flush=True)
 
     rows: list[dict[str, Any]] = []
     print(f"[START] offsets={offsets} candidates={[c['name'] for c in candidates]}", flush=True)

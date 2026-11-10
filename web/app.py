@@ -25,6 +25,7 @@ inject_global_css()
 
 # ─── Sayfa Tanımları ───
 ana_sayfa = st.Page("pages/0_ana_sayfa.py", title="Ana Sayfa", icon="🏠", default=True)
+ai_analist = st.Page("pages/10_ai_analist.py", title="AI Uzman Analist", icon="🧠")
 tek_hisse = st.Page("pages/2_tek_hisse_analiz.py", title="Hisse Analizi", icon="🔎")
 alim_avcisi = st.Page("pages/9_alim_avcisi.py", title="Alım & Satış Avcısı", icon="🎯")
 portfoy_defteri = st.Page("pages/8_portfoy_defteri.py", title="Portföy & Risk", icon="💼")
@@ -36,9 +37,9 @@ faktor_optimizasyonu = st.Page("pages/5_faktor_optimizasyonu.py", title="Faktör
 shadow_test = st.Page("pages/6_shadow_test.py", title="Shadow Test", icon="🧪")
 performans = st.Page("pages/7_performans.py", title="Performans Takibi", icon="📋")
 
-# ─── Navigasyon: 4 ana sayfa + Gelişmiş araçlar ───
+# ─── Navigasyon: Ana menü + Gelişmiş araçlar ───
 pg = st.navigation({
-    "Ana Menü": [ana_sayfa, tek_hisse, alim_avcisi, portfoy_defteri],
+    "Ana Menü": [ana_sayfa, ai_analist, tek_hisse, alim_avcisi, portfoy_defteri],
     "Gelişmiş": [piyasa_tarayici, sektor_radari, walkforward_lab, faktor_optimizasyonu, shadow_test, performans],
 })
 

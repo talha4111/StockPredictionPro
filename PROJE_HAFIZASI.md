@@ -93,7 +93,11 @@ Proje, kurumsal seviyede bir **Factor Research & Equity Engine (v3.1)** ve bunun
    * Streamlit Cloud geçici konteyner uyku-uyanış döngüsünde kullanıcıların sıfırlanması engellendi.
    * `web/data/users.json` ve `st.secrets` çift katmanlı otomatik kurtarma eklendi.
    * Yönetici hesabı (`talha6641`) kalıcı olarak PBKDF2 hash ile kaydedildi; Midas portföy işlemleriyle ilişkilendirildi.
-9. **Git Senkronizasyonu:** Tüm güncellemeler commitleşti.
+9. **Kurumsal AI Uzman Analist & Kalıcı Hafıza Merkezi (10 Kasım 2026):**
+   * `web/pages/10_ai_analist.py` ve `web/components/ai_analyst.py` kuruldu, ana menüye ve ana sayfaya bağlandı.
+   * **Çift Katmanlı Kalıcı Hafıza (`web/data/ai_analyst_memory.json` + `ai_chat_sessions.json` + SQLite):** Geçmiş konuşulan hisseleri (`SARAE.IS`, `COHR`, `MRVL`, `BE`, `RKLB`), bilanço sonuçlarını, alınan kararları ve Midas FIFO kurallarını asla unutmaz; takip sorularında önceki bağlamı otomatik devralır.
+   * **Canlı Quant Telemetri Enjeksiyonu:** Her soruda `dip_hunter`, `stock_ai_predictor` (Üçlü Bariyer AI), `investment_committee`, `portfolio_tracker` ve canlı `yfinance` (ABD + BIST `.IS`) verilerini birleştirerek kurumsal analist kalitesinde yanıt üretir (Yerleşik Kurumsal Quant Motoru + Gemini/Groq/OpenAI Bulut LLM hibrit desteği).
+10. **Git Senkronizasyonu:** Tüm güncellemeler hazırlandı.
 
 ---
 

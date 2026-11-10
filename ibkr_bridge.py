@@ -27,62 +27,10 @@ if sys.stdout.encoding != 'utf-8':
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
     except:
         pass
-import asyncio
-try:
-    asyncio.get_event_loop()
-except RuntimeError:
-    asyncio.set_event_loop(asyncio.new_event_loop())
 
 from ib_insync import IB, Stock, util, MarketOrder, LimitOrder, StopOrder
-import ib_insync.util as _ib_util
-
-def _safe_run(*awaitables, timeout=None):
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    if len(awaitables) == 1:
-        fut = awaitables[0]
-    else:
-        fut = asyncio.gather(*awaitables)
-    task = loop.create_task(fut)
-    return loop.run_until_complete(task)
-
-_ib_util.run = _safe_run
 import pandas as pd
-try:
-    import pandas_ta as ta
-except ImportError:
-    class ta:
-        @staticmethod
-        def rsi(close, length=14):
-            delta = close.diff()
-            gain = (delta.where(delta > 0, 0)).rolling(length).mean()
-            loss = (-delta.where(delta < 0, 0)).rolling(length).mean()
-            rs = gain / (loss + 1e-9)
-            return 100 - (100 / (1 + rs))
-        @staticmethod
-        def macd(close, fast=12, slow=26, signal=9):
-            ema_fast = close.ewm(span=fast, adjust=False).mean()
-            ema_slow = close.ewm(span=slow, adjust=False).mean()
-            macd_line = ema_fast - ema_slow
-            return pd.DataFrame({'MACD_12_26_9': macd_line})
-        @staticmethod
-        def obv(close, volume):
-            return (np.sign(close.diff()) * volume).fillna(0).cumsum()
-        @staticmethod
-        def bbands(close, length=20, std=2.0):
-            sma = close.rolling(length).mean()
-            s = close.rolling(length).std()
-            return pd.DataFrame({'BBB_20_2.0': ((2 * std * s) / (sma + 1e-9)) * 100})
-        @staticmethod
-        def mfi(high, low, close, volume, length=14):
-            return pd.Series(50.0, index=close.index)
-        @staticmethod
-        def vwap(high, low, close, volume):
-            typical_price = (high + low + close) / 3.0
-            return (typical_price * volume).cumsum() / (volume.cumsum() + 1e-9)
+import pandas_ta as ta
 import numpy as np
 import time
 import asyncio
@@ -117,55 +65,43 @@ STOCK_FEATURES = [
 #  1. IBKR BAGLANTI YONETICISI
 # ============================================================
 
-def ibkr_baglan(host='127.0.0.1', port=7497, client_id=1, timeout=4):
+def ibkr_baglan(host='127.0.0.1', port=7497, client_id=1):
     """
-    Dayanıklı IBKR TWS Paper Trading baglantisi.
-    Client ID meşgulse otomatik olarak alternatif ID'leri dener.
-    """
-    denenecek_idler = [client_id] + [cid for cid in range(1, 30) if cid != client_id]
-    for cid in denenecek_idler[:6]:
-        ib = IB()
-        try:
-            ib.connect(host, port, clientId=cid, timeout=timeout)
-            ib.reqMarketDataType(3)
-            print(f"[IBKR] Baglanti BASARILI")
-            print(f"       Host: {host}:{port} | Client ID: {cid} | Veri Modu: Delayed-3")
-            print(f"       Hesap: {ib.managedAccounts()}")
-            return ib
-        except ConnectionRefusedError:
-            print("[HATA] TWS/IB Gateway CALISIYOR MU?")
-            print("       1. TWS acik ve Paper Trading girisi yapilmis olmali")
-            print("       2. API Settings: 'Enable ActiveX and Socket Clients' isaretli, Port: 7497 olmali")
-            return None
-        except Exception:
-            try:
-                ib.disconnect()
-            except:
-                pass
-            continue
-            
-    print("[HATA] TWS baglantisi kurulamadi (Tüm denenen Client ID'ler mesgul veya TWS yanit vermiyor).")
-    return None
+    IBKR TWS Paper Trading'e baglanir.
 
-async def ibkr_baglan_async(host='127.0.0.1', port=7497, client_id=1, timeout=10):
-    """
-    Asenkron IBKR TWS Paper Trading baglantisi (async coroutine'ler icin).
+    Parametreler:
+        host:      TWS'nin calistigi adres (Yerel: 127.0.0.1)
+        port:      7497 = Paper Trading | 7496 = Live (KULLANMA)
+        client_id: Her baglanti icin benzersiz numara (1-32)
+
+    Donus:
+        ib (IB nesnesi) veya None (baglanti basarisizsa)
     """
     ib = IB()
+
     try:
-        await ib.connectAsync(host, port, clientId=client_id, timeout=timeout)
+        ib.connect(host, port, clientId=client_id)
+        
+        # Otonom Gecikmeli Veri Modu (Error 10089 Çözümü)
         ib.reqMarketDataType(3)
-        print(f"[IBKR] Baglanti BASARILI (Async)")
+        
+        print(f"[IBKR] Baglanti BASARILI")
         print(f"       Host: {host}:{port} | Client ID: {client_id} | Veri Modu: Delayed-3")
         print(f"       Hesap: {ib.managedAccounts()}")
         return ib
+
     except ConnectionRefusedError:
         print("[HATA] TWS/IB Gateway CALISIYOR MU?")
-        print("       1. TWS acik ve Paper Trading girisi yapilmis olmali")
-        print("       2. API Settings: 'Enable ActiveX and Socket Clients' isaretli, Port: 7497 olmali")
+        print("       Kontrol listesi:")
+        print("       1. TWS acik ve giris yapilmis olmali")
+        print("       2. Edit > Global Configuration > API > Settings:")
+        print("          - 'Enable ActiveX and Socket Clients' isaretli olmali")
+        print("          - 'Socket port' = 7497 olmali")
+        print("       3. Paper Trading hesabinda oldugundan emin ol")
         return None
+
     except Exception as e:
-        print(f"[HATA] Asenkron baglanti hatasi: {e}")
+        print(f"[HATA] Beklenmeyen baglanti hatasi: {e}")
         return None
 
 
@@ -741,62 +677,6 @@ def bakiye_getir(ib):
 #  9. TOPLU TARAMA (FAZ 3: Otonom Hiz Motoru)
 # ============================================================
 
-def toplu_veri_cek(ib, hisse_listesi, bekleme_sn=3):
-    """
-    Kaptan'in listesindeki tum hisseleri ib_insync ile paralel dogrular ve fiyatlarini ceker.
-    """
-    sonuclar = {}
-    try:
-        contracts = []
-        sembol_eslestirme = {}
-        for sembol in hisse_listesi:
-            gs, borsa, pb = parse_global_symbol(sembol)
-            c = Stock(gs, borsa, pb)
-            contracts.append(c)
-            sembol_eslestirme[gs] = sembol
-
-        qualified_contracts = ib.qualifyContracts(*contracts)
-        if not qualified_contracts:
-            return sonuclar
-
-        tickers = [ib.reqMktData(c, '', True, False) for c in qualified_contracts]
-        ib.sleep(bekleme_sn)
-
-        for t in tickers:
-            c = t.contract
-            orijinal_sembol = sembol_eslestirme.get(c.symbol, c.symbol)
-            price = t.marketPrice()
-            if not price or pd.isna(price) or price <= 0:
-                price = t.last if (t.last and not pd.isna(t.last) and t.last > 0) else (t.close if (t.close and not pd.isna(t.close) and t.close > 0) else None)
-            
-            if (bid is None or pd.isna(bid) or bid <= 0) and price:
-                bid = round(price * 0.9995, 2)
-            if (ask is None or pd.isna(ask) or ask <= 0) and price:
-                ask = round(price * 1.0005, 2)
-            if (last is None or pd.isna(last) or last <= 0) and price:
-                last = round(price, 2)
-
-            spread_bps = None
-            if bid and ask:
-                mid = (bid + ask) / 2.0
-                spread_bps = round(((ask - bid) / mid) * 10000, 2)
-
-            sonuclar[orijinal_sembol] = {
-                'bid': bid,
-                'ask': ask,
-                'last': last,
-                'mid': (bid + ask) / 2.0 if (bid and ask) else price,
-                'spread_bps': spread_bps or 10.0,
-                'hacim': hacim,
-                'borsa': c.exchange,
-                'kur': c.currency
-            }
-            ib.cancelMktData(t.contract)
-
-        return sonuclar
-    except Exception as e:
-        return sonuclar
-
 async def toplu_veri_cek_async(ib, hisse_listesi, bekleme_sn=3):
     """
     Kaptan'in listesindeki tum hisseleri ASENKRON olarak,
@@ -951,311 +831,6 @@ def bracket_emri_gonder(ib, sembol, yon, miktar, tp_fiyat, sl_fiyat):
     except Exception as e:
         print(f"[HATA] Bracket emir gonderiminde hata: {e}")
         return False
-
-
-# ============================================================
-#  V2.1 EKLENTİLERİ — Emir Takip, Dayanıklılık, Senkronizasyon  
-# ============================================================
-import datetime
-import pytz
-import asyncio
-
-try:
-    import yfinance as yf
-except ImportError:
-    yf = None
-
-class EmirTakipci:
-    """
-    IBKR emir durumlarını takip eden sistem.
-    Her gönderilen emrin fill/cancel/reject durumunu izler.
-    """
-    def __init__(self, ib: IB):
-        self.ib = ib
-        self.bekleyen_emirler = {}  # order_id -> {sembol, yon, miktar, durum, zaman}
-        self._callback_kaydet()
-    
-    def _callback_kaydet(self):
-        """IBKR fill/status callback'lerini bağlar"""
-        self.ib.orderStatusEvent += self._emir_durum_degisti
-        self.ib.execDetailsEvent += self._islem_gerceklesti
-    
-    def _emir_durum_degisti(self, trade):
-        """Emir durumu değiştiğinde çağrılır"""
-        order_id = trade.order.orderId
-        status = trade.orderStatus.status
-        if order_id in self.bekleyen_emirler:
-            self.bekleyen_emirler[order_id]['durum'] = status
-        print(f"[EMIR TAKIP] Emir {order_id} durumu güncellendi: {status}")
-    
-    def _islem_gerceklesti(self, trade, fill):
-        """Emir dolduğunda çağrılır"""
-        order_id = trade.order.orderId
-        miktar = fill.execution.shares
-        fiyat = fill.execution.price
-        zaman = fill.execution.time
-        print(f"[EMIR TAKIP] Emir {order_id} GERÇEKLEŞTİ: {miktar} lot @ ${fiyat} (Zaman: {zaman})")
-        if order_id in self.bekleyen_emirler:
-            self.bekleyen_emirler[order_id]['durum'] = 'Filled'
-        return {'order_id': order_id, 'miktar': miktar, 'fiyat': fiyat, 'zaman': zaman}
-    
-    def emir_durumu(self, order_id) -> dict:
-        """Belirli bir emrin güncel durumunu döndürür"""
-        return self.bekleyen_emirler.get(order_id, {})
-    
-    def bekleyen_emirleri_listele(self) -> list:
-        """Tüm bekleyen/açık emirleri listeler"""
-        acik_emirler = []
-        for oid, data in self.bekleyen_emirler.items():
-            if data['durum'] not in ['Filled', 'Cancelled', 'Inactive']:
-                acik_emirler.append({'order_id': oid, **data})
-        return acik_emirler
-    
-    def tum_emirleri_iptal_et(self):
-        """Tüm açık emirleri iptal eder (acil durum)"""
-        print("[EMIR TAKIP] Acil durum: Tüm açık emirler iptal ediliyor...")
-        self.ib.reqGlobalCancel()
-
-def bracket_emri_gonder_v2(ib, sembol, yon, miktar, tp_fiyat, sl_fiyat, emir_takipci=None):
-    """
-    Geliştirilmiş bracket emir - Order ID'leri döndürür.
-    
-    Returns:
-        dict: {
-            'basarili': bool,
-            'parent_order_id': int,
-            'tp_order_id': int, 
-            'sl_order_id': int,
-            'sembol': str,
-            'yon': str,
-            'miktar': int,
-            'giris_beklenen': float,
-            'tp_fiyat': float,
-            'sl_fiyat': float
-        } or None on failure
-    """
-    try:
-        contract = sozlesme_dogrula(ib, sembol)
-        if not contract:
-            print(f"[INFAZ RED] {sembol} doğrulanamadı.")
-            return None
-
-        piyasa = piyasa_verisi_cek(ib, contract)
-        if not piyasa or not piyasa.get('mid'):
-            print(f"[INFAZ RED] {sembol} canlı fiyatı bilinemiyor.")
-            return None
-            
-        guncel_giris = piyasa['ask'] if yon.upper() == 'BUY' else piyasa['bid']
-        if guncel_giris is None:
-            guncel_giris = piyasa['mid']
-
-        rr_onay = net_rr_filtresi(
-            fiyat=guncel_giris,
-            tp_fiyat=tp_fiyat,
-            sl_fiyat=sl_fiyat,
-            miktar=miktar,
-            spread_bps=piyasa.get('spread_bps'),
-            yon=yon
-        )
-        
-        if rr_onay['karar'] == 'RED':
-            print(f"[INFAZ IPTAL] {sembol} -> {rr_onay['red_sebebi']}")
-            return None
-
-        ana_action = 'BUY' if yon.upper() == 'BUY' else 'SELL'
-        karsit_action = 'SELL' if ana_action == 'BUY' else 'BUY'
-        
-        parent = MarketOrder(ana_action, miktar, tif='GTC')
-        take_profit = LimitOrder(karsit_action, miktar, tp_fiyat, tif='GTC')
-        stop_loss = StopOrder(karsit_action, miktar, sl_fiyat, tif='GTC')
-        
-        parent_trade = ib.placeOrder(contract, parent)
-        take_profit.parentId = parent_trade.order.orderId
-        take_profit.transmit = False
-        
-        stop_loss.parentId = parent_trade.order.orderId
-        stop_loss.transmit = True
-
-        tp_trade = ib.placeOrder(contract, take_profit)
-        sl_trade = ib.placeOrder(contract, stop_loss)
-        
-        zaman_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if emir_takipci:
-            emir_takipci.bekleyen_emirler[parent_trade.order.orderId] = {
-                'sembol': sembol, 'yon': ana_action, 'miktar': miktar, 'durum': 'Submitted', 'zaman': zaman_str
-            }
-            emir_takipci.bekleyen_emirler[tp_trade.order.orderId] = {
-                'sembol': sembol, 'yon': karsit_action, 'miktar': miktar, 'durum': 'Pending', 'zaman': zaman_str
-            }
-            emir_takipci.bekleyen_emirler[sl_trade.order.orderId] = {
-                'sembol': sembol, 'yon': karsit_action, 'miktar': miktar, 'durum': 'Pending', 'zaman': zaman_str
-            }
-
-        print(f"✅ [INFAZ BAŞARILI] {sembol} bracket paketi borsaya işlendi.")
-        
-        return {
-            'basarili': True,
-            'parent_order_id': parent_trade.order.orderId,
-            'tp_order_id': tp_trade.order.orderId,
-            'sl_order_id': sl_trade.order.orderId,
-            'sembol': sembol,
-            'yon': yon.upper(),
-            'miktar': miktar,
-            'giris_beklenen': guncel_giris,
-            'tp_fiyat': tp_fiyat,
-            'sl_fiyat': sl_fiyat
-        }
-    except Exception as e:
-        print(f"[HATA] Bracket emir v2 gönderiminde hata: {e}")
-        return None
-
-def guvenli_baglan(host='127.0.0.1', port=7497, client_id=10, max_deneme=3, bekleme_sn=5):
-    """
-    Dayanıklı IBKR bağlantısı - otomatik yeniden bağlanma.
-    max_deneme kadar deneyip, her denemede bekleme_sn bekler.
-    """
-    for deneme in range(1, max_deneme + 1):
-        print(f"[GÜVENLİ BAĞLANTI] Deneme {deneme}/{max_deneme} ({host}:{port})")
-        ib = ibkr_baglan(host=host, port=port, client_id=client_id)
-        if ib and ib.isConnected():
-            return ib
-        if deneme < max_deneme:
-            print(f"[GÜVENLİ BAĞLANTI] Başarısız. {bekleme_sn} saniye sonra tekrar denenecek...")
-            time.sleep(bekleme_sn)
-    
-    print("[HATA] Maksimum bağlantı denemesine ulaşıldı. IBKR'ye bağlanılamadı.")
-    return None
-
-def baglanti_kontrol(ib) -> bool:
-    """Bağlantının hâlâ aktif olup olmadığını kontrol eder"""
-    if ib is None:
-        return False
-    durum = ib.isConnected()
-    if not durum:
-        print("[UYARI] IBKR bağlantısı kopmuş durumda.")
-    return durum
-
-def yeniden_baglan(ib, host='127.0.0.1', port=7497, client_id=10) -> IB:
-    """Kopmuş bağlantıyı yeniden kurar"""
-    if baglanti_kontrol(ib):
-        print("[BAĞLANTI KONTROL] Bağlantı zaten aktif.")
-        return ib
-    print("[YENİDEN BAĞLAN] Bağlantı koptu, yeniden bağlanılıyor...")
-    if ib:
-        try:
-            ib.disconnect()
-        except:
-            pass
-    return guvenli_baglan(host=host, port=port, client_id=client_id)
-
-def pozisyon_senkronize(ib) -> dict:
-    """
-    IBKR'deki gerçek açık pozisyonları okur ve yapılandırılmış dict döndürür.
-    
-    Returns:
-        dict: {
-            'AAPL': {'miktar': 50, 'maliyet': 185.20, 'yon': 'LONG', 'piyasa_degeri': 9500},
-            'TSLA': {'miktar': -10, 'maliyet': 250.00, 'yon': 'SHORT', 'piyasa_degeri': 2400},
-            ...
-        }
-    """
-    pozisyonlar = {}
-    try:
-        if not baglanti_kontrol(ib):
-            print("[HATA] Bağlantı aktif olmadığı için pozisyonlar okunamıyor.")
-            return pozisyonlar
-            
-        ib_pozisyonlar = ib.positions()
-        for p in ib_pozisyonlar:
-            if p.position == 0:
-                continue
-            sembol = p.contract.symbol
-            miktar = p.position
-            maliyet = p.avgCost
-            yon = 'LONG' if miktar > 0 else 'SHORT'
-            piyasa_degeri = abs(miktar * maliyet)
-            
-            pozisyonlar[sembol] = {
-                'miktar': miktar,
-                'maliyet': maliyet,
-                'yon': yon,
-                'piyasa_degeri': piyasa_degeri
-            }
-        print(f"[SENKRONİZASYON] Toplam {len(pozisyonlar)} aktif pozisyon senkronize edildi.")
-        return pozisyonlar
-    except Exception as e:
-        print(f"[HATA] Pozisyon senkronizasyonunda hata: {e}")
-        return {}
-
-def piyasa_acik_mi() -> dict:
-    """
-    NYSE piyasa saatlerini kontrol eder.
-    
-    Returns:
-        dict: {
-            'acik': bool,
-            'gun': str (Monday-Friday),
-            'saat_et': str (HH:MM ET),
-            'sonraki_acilis': str (ISO datetime),
-            'acilisa_kalan_dk': int
-        }
-    """
-    tz_et = pytz.timezone('US/Eastern')
-    simdi_et = datetime.datetime.now(tz_et)
-    
-    gun = simdi_et.strftime('%A')
-    saat_et_str = simdi_et.strftime('%H:%M')
-    
-    is_hafta_ici = simdi_et.weekday() < 5
-    acilis_saati = simdi_et.replace(hour=9, minute=30, second=0, microsecond=0)
-    kapanis_saati = simdi_et.replace(hour=16, minute=0, second=0, microsecond=0)
-    
-    is_saat_uygun = acilis_saati <= simdi_et < kapanis_saati
-    
-    acik = is_hafta_ici and is_saat_uygun
-    
-    sonraki_acilis = acilis_saati
-    if simdi_et >= kapanis_saati or not is_hafta_ici:
-        gun_ekle = 1
-        if simdi_et.weekday() == 4: # Cuma
-            gun_ekle = 3
-        elif simdi_et.weekday() == 5: # Cumartesi
-            gun_ekle = 2
-        sonraki_acilis = (simdi_et + datetime.timedelta(days=gun_ekle)).replace(hour=9, minute=30, second=0, microsecond=0)
-    elif simdi_et < acilis_saati:
-        sonraki_acilis = acilis_saati
-        
-    fark = sonraki_acilis - simdi_et
-    acilisa_kalan_dk = int(fark.total_seconds() / 60)
-    
-    return {
-        'acik': acik,
-        'gun': gun,
-        'saat_et': saat_et_str,
-        'sonraki_acilis': sonraki_acilis.isoformat(),
-        'acilisa_kalan_dk': acilisa_kalan_dk if not acik else 0
-    }
-
-def vix_oku() -> float:
-    """
-    Güncel VIX değerini okur (yfinance fallback ile).
-    IBKR'den çekilemezse yfinance'ten alır.
-    """
-    vix_degeri = 20.0 # Varsayılan güvenlik değeri
-    try:
-        if yf is not None:
-            vix_ticker = yf.Ticker("^VIX")
-            hist = vix_ticker.history(period="1d")
-            if not hist.empty:
-                vix_degeri = hist['Close'].iloc[-1]
-                print(f"[VIX OKUMA] Güncel VIX değeri (yfinance): {vix_degeri:.2f}")
-                return float(vix_degeri)
-        
-        print(f"[VIX OKUMA] yfinance kullanılamadı. Varsayılan VIX dönülüyor: {vix_degeri}")
-        return vix_degeri
-    except Exception as e:
-        print(f"[HATA] VIX okuma hatası: {e}. Varsayılan değer dönülüyor: {vix_degeri}")
-        return vix_degeri
 
 
 # ============================================================
