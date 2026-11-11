@@ -684,21 +684,42 @@ def extract_symbols_and_intent(
                 if f"{tok}.IS" not in found_symbols:
                     _add_sym(tok)
 
-    # 5) Niyet (Intent) tespiti
-    if any(k in q_lower for k in ["bunu unutma", "hafızaya kaydet", "not al", "aldım", "sattım"]) and len(q_raw) < 220:
+    # 5) Niyet (Intent) tespiti — tek bir anahtar kelimeye takılmak yerine puanlama yapılır.
+    #    Her niyet için güçlü (2 puan) ve zayıf (1 puan) ifadeler sayılır, en yüksek puan kazanır.
+    memory_cmd = any(k in q_lower for k in ["bunu unutma", "hafızaya kaydet", "hafizaya kaydet", "not al", "kaydet:"])
+    trade_note = bool(re.search(r"\b(aldım|sattım|aldim|sattim)\b", q_lower)) and not re.search(r"\?|mı|mi|mu|mü", q_lower)
+    if (memory_cmd or trade_note) and len(q_raw) < 220:
         intent = "MEMORY_UPDATE"
-    elif any(k in q_lower for k in ["bilanço", "bilanco", "sonuçlar", "sonuclar", "açıklandı mı", "aciklandi mi", "nasıl geldi", "eps", "çeyrek", "guidance"]):
-        intent = "EARNINGS_CHECK"
-    elif any(k in q_lower for k in ["ne zaman", "toparlar", "toparlanma", "gelir mi", "70", "80", "halka arz", "neden düştü", "niye düştü", "düşüş"]):
-        intent = "RECOVERY_TARGET"
-    elif any(k in q_lower for k in ["hangisini", "iki tanesini", "ikisini", "kıyasla", "karşılaştır", "seç", "arasında kaldım", "hangisi alınır"]) or len(found_symbols) >= 2:
-        intent = "COMPARE_SELECT"
-    elif any(k in q_lower for k in ["portföy", "portfoy", "elimdeki", "lotlar", "fifo", "midas", "kâr", "zarar", "vergi"]):
-        intent = "PORTFOLIO_FIFO"
-    elif any(k in q_lower for k in ["fırsat", "firsat", "ne alsam", "ne alınır", "dip avcısı", "alım avcısı", "öneri", "bugün"]):
-        intent = "OPPORTUNITY_SCAN"
     else:
-        intent = "DEEP_STOCK_ANALYSIS"
+        intent_rules = {
+            "EARNINGS_CHECK": (
+                ["bilanço", "bilanco", "açıklandı mı", "aciklandi mi", "eps", "guidance", "rehberlik"],
+                ["sonuçlar", "sonuclar", "nasıl geldi", "çeyrek", "ceyrek", "karne"],
+            ),
+            "RECOVERY_TARGET": (
+                ["toparlar", "toparlanma", "eski seviye", "halka arz", "ne zaman döner", "ne zaman çıkar"],
+                ["ne zaman", "neden düştü", "niye düştü", "geri gelir"],
+            ),
+            "COMPARE_SELECT": (
+                ["hangisini", "hangisi", "kıyasla", "kiyasla", "karşılaştır", "karsilastir", "arasında kaldım", "ikisini", "iki tanesini"],
+                ["seç", "mı yoksa", "mi yoksa"],
+            ),
+            "PORTFOLIO_FIFO": (
+                ["portföy", "portfoy", "fifo", "midas", "lotlarım", "lotlarim", "elimdeki"],
+                ["maliyetim", "vergi", "lot"],
+            ),
+            "OPPORTUNITY_SCAN": (
+                ["fırsat", "firsat", "ne alsam", "ne alınır", "ne alinir", "dip avcısı", "alım avcısı"],
+                ["öneri", "oneri", "tavsiye"],
+            ),
+        }
+        scores = {}
+        for name, (strong, weak) in intent_rules.items():
+            scores[name] = 2 * sum(1 for k in strong if k in q_lower) + sum(1 for k in weak if k in q_lower)
+        if len(found_symbols) >= 2:
+            scores["COMPARE_SELECT"] += 1
+        best_intent, best_score = max(scores.items(), key=lambda x: x[1])
+        intent = best_intent if best_score >= 2 else "DEEP_STOCK_ANALYSIS"
 
     # 6) Bağlam Devamı (Follow-up Question): Eğer soruda sembol yoksa önceki konuşulan sembolleri devral!
     used_context = False
@@ -752,9 +773,27 @@ def collect_symbol_intelligence(symbol: str) -> dict:
         daily_chg_pct = ((last_price / prev_close) - 1.0) * 100.0 if prev_close > 0 else 0.0
 
         # Hareketli ortalamalar
+        sma5 = float(close.rolling(5).mean().iloc[-1]) if len(close) >= 5 else last_price
+        sma10 = float(close.rolling(10).mean().iloc[-1]) if len(close) >= 10 else last_price
         sma20 = float(close.rolling(20).mean().iloc[-1]) if len(close) >= 20 else last_price
         sma50 = float(close.rolling(50).mean().iloc[-1]) if len(close) >= 50 else last_price
         sma200 = float(close.rolling(200).mean().iloc[-1]) if len(close) >= 200 else float(close.mean())
+
+        # Hacim oranı (Son gün / 20G ortalama)
+        vol_series = hist["Volume"].dropna() if "Volume" in hist.columns else pd.Series(dtype=float)
+        avg_vol_20 = float(vol_series.tail(21).iloc[:-1].mean()) if len(vol_series) >= 6 else 0.0
+        today_vol = float(vol_series.iloc[-1]) if len(vol_series) >= 1 else 0.0
+        vol_ratio = round(today_vol / avg_vol_20, 2) if avg_vol_20 > 0 else 1.0
+
+        # Son 5 günlük dip -> tepe dalgası ve Fibonacci soğuma (geri çekilme) basamakları
+        swing_low_5d = float(hist["Low"].tail(5).min()) if len(hist) >= 3 else last_price * 0.92
+        swing_high_5d = max(float(hist["High"].tail(3).max()) if len(hist) >= 2 else last_price, last_price)
+        swing_range = max(0.01, swing_high_5d - swing_low_5d)
+        rally_from_low_pct = ((last_price / swing_low_5d) - 1.0) * 100.0 if swing_low_5d > 0 else 0.0
+        fib_236 = round(swing_high_5d - 0.236 * swing_range, 2)
+        fib_382 = round(swing_high_5d - 0.382 * swing_range, 2)
+        fib_500 = round(swing_high_5d - 0.500 * swing_range, 2)
+        fib_618 = round(swing_high_5d - 0.618 * swing_range, 2)
 
         # RSI (14)
         delta = close.diff()
@@ -786,9 +825,19 @@ def collect_symbol_intelligence(symbol: str) -> dict:
             "drop_52w_pct": round(drop_52w_pct, 1),
             "drop_3m_pct": round(drop_3m_pct, 1),
             "rsi14": round(rsi14, 1),
+            "sma5": round(sma5, 2),
+            "sma10": round(sma10, 2),
             "sma20": round(sma20, 2),
             "sma50": round(sma50, 2),
             "sma200": round(sma200, 2),
+            "vol_ratio": vol_ratio,
+            "swing_low_5d": round(swing_low_5d, 2),
+            "swing_high_5d": round(swing_high_5d, 2),
+            "rally_from_low_pct": round(rally_from_low_pct, 1),
+            "fib_236": fib_236,
+            "fib_382": fib_382,
+            "fib_500": fib_500,
+            "fib_618": fib_618,
         })
 
         # Temel veriler & Seans sonrası fiyat (tk.info)
@@ -817,11 +866,48 @@ def collect_symbol_intelligence(symbol: str) -> dict:
         beta = info.get("beta")
         mkt_cap = info.get("marketCap")
         target_mean = info.get("targetMeanPrice")
+        target_median = info.get("targetMedianPrice")
+        target_low = info.get("targetLowPrice")
         target_high = info.get("targetHighPrice")
         rec_key = info.get("recommendationKey", "")
+        rec_mean = info.get("recommendationMean")
         num_analysts = info.get("numberOfAnalystOpinions")
 
         analyst_upside = ((float(target_mean) / last_price) - 1.0) * 100.0 if target_mean and last_price > 0 else None
+
+        rec_counts = {}
+        try:
+            rs_df = getattr(tk, "recommendations_summary", None)
+            if rs_df is not None and not rs_df.empty:
+                r0 = rs_df.iloc[0]
+                rec_counts = {
+                    "strongBuy": int(r0.get("strongBuy", 0) or 0),
+                    "buy": int(r0.get("buy", 0) or 0),
+                    "hold": int(r0.get("hold", 0) or 0),
+                    "sell": int(r0.get("sell", 0) or 0),
+                    "strongSell": int(r0.get("strongSell", 0) or 0),
+                }
+        except Exception:
+            rec_counts = {}
+
+        recent_ratings = []
+        try:
+            ud_df = getattr(tk, "upgrades_downgrades", None)
+            if ud_df is not None and not ud_df.empty:
+                for dt_idx, urow in ud_df.head(5).iterrows():
+                    dt_s = pd.to_datetime(dt_idx).strftime("%d.%m.%Y")
+                    cur_t = urow.get("currentPriceTarget")
+                    pri_t = urow.get("priorPriceTarget")
+                    recent_ratings.append({
+                        "date": dt_s,
+                        "firm": str(urow.get("Firm", "")),
+                        "to_grade": str(urow.get("ToGrade", "")),
+                        "pt_action": str(urow.get("priceTargetAction", "")),
+                        "current_target": round(float(cur_t), 2) if pd.notna(cur_t) and float(cur_t) > 0 else None,
+                        "prior_target": round(float(pri_t), 2) if pd.notna(pri_t) and float(pri_t) > 0 else None,
+                    })
+        except Exception:
+            recent_ratings = []
 
         intel["fundamentals"] = {
             "forward_pe": round(float(fpe), 1) if fpe and fpe > 0 else None,
@@ -835,10 +921,15 @@ def collect_symbol_intelligence(symbol: str) -> dict:
             "beta": round(float(beta), 2) if beta else None,
             "market_cap_b": round(float(mkt_cap) / 1e9, 2) if mkt_cap else None,
             "analyst_target": round(float(target_mean), 2) if target_mean else None,
+            "analyst_median": round(float(target_median), 2) if target_median else None,
+            "analyst_low": round(float(target_low), 2) if target_low else None,
             "analyst_high": round(float(target_high), 2) if target_high else None,
             "analyst_upside_pct": round(float(analyst_upside), 1) if analyst_upside is not None else None,
             "recommendation": str(rec_key).upper().replace("_", " ") if rec_key else None,
+            "recommendation_mean": round(float(rec_mean), 2) if rec_mean else None,
             "num_analysts": int(num_analysts) if num_analysts else None,
+            "rec_counts": rec_counts,
+            "recent_ratings": recent_ratings,
         }
 
         # Son haber başlıkları (yfinance.news bazen askıda kalabildiği için boş tutulur; haber gerekirse LLM web/katalizörden beslenir)
@@ -893,25 +984,18 @@ def collect_symbol_intelligence(symbol: str) -> dict:
             pass
         intel["earnings_releases"] = recent_earnings_list
 
-        # 4 Sütun Faktör Puanları (DB veya Dinamik Hesaplama)
-        db_row = get_db_symbol_data(sym) if not is_bist else None
-        if db_row:
-            kalite = float(db_row.get("quality_score") or 65.0)
-            deger = float(db_row.get("value_score") or 58.0)
-            momentum = float(db_row.get("momentum_score") or 55.0)
-            risk_sc = float(db_row.get("risk_score") or 55.0)
-            comp_sc = float(db_row.get("composite_score") or 60.0)
-        else:
-            # Dinamik faktör tahmini
-            gm = intel["fundamentals"].get("gross_margin_pct") or 38.0
-            rg = intel["fundamentals"].get("rev_growth_yoy_pct") or 18.0
-            kalite = float(np.clip(45.0 + (gm * 0.55) + (rg * 0.35), 25.0, 95.0))
-            fpe_val = intel["fundamentals"].get("forward_pe") or intel["fundamentals"].get("trailing_pe") or 25.0
-            deger = float(np.clip(90.0 - (fpe_val * 1.3), 20.0, 92.0))
-            momentum = float(np.clip(50.0 + chg_3m * 0.7 + (rsi14 - 50.0) * 0.4, 20.0, 95.0))
-            beta_val = intel["fundamentals"].get("beta") or 1.5
-            risk_sc = float(np.clip(90.0 - (beta_val * 16.0), 20.0, 88.0))
-            comp_sc = round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk_sc * 0.15, 1)
+        # 4 Sütun Faktör Puanları (Dinamik Hesaplama + Tarama Skoru Entegrasyonu)
+        db_map = get_db_symbol_data((sym,)) if not is_bist else {}
+        db_row = db_map.get(sym)
+        gm = intel["fundamentals"].get("gross_margin_pct") or 38.0
+        rg = intel["fundamentals"].get("rev_growth_yoy_pct") or 18.0
+        kalite = float(np.clip(45.0 + (gm * 0.55) + (rg * 0.35), 25.0, 95.0))
+        fpe_val = intel["fundamentals"].get("forward_pe") or intel["fundamentals"].get("trailing_pe") or 25.0
+        deger = float(np.clip(90.0 - (fpe_val * 1.3), 20.0, 92.0))
+        momentum = float(np.clip(50.0 + chg_3m * 0.7 + (rsi14 - 50.0) * 0.4, 20.0, 95.0))
+        beta_val = intel["fundamentals"].get("beta") or 1.5
+        risk_sc = float(np.clip(90.0 - (beta_val * 16.0), 20.0, 88.0))
+        comp_sc = float(db_row.get("score")) if (db_row and db_row.get("score")) else round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk_sc * 0.15, 1)
 
         intel["factors"] = {
             "kalite": round(kalite, 1),
@@ -1063,15 +1147,319 @@ def score_stock_for_selection(intel: dict) -> tuple[float, list[str], list[str]]
         )
 
     # 7. Üçlü Bariyer AI Olasılığı
-    p_tp = ai.get("p_tp")
-    if p_tp and p_tp >= 0.48:
+    win_prob_pct = ai.get("win_prob_pct")
+    if win_prob_pct is None and ai.get("p_tp") is not None:
+        win_prob_pct = float(ai.get("p_tp")) * 100.0
+    if win_prob_pct and win_prob_pct >= 52.0:
         score += 6.0
-        pros.append(f"🤖 **Üçlü Bariyer AI Onayı:** 15 iş gününde hedefe ulaşma olasılığı **%{p_tp*100:.0f}**.")
+        pros.append(f"🤖 **Üçlü Bariyer AI Onayı:** 15 iş gününde hedefe ulaşma olasılığı **%{win_prob_pct:.0f}**.")
 
     return round(float(np.clip(score, 10.0, 99.0)), 1), pros, cons
 
 
-# ─── 7. YERLEŞİK KURUMSAL QUANT MUHAKEME MOTORU (TÜRKÇE SENTEZ) ───
+# ─── 7. YERLEŞİK KURUMSAL QUANT MUHAKEME MOTORU (SORU ODAKLI & DİNAMİK SENTEZ) ───
+def detect_question_focus(user_query: str) -> list[str]:
+    """Sorunun tam olarak NE sorduğunu (geri çekilme basamakları, yükseliş devamı, analist görüşü, al/sat kararı vb.) tespit eder."""
+    q = user_query.lower()
+    focus = []
+    rules = [
+        ("PULLBACK", [
+            "kaça düşer", "kaca duser", "kaçlara düşer", "kaclara duser", "nereye düşer", "nereye çeker",
+            "kaça çeker", "kaçlara çekilir", "ne kadar düşer", "geri çekil", "düzeltme", "soğu", "şişti",
+            "sisti", "köpük", "kopuk", "ortalama kaç", "destek", "taban",
+        ]),
+        ("DIRECTION", [
+            "yükselir mi", "yukselir mi", "devam eder mi", "korur mu", "koruyarak", "ilerleyecek mi",
+            "ilerler mi", "düşer mi", "duser mi", "daha da düş", "düşme ihtimali", "dusme ihtimali",
+            "yükselişi", "yukselisi", "yön", "yon", "çıkar mı", "cikar mi", "iner mi", "artış", "artis",
+        ]),
+        ("ANALYST", [
+            "analist", "uzman", "görüş", "gorus", "hedef fiyat", "wall street", "kurum",
+            "derecelendirme", "beklenti", "yorum", "gelecek performans",
+        ]),
+        ("BUY_DECISION", [
+            "alınır mı", "alinir mi", "almalı mı", "almali mi", "alayım mı", "alayim mi",
+            "girilir mi", "girmeli", "ekleme", "eklesem", "almak mantıklı", "kaçtan al", "kademe",
+        ]),
+        ("SELL_DECISION", [
+            "satayım mı", "satayim mi", "satmalı", "satsam", "kâr al", "kar al",
+            "çıkayım", "elimdekini sat", "tutayım mı", "tutayim mi", "tutmalı", "satış",
+        ]),
+        ("TIMING", ["ne zaman", "kaç gün", "hangi gün", "vade", "takvim"]),
+        ("WHY", ["neden", "niye", "sebebi", "sebep", "niçin"]),
+    ]
+    for name, keys in rules:
+        if any(k in q for k in keys):
+            focus.append(name)
+    return focus
+
+
+def _render_targeted_stock_section(intel: dict, focus: list[str], regime_info: dict, portfolio_intel: dict) -> tuple[list[str], list[str]]:
+    """
+    Tek bir hisse için sabit şablon yerine KULLANICININ SORDUĞU SORUYA göre:
+    1) Ana Odaklı Yanıt (main_lines)
+    2) Tıklayınca Açılacak Detay/Tablo Ekleri (detail_lines)
+    üretir.
+    """
+    sym = intel["symbol"]
+    cur = intel.get("currency", "$")
+    p = float(intel.get("price") or 0.0)
+    chg = float(intel.get("daily_chg_pct") or 0.0)
+    dip = intel.get("dip") or {}
+    ex = intel.get("exit") or {}
+    fnd = intel.get("fundamentals") or {}
+    fac = intel.get("factors") or {}
+    earn = intel.get("earnings") or {}
+    ai = dip.get("ai_pred") or intel.get("ai_pred") or {}
+
+    rsi_d = float(intel.get("rsi14") or 50.0)
+    rsi_intra = float(dip.get("rsi_intra") or rsi_d)
+    sma5 = float(intel.get("sma5") or p)
+    sma10 = float(intel.get("sma10") or p)
+    sma20 = float(intel.get("sma20") or p)
+    sma50 = float(intel.get("sma50") or p)
+    sma200 = float(intel.get("sma200") or p)
+    vol_ratio = float(intel.get("vol_ratio") or 1.0)
+
+    swing_low = float(intel.get("swing_low_5d") or p * 0.9)
+    swing_high = float(intel.get("swing_high_5d") or p)
+    rally_pct = float(intel.get("rally_from_low_pct") or 0.0)
+    fib236 = float(intel.get("fib_236") or p * 0.95)
+    fib382 = float(intel.get("fib_382") or p * 0.91)
+    fib500 = float(intel.get("fib_500") or p * 0.88)
+    fib618 = float(intel.get("fib_618") or p * 0.85)
+
+    win_prob = ai.get("win_prob_pct")
+    stop_prob = ai.get("stop_prob_pct")
+    analog_cnt = ai.get("analog_count", 25)
+    analog_win = ai.get("analog_win_rate_pct")
+    analog_ret = ai.get("analog_avg_ret_pct")
+
+    z1l = float(dip.get("zone1_low") or fib382)
+    z1h = float(dip.get("zone1_high") or fib236)
+    z2l = float(dip.get("zone2_low") or fib618)
+    z2h = float(dip.get("zone2_high") or fib500)
+    tp1 = float(dip.get("target1") or sma20 * 1.08)
+    tp2 = float(dip.get("target2") or sma50 * 1.12)
+    stop = float(dip.get("stop_level") or swing_low * 0.92)
+    upside_tp1 = float(dip.get("upside_pct") or (((tp1 / p) - 1.0) * 100.0 if p > 0 else 0.0))
+
+    sc, pros, cons = score_stock_for_selection(intel)
+
+    # Eğer özel bir soru odağı yakalanmadıysa dengeli varsayılan odaklar: DIRECTION + BUY_DECISION
+    active_focus = list(focus) if focus else ["DIRECTION", "BUY_DECISION"]
+
+    main_lines: list[str] = []
+    main_lines.append(
+        f"### 📌 `{sym}` ({intel['name']}) — Anlık: **{cur}{p:,.2f}** ({chg:+.2f}%) · Quant Skor: **{sc:.0f}/100**"
+    )
+
+    # ── ODAK 1: YÜKSELİŞİ KORUR MU / DAHA DÜŞME İHTİMALİ VAR MI? (DIRECTION) ──
+    if "DIRECTION" in active_focus:
+        if win_prob is not None:
+            if win_prob >= 60:
+                verdict_headline = f"Orta vadede (15 iş günü) yükselişin devam etme olasılığı **%{win_prob}** ile ağır basıyor"
+            elif win_prob >= 50:
+                verdict_headline = f"15 günlük hedef olasılığı **%{win_prob}** ile dengeli/pozitif; ancak kısa vadede sindirme (geri çekilme) olasılığı yüksek"
+            else:
+                verdict_headline = f"Kısa vadede tekrar aşağı sarkma/destek testi riski (**%{stop_prob or (100 - win_prob)}**) henüz daha baskın (Hedef olasılığı: **%{win_prob}**)"
+        else:
+            verdict_headline = "Kısa vadeli tepki başlamış durumda ancak üstteki hareketli ortalama dirençleri yakından izlenmeli"
+
+        intra_warn = (
+            f"Saatlik RSI **{rsi_intra:.1f}** ile aşırı ısınmış durumda; bu yüzden dümdüz çıkmayıp **1-3 gün içinde kâr satışı / nefes alma** görmemiz çok doğal."
+            if rsi_intra >= 75
+            else f"Saatlik RSI **{rsi_intra:.1f}** ve günlük RSI **{rsi_d:.1f}** ile aşırı bir şişkinlik yok, hareket daha dengeli."
+        )
+
+        main_lines.append(f"**🔮 Yön & Devamlılık Özeti:** {verdict_headline}. {intra_warn}")
+        main_lines.append("")
+
+        # Güçlü Yanlar vs Düşüş Riskleri
+        main_lines.append("**🟢 Yükselişin Devamını Destekleyen Sinyaller:**")
+        if win_prob is not None and analog_win is not None:
+            main_lines.append(
+                f"* **Yapay Zeka (Üçlü Bariyer) & Tarihsel İkizler:** 15 iş gününde `{cur}{stop:,.2f}` stop sınırına değmeden önce "
+                f"**`{cur}{tp1:,.2f}`** (+%{upside_tp1:.1f}) hedefine ulaşma ihtimali **%{win_prob}**. "
+                f"`{sym}` son 2 yılda benzer fiyat/indikatör yapısına **{analog_cnt} kez** geldi; bunların **%{analog_win:.0f}'inde** yukarı tepki verdi "
+                f"(15G ort. getiri: **%{analog_ret:+.1f}**)."
+            )
+        if rally_pct >= 5.0:
+            main_lines.append(
+                f"* **Dipten Tepki Gücü:** Son 5 günlük dip noktası olan **`{cur}{swing_low:,.2f}`** seviyesinden **+%{rally_pct:.1f}** tepki verdi "
+                f"(Hacim oranı: 20 günlük ortalamanın **{vol_ratio:.2f}x** katı)."
+            )
+        if fnd.get("forward_pe"):
+            main_lines.append(
+                f"* **Temel Çarpan Desteği:** İleri F/K **`{fnd['forward_pe']:.1f}x`**"
+                + (f", Yıllık Ciro Büyümesi **+%{fnd['rev_growth_yoy_pct']:.1f}**" if fnd.get("rev_growth_yoy_pct") else "")
+                + "."
+            )
+
+        main_lines.append("")
+        main_lines.append("**⚠️ Daha Düşme / Geri Çekilme İhtimalini Yaratan Riskler:**")
+        # Üstteki ortalama duvarları
+        overhead_walls = []
+        if sma20 > p * 1.005:
+            overhead_walls.append(f"**`{cur}{sma20:,.2f}` (SMA 20)**")
+        if sma50 > p * 1.005:
+            overhead_walls.append(f"**`{cur}{sma50:,.2f}` (SMA 50)**")
+        if sma200 > p * 1.005:
+            overhead_walls.append(f"**`{cur}{sma200:,.2f}` (SMA 200 — Ana Trend)**")
+        if overhead_walls:
+            main_lines.append(
+                f"* **Üstteki Direnç Duvarları:** Fiyat henüz {', '.join(overhead_walls)} seviyelerinin altında. "
+                f"İlk yukarı denemede bu ortalamalara çarptığında kısa vadeli kâr satışıyla karşılaşabilir."
+            )
+        else:
+            main_lines.append(
+                f"* **Ortalamaların Üzerinde:** Fiyat 20 ve 200 günlük ortalamalarının üzerinde; en yakın geri çekilme desteği **`{cur}{sma20:,.2f}` (SMA 20)**."
+            )
+        if rsi_intra >= 75:
+            main_lines.append(
+                f"* **Kısa Vadeli Yorulma (`Saatlik RSI: {rsi_intra:.1f}`):** Son günlerde dipten **+%{rally_pct:.1f}** zıpladığı için dipten alan trader'ların kâr realizasyonu yapma ihtimali yüksek."
+            )
+        if regime_info.get("smh_2w_ret") is not None:
+            main_lines.append(
+                f"* **Sektör & Makro Havası:** {regime_info.get('regime_badge', '')} (Çip ETF SMH 2H: **%{regime_info.get('smh_2w_ret', 0):+.1f}**, VIX: **{regime_info.get('vix_val', 18):.1f}**)."
+            )
+        main_lines.append(
+            f"* **🎯 Korunması Gereken Kritik Eşik:** Yükselişin bozulmaması için geri çekilmelerde **`{cur}{fib382:,.2f} – {cur}{sma5:,.2f}`** destek bandının üzerinde tutunması, yukarıda ise **`{cur}{sma20:,.2f}` (SMA 20)** direncini kırması gerekir."
+        )
+        main_lines.append("")
+
+    # ── ODAK 2: ŞİŞTİ Mİ / TOPARLAYIP ORTALAMA KAÇLARA DÜŞER? (PULLBACK) ──
+    if "PULLBACK" in active_focus or ("DIRECTION" in active_focus and rsi_intra >= 75):
+        stop1_high = round(fib236, 2)
+        stop1_low = round(max(fib236 * 0.982, (fib236 + fib382) / 2.0), 2)
+
+        mid_ma = max(sma5, sma10) if max(sma5, sma10) < stop1_low else round(fib382 * 0.985, 2)
+        stop2_low = round(min(fib382, max(mid_ma, fib500 * 1.01)), 2)
+        stop2_high = round(max(fib382, min(mid_ma, stop1_low - 0.50)), 2)
+        if stop2_low >= stop2_high:
+            stop2_low = round(fib382 * 0.98, 2)
+            stop2_high = round(fib382, 2)
+
+        stop3_low = round(min(fib618, fib500), 2)
+        stop3_high = round(max(fib618, fib500), 2)
+
+        drop1_pct = (((stop1_low + stop1_high) / 2.0 / p) - 1.0) * 100.0 if p > 0 else 0.0
+        drop2_pct = (((stop2_low + stop2_high) / 2.0 / p) - 1.0) * 100.0 if p > 0 else 0.0
+        drop3_pct = (((stop3_low + stop3_high) / 2.0 / p) - 1.0) * 100.0 if p > 0 else 0.0
+
+        overheat_status = (
+            f"Evet, kısa vadede belirgin bir yükseliş sonrası soluklanma ihtiyacı var (Son dipten **+%{rally_pct:.1f}** tepki verdi, Saatlik RSI: **{rsi_intra:.1f}**, Günlük RSI: **{rsi_d:.1f}**)."
+            if (rsi_intra >= 72 or rally_pct >= 12.0 or rsi_d >= 65)
+            else f"Şu an aşırı bir balon/şişkinlik yok (Günlük RSI: **{rsi_d:.1f}**, Saatlik RSI: **{rsi_intra:.1f}**), ancak olası geri çekilmede destek basamakları net:"
+        )
+
+        main_lines.append(f"#### 🎯 `{sym}` Soğuma (Geri Çekilme) Basamakları — Ortalama Kaçlara Düşer?")
+        main_lines.append(overheat_status)
+        main_lines.append(
+            f"1. **🟢 1. Durak (Hafif Nefes Alma / Güçlü Kalırsa): `{cur}{stop1_low:,.2f} – {cur}{stop1_high:,.2f}`** *(Şu andan ort. **%{drop1_pct:.1f}** fark)*\n"
+            f"   * **Teknik Karşılığı:** Fibonacci %23.6 ilk düzeltme basamağı (`{cur}{fib236:,.2f}`). Alıcı iştahı çok güçlü kalırsa bu bandın altına inmeden yukarı döner.\n"
+            f"2. **🎯 2. Durak (EN OLASI / Ortalama Geri Çekilme Yeri): `{cur}{stop2_low:,.2f} – {cur}{stop2_high:,.2f}`** *(Şu andan ort. **%{drop2_pct:.1f}** fark)*\n"
+            f"   * **Teknik Karşılığı:** Fibonacci %38.2 altın düzeltme seviyesi (`{cur}{fib382:,.2f}`) ve 5G/10G kısa vade ortalamalar (`{cur}{sma5:,.2f}` / `{cur}{sma10:,.2f}`). **'Köpüğünü alınca ortalama kaça oturur?' sorusunun ana cevabı bu bölgedir.**\n"
+            f"3. **🛡️ 3. Durak (Genel Borsada Sert Satış Çıkarsa Dip Destek): `{cur}{stop3_low:,.2f} – {cur}{stop3_high:,.2f}`** *(Şu andan ort. **%{drop3_pct:.1f}** fark)*\n"
+            f"   * **Teknik Karşılığı:** Son yükselişin yarısının geri verildiği yer (Fib %50 = `{cur}{fib500:,.2f}` / Fib %61.8 = `{cur}{fib618:,.2f}`). Daha altında 2. Kademe yedek kurşun kutusu (`{cur}{z2l:,.2f} – {cur}{z2h:,.2f}`) ve kesin stop (`{cur}{stop:,.2f}`) bulunur."
+        )
+        main_lines.append("")
+
+    # ── ODAK 3: UZMAN ANALİSTLERİN GÖRÜŞLERİ & HEDEF FİYATLAR (ANALYST) ──
+    if "ANALYST" in active_focus:
+        rec_str = fnd.get("recommendation") or "BUY"
+        n_an = fnd.get("num_analysts") or "—"
+        t_mean = fnd.get("analyst_target")
+        t_med = fnd.get("analyst_median")
+        t_low = fnd.get("analyst_low")
+        t_high = fnd.get("analyst_high")
+        up_pct = fnd.get("analyst_upside_pct")
+        rc = fnd.get("rec_counts") or {}
+        ratings = fnd.get("recent_ratings") or []
+
+        if t_mean:
+            main_lines.append(f"#### 🏦 `{sym}` İçin Uzman Analistlerin (Wall Street) Görüşleri")
+            rc_parts = []
+            if rc:
+                rc_parts.append(
+                    f"🟢 **{rc.get('strongBuy', 0)}** Güçlü Al · 🟢 **{rc.get('buy', 0)}** Al · "
+                    f"🟡 **{rc.get('hold', 0)}** Tut · 🔴 **{rc.get('sell', 0) + rc.get('strongSell', 0)}** Sat"
+                )
+            rc_line = f" ({' | '.join(rc_parts)})" if rc_parts else ""
+            main_lines.append(
+                f"* **Ortak Konsensüs ({n_an} Analist):** **`{rec_str}`**{rc_line}\n"
+                f"* **Hedef Fiyat Yelpazesi (Anlık `{cur}{p:,.2f}`):**\n"
+                f"  * 🎯 **Ortalama Hedef:** **`{cur}{t_mean:,.2f}`** (**+%{up_pct:.1f}** potansiyel)"
+                + (f" · **Medyan Hedef:** **`{cur}{t_med:,.2f}`**" if t_med else "")
+                + (f"\n  * 🛡️ **En Düşük Hedef:** **`{cur}{t_low:,.2f}`**" if t_low else "")
+                + (f" · 🚀 **En Yüksek Hedef:** **`{cur}{t_high:,.2f}`**" if t_high else "")
+            )
+            if ratings:
+                main_lines.append("* **Son Kurum Raporları & Derecelendirmeler:**")
+                for rt in ratings[:4]:
+                    pt_txt = ""
+                    if rt.get("current_target") and rt.get("prior_target"):
+                        pt_txt = f" — Hedef: `{cur}{rt['prior_target']:,.0f}` → **`{cur}{rt['current_target']:,.0f}`** ({rt.get('pt_action', '')})"
+                    elif rt.get("current_target"):
+                        pt_txt = f" — Hedef: **`{cur}{rt['current_target']:,.0f}`**"
+                    main_lines.append(f"  * **[{rt['date']}] {rt['firm']}:** `{rt['to_grade']}`{pt_txt}")
+            main_lines.append("")
+
+    # ── ODAK 4: ALIM / SATIŞ KARARI & KADEMELİ OYUN PLANI (BUY_DECISION / SELL_DECISION) ──
+    if "BUY_DECISION" in active_focus or "SELL_DECISION" in active_focus:
+        main_lines.append(f"#### 💡 `{sym}` İçin Net Aksiyon & Oyun Planı")
+        if p <= z1h * 1.015 and p >= z1l * 0.98:
+            entry_msg = f"Fiyat şu an **1. Kademe alım kutumuzun (`{cur}{z1l:,.2f} – {cur}{z1h:,.2f}`) tam içinde**. Tüm bütçeyle tek seferde değil, 1. parçayla giriş için uygun."
+        elif p > z1h * 1.015:
+            entry_msg = (
+                f"Fiyat son sıçramayla ideal 1. alım kutumuzun (`{cur}{z1l:,.2f} – {cur}{z1h:,.2f}`) üzerine çıktı. "
+                f"En tepeden tek kurşunla atlamak yerine **`{cur}{fib236:,.2f} – {cur}{fib382:,.2f}`** soğuma bandına geri çekilmeyi pusuda beklemek daha düşük maliyet sağlar."
+            )
+        else:
+            entry_msg = f"Fiyat 1. kutunun altında; **`{cur}{z2l:,.2f} – {cur}{z2h:,.2f}`** (2. Kademe destek bölgesi) ve dönüş mumu takip edilmeli."
+
+        main_lines.append(f"* **Yeni Alım / Ekleme Düşünenler İçin:** {entry_msg}")
+        shield = ex.get("profit_shield_line") or round(max(fib382, z1l * 0.97), 2)
+        main_lines.append(
+            f"* **Elinde `{sym}` Bulunduranlar İçin:** Fiyat **`{cur}{shield:,.2f}`** (Kâr Koruma / İlk Ana Destek) üzerinde kaldığı sürece panik satışı yapılmaz; "
+            f"15 günlük ilk kâr alma hedefimiz **`{cur}{tp1:,.2f}`** (+%{upside_tp1:.1f}), ikinci ana hedefimiz **`{cur}{tp2:,.2f}`**."
+        )
+        main_lines.append("")
+
+    # ── DETAY / EK TABLO BÖLÜMÜ (Tıklayınca büyüyen kısım için) ──
+    ic_card = build_investment_committee_card(
+        symbol=sym,
+        current_price=p,
+        kalite=fac.get("kalite", 60),
+        deger=fac.get("deger", 55),
+        momentum=fac.get("momentum", 55),
+        risk=fac.get("risk", 55),
+        dip_res=dip,
+        exit_res=ex,
+        earnings_info=earn,
+        regime_info=regime_info,
+    )
+    fpe_s = f"{fnd['forward_pe']:.1f}x" if fnd.get("forward_pe") else (f"{fnd['trailing_pe']:.1f}x" if fnd.get("trailing_pe") else "—")
+    gm_s = f"%{fnd['gross_margin_pct']:.1f}" if fnd.get("gross_margin_pct") else "—"
+    rg_s = f"%{fnd['rev_growth_yoy_pct']:+.1f}" if fnd.get("rev_growth_yoy_pct") is not None else "—"
+    tgt_s = f"{cur}{fnd['analyst_target']} (+%{fnd['analyst_upside_pct']:.0f})" if fnd.get("analyst_target") and fnd.get("analyst_upside_pct") else "—"
+
+    detail_lines: list[str] = [
+        f"#### 📊 `{sym}` Tam Teknik, Çarpan & Algoritma Tablosu",
+        "| Teknik Göstergeler | Değer | Temel & Çarpanlar | Değer | Algoritma Seviyeleri | Seviye |",
+        "| :--- | :---: | :--- | :---: | :--- | :---: |",
+        f"| **Günlük / Saatlik RSI** | **{rsi_d:.1f} / {rsi_intra:.1f}** | **İleri / Cari F/K** | **{fpe_s}** | **1. Kademe Alım** | **`{cur}{z1l:,.2f} – {cur}{z1h:,.2f}`** |",
+        f"| **SMA 5 / 10 / 20** | {cur}{sma5:,.1f} / {cur}{sma10:,.1f} / {cur}{sma20:,.1f} | **Brüt Kâr Marjı** | {gm_s} | **2. Kademe Alım** | `{cur}{z2l:,.2f} – {cur}{z2h:,.2f}` |",
+        f"| **SMA 50 / 200** | {cur}{sma50:,.1f} / {cur}{sma200:,.1f} | **Yıllık Ciro Büyümesi** | {rg_s} | **İlk Hedef (TP1)** | **`{cur}{tp1:,.2f}`** (+%{upside_tp1:.1f}) |",
+        f"| **Fibonacci %23.6 / %38.2** | `{cur}{fib236:,.2f}` / `{cur}{fib382:,.2f}` | **Analist Hedefi** | {tgt_s} | **Kaçış (Stop-Loss)** | **`{cur}{stop:,.2f}`** |",
+        "",
+        f"* **Boğa Senaryosu:** {ic_card['bull_case'].replace('\\$', '$')}",
+        f"* **Baz Senaryo:** {ic_card['base_case'].replace('\\$', '$')}",
+        f"* **Ayı Senaryosu:** {ic_card['bear_case'].replace('\\$', '$')}",
+    ]
+    return main_lines, detail_lines
+
+
 def _synthesize_institutional_response(
     user_query: str,
     intent: str,
@@ -1084,7 +1472,69 @@ def _synthesize_institutional_response(
 ) -> str:
     """
     Tüm canlı verileri, algoritmaları ve kalıcı hafızayı birleştirerek
-    Wall Street / BIST Kıdemli Analisti kalitesinde detaylı yanıt üretir.
+    KULLANICININ SORUSUNA DOĞRUDAN ODAKLANAN yanıt üretir.
+    Uzun referans tablolarını `<!-- DETAILS_SPLIT -->` ayırıcı ile ayrıştırır ki arayüzde tıklayınca büyüsün.
+    """
+    focus = detect_question_focus(user_query)
+    valid_intels = [intel_map[s] for s in symbols if s in intel_map and intel_map[s].get("valid")]
+
+    # Eğer kullanıcı açıkça geri çekilme ("kaça düşer / şişti mi"), yön ("yükselişi korur mu / düşer mi")
+    # veya analist ("uzman analist görüşleri") soruyorsa, genel şablon yerine doğrudan soru-odaklı motoru çalıştır:
+    if valid_intels and any(f in focus for f in ["PULLBACK", "DIRECTION", "ANALYST", "BUY_DECISION", "SELL_DECISION"]) and intent not in ("MEMORY_UPDATE", "PORTFOLIO_FIFO", "RECOVERY_TARGET"):
+        main_all: list[str] = []
+        detail_all: list[str] = []
+
+        if used_context and symbols:
+            main_all.append(f"> 🧠 **Bağlam:** Önceki konuşmamızdaki **`{', '.join(symbols)}`** üzerinden devam ediyorum.\n")
+
+        for intel in valid_intels:
+            m_lines, d_lines = _render_targeted_stock_section(intel, focus, regime_info, portfolio_intel)
+            main_all.extend(m_lines)
+            detail_all.extend(d_lines)
+            detail_all.append("")
+
+        # Birden fazla hisse varsa en alta net bir yan yana özet tablo ekle
+        if len(valid_intels) >= 2:
+            main_all.append("### ⚖️ Hisselerin Yan Yana Karşılaştırma Özeti")
+            main_all.append("| Hisse | Anlık Fiyat | Günlük / Saatlik RSI | 1. Soğuma Durağı | 🎯 Ortalama Düşüş Yeri (2. Durak) | AI 15G Hedef İhtimali | 15G Kâr Hedefi | Analist Ort. Hedef |")
+            main_all.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+            for intel in valid_intels:
+                cur = intel.get("currency", "$")
+                dip = intel.get("dip") or {}
+                ai = dip.get("ai_pred") or {}
+                fnd = intel.get("fundamentals") or {}
+                wp = f"%{ai['win_prob_pct']}" if ai.get("win_prob_pct") is not None else "—"
+                at = f"{cur}{fnd['analyst_target']:,.0f} (+%{fnd.get('analyst_upside_pct', 0):.0f})" if fnd.get("analyst_target") else "—"
+                main_all.append(
+                    f"| **`{intel['symbol']}`** | **{cur}{intel['price']:,.2f}** ({intel['daily_chg_pct']:+.1f}%) | "
+                    f"{intel['rsi14']:.0f} / {dip.get('rsi_intra', intel['rsi14']):.0f} | "
+                    f"`{cur}{intel.get('fib_236', 0):,.2f}` | **`{cur}{intel.get('fib_382', 0):,.2f} – {cur}{intel.get('sma5', 0):,.2f}`** | "
+                    f"**{wp}** | **{cur}{dip.get('target1', 0):,.2f}** | {at} |"
+                )
+
+        if detail_all:
+            return "\n".join(main_all).strip() + "\n\n<!-- DETAILS_SPLIT -->\n\n" + "\n".join(detail_all).strip()
+        return "\n".join(main_all).strip()
+
+    body = _synthesize_institutional_body(
+        user_query, intent, symbols, used_context, intel_map, portfolio_intel, regime_info, memory_data
+    )
+    return body
+
+
+def _synthesize_institutional_body(
+    user_query: str,
+    intent: str,
+    symbols: list[str],
+    used_context: bool,
+    intel_map: dict[str, dict],
+    portfolio_intel: dict,
+    regime_info: dict,
+    memory_data: dict,
+) -> str:
+    """
+    Özel niyetler (Hafıza kaydı, Bilanço kontrolü, 4'lü Seçim, Toparlanma Takvimi, FIFO Portföy, Fırsat Taraması)
+    için sentez üretir.
     """
     valid_intels = [intel_map[s] for s in symbols if s in intel_map and intel_map[s].get("valid")]
     q_lower = user_query.lower()
@@ -1122,8 +1572,9 @@ def _synthesize_institutional_response(
 
     # ── DURUM B: BİLANÇO & SONUÇ SORGUSU (EARNINGS_CHECK) ──
     if intent == "EARNINGS_CHECK" and valid_intels:
-        lines.append("### 📅 Bilanço Sonuçları, Rehberlik (Guidance) & Takvim Röntgeni")
+        lines.append("### 📅 Bilanço Sonuçları, Rehberlik (Guidance) & Takvim Özeti")
         lines.append("")
+        detail_earn: list[str] = []
 
         # Eğer COHR soruluyorsa veya listede varsa hafızadaki resmi Q1 FY27 detayını + canlı fiyatı birleştir
         for intel in valid_intels:
@@ -1171,32 +1622,36 @@ def _synthesize_institutional_response(
 
             if earn.get("summary_text"):
                 lines.append(f"* **Tarihsel Bilanço Tepki Karakteri:** {earn['summary_text']}")
+            lines.append("")
 
             if rel_list:
-                lines.append("")
-                lines.append("| Bilanço Tarihi | EPS Beklentisi | Açıklanan EPS | Sürpriz (%) | Durum |")
-                lines.append("| :--- | :---: | :---: | :---: | :---: |")
+                detail_earn.append(f"#### 📊 `{sym}` Geçmiş Çeyrek Bilanço Sürpriz Tablosu")
+                detail_earn.append("| Bilanço Tarihi | EPS Beklentisi | Açıklanan EPS | Sürpriz (%) | Durum |")
+                detail_earn.append("| :--- | :---: | :---: | :---: | :---: |")
                 for r in rel_list[:4]:
                     est_s = f"{cur}{r['eps_estimate']:.2f}" if r.get("eps_estimate") is not None else "—"
                     rep_s = f"{cur}{r['eps_reported']:.2f}" if r.get("eps_reported") is not None else "⏳ Bekleniyor"
                     surp_v = r.get("surprise_pct")
                     surp_s = f"%{surp_v:+.1f}" if surp_v is not None else "—"
                     status_s = "🟢 Beklenti Üstü" if (surp_v is not None and surp_v > 0) else ("🔴 Beklenti Altı" if (surp_v is not None and surp_v < 0) else "📅 Takvimde")
-                    lines.append(f"| **{r['date']}** | {est_s} | **{rep_s}** | {surp_s} | {status_s} |")
-            lines.append("")
+                    detail_earn.append(f"| **{r['date']}** | {est_s} | **{rep_s}** | {surp_s} | {status_s} |")
+                detail_earn.append("")
 
-        # Eğer tek bir hisse sorulduysa ama hafızada 4'lü grup (COHR, MRVL, BE, RKLB) varsa diğerlerinin takvimini de özetle
-        if len(valid_intels) >= 1 and any(s in ["COHR", "MRVL", "BE", "RKLB"] for s in symbols):
-            lines.append("---")
-            lines.append("#### 🗓️ Takip Listemizdeki Dörtlünün Genel Bilanço Durumu Özeti")
-            lines.append(
-                "1. **`COHR` (Coherent):** ✅ **Açıklandı** (4 Kasım kapanış sonrası tüm sonuçlar ve konferans tamamlandı; $2.37B ciro ve $2.09 EPS ile çifte rekor kırdı).\n"
-                "2. **`BE` (Bloom Energy):** ✅ **Açıklandı** (22 Ekim 2026'da 3. çeyrek sonuçlarını duyurdu).\n"
-                "3. **`RKLB` (Rocket Lab):** ⏳ **9 Kasım 2026 Pazartesi** ABD kapanışı sonrası açıklanacak.\n"
-                "4. **`MRVL` (Marvell):** ⏳ **1 Aralık 2026** civarında açıklanması bekleniyor (mali takvimi 1 ay geriden geliyor)."
-            )
+        # Birden fazla hisse sorulduysa her birinin bilanço takvimini canlı veriden özetle (sabit tarih yok)
+        if len(valid_intels) >= 2:
+            lines.append("#### 🗓️ Sorulan Hisselerin Bilanço Takvimi (Canlı)")
+            for i, intel in enumerate(valid_intels, 1):
+                earn = intel.get("earnings") or {}
+                nd = earn.get("next_earnings_date")
+                dl = earn.get("days_to_earnings")
+                if nd and dl is not None and dl >= 0:
+                    lines.append(f"{i}. **`{intel['symbol']}`:** ⏳ Sıradaki bilanço **{nd}** ({dl} gün kaldı)")
+                else:
+                    lines.append(f"{i}. **`{intel['symbol']}`:** Yakın tarihli bilanço takvimi bulunamadı (son çeyrek açıklanmış olabilir).")
 
-        return "\n".join(lines)
+        if detail_earn:
+            return "\n".join(lines).strip() + "\n\n<!-- DETAILS_SPLIT -->\n\n" + "\n".join(detail_earn).strip()
+        return "\n".join(lines).strip()
 
     # ── DURUM C: ÇOKLU HİSSE KIYASLAMA & EN İYİLERİ SEÇME (COMPARE_SELECT) ──
     if intent == "COMPARE_SELECT" and len(valid_intels) >= 2:
@@ -1210,41 +1665,19 @@ def _synthesize_institutional_response(
         winners = scored_list[:top_n]
         eliminated = scored_list[top_n:]
 
-        lines.append(f"### ⚔️ {', '.join(x[1]['symbol'] for x in scored_list)} Kafa Kafaya Kurumsal Kıyaslama")
-        lines.append(
-            f"Sistemin **Dip Avcısı (`dip_hunter`)**, **Üçlü Bariyer AI**, **4 Sütun Faktör Motoru** ve **Wall Street çarpanları** ile "
-            f"{len(scored_list)} hisseyi canlı taradım:"
-        )
-        lines.append("")
-        lines.append("| Sıra & Hisse | Anlık Fiyat | 1 Aylık | RSI(14) | İleri F/K | Dip Avcısı Durumu | 1. Alım Kutusu | İlk Hedef (TP1) | Stop Sınırı | Quant Puan |")
-        lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
-
-        for idx, (sc, intel, _, _) in enumerate(scored_list, 1):
-            sym = intel["symbol"]
-            cur = intel["currency"]
-            dip = intel.get("dip") or {}
-            fnd = intel.get("fundamentals") or {}
-            fpe_s = f"{fnd['forward_pe']:.1f}x" if fnd.get("forward_pe") else "—"
-            st_badge = dip.get("state_badge", "🔵 BEKLEMEDE")
-            z1_s = f"{cur}{dip.get('zone1_low', 0):.2f}–{cur}{dip.get('zone1_high', 0):.2f}" if dip else "—"
-            tp1_s = f"{cur}{dip.get('target1', 0):.2f} (+%{dip.get('upside_pct', 0):.1f})" if dip else "—"
-            sl_s = f"{cur}{dip.get('stop_level', 0):.2f}" if dip else "—"
-            medal = "🏆" if idx <= top_n else "❌"
-            lines.append(
-                f"| {medal} **{idx}. {sym}** | **{cur}{intel['price']:,.2f}** | %{intel['chg_1m_pct']:+.1f} | "
-                f"**{intel['rsi14']:.1f}** | {fpe_s} | {st_badge} | `{z1_s}` | **{tp1_s}** | {sl_s} | **{sc:.0f}/100** |"
-            )
-
-        lines.append("")
         winner_names = " ve ".join(f"`{w[1]['symbol']}`" for w in winners)
-        lines.append(f"### 🏆 Sistemin Seçtiği {top_n} Favori Hisse: {winner_names}")
+        lines.append(f"### 🏆 Kıyaslama Sonucu — Seçilen {top_n} Favori Hisse: {winner_names}")
+        lines.append(
+            f"**{', '.join(x[1]['symbol'] for x in scored_list)}** hisselerini **Dip Avcısı**, **Üçlü Bariyer AI**, "
+            f"**4 Sütun Faktör Motoru** ve **Wall Street çarpanları** ile kafa kafaya yarıştırdım:"
+        )
         lines.append("")
 
         for idx, (sc, intel, pros, cons) in enumerate(winners, 1):
             sym = intel["symbol"]
             cur = intel["currency"]
             dip = intel.get("dip") or {}
-            lines.append(f"#### {idx}. Tercih: `{sym}` ({intel['name']}) — Quant Skor: **{sc:.0f}/100**")
+            lines.append(f"#### 🥇 {idx}. Tercih: `{sym}` ({intel['name']}) — Quant Skor: **{sc:.0f}/100** · Fiyat: **{cur}{intel['price']:,.2f}** ({intel['daily_chg_pct']:+.2f}%)")
             for p in pros:
                 lines.append(f"* {p}")
             if cons:
@@ -1259,11 +1692,32 @@ def _synthesize_institutional_response(
             lines.append("")
 
         if eliminated:
-            lines.append("### ❌ Diğer Hisseler Neden Elendi?")
+            lines.append("#### ❌ Diğer Hisseler Neden Elendi?")
             for sc, intel, pros, cons in eliminated:
                 sym = intel["symbol"]
                 reason_str = " ".join(cons) if cons else "Diğer adaylara göre risk/getiri oranı daha düşük kaldı."
                 lines.append(f"* **`{sym}` (Skor: {sc:.0f}/100):** {reason_str}")
+
+        detail_cmp = [
+            f"#### 📊 {', '.join(x[1]['symbol'] for x in scored_list)} Detaylı Karşılaştırma Tablosu",
+            "| Sıra & Hisse | Anlık Fiyat | 1 Aylık | RSI(14) | İleri F/K | Dip Avcısı Durumu | 1. Alım Kutusu | İlk Hedef (TP1) | Stop Sınırı | Quant Puan |",
+            "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
+        ]
+        for idx, (sc, intel, _, _) in enumerate(scored_list, 1):
+            sym = intel["symbol"]
+            cur = intel["currency"]
+            dip = intel.get("dip") or {}
+            fnd = intel.get("fundamentals") or {}
+            fpe_s = f"{fnd['forward_pe']:.1f}x" if fnd.get("forward_pe") else "—"
+            st_badge = dip.get("state_badge", "🔵 BEKLEMEDE")
+            z1_s = f"{cur}{dip.get('zone1_low', 0):.2f}–{cur}{dip.get('zone1_high', 0):.2f}" if dip else "—"
+            tp1_s = f"{cur}{dip.get('target1', 0):.2f} (+%{dip.get('upside_pct', 0):.1f})" if dip else "—"
+            sl_s = f"{cur}{dip.get('stop_level', 0):.2f}" if dip else "—"
+            medal = "🏆" if idx <= top_n else "❌"
+            detail_cmp.append(
+                f"| {medal} **{idx}. {sym}** | **{cur}{intel['price']:,.2f}** | %{intel['chg_1m_pct']:+.1f} | "
+                f"**{intel['rsi14']:.1f}** | {fpe_s} | {st_badge} | `{z1_s}` | **{tp1_s}** | {sl_s} | **{sc:.0f}/100** |"
+            )
 
         # Otomatik hafızaya kaydet
         win_desc = ", ".join(
@@ -1281,7 +1735,7 @@ def _synthesize_institutional_response(
             symbols=[x[1]["symbol"] for x in scored_list],
             pinned=True,
         )
-        return "\n".join(lines)
+        return "\n".join(lines).strip() + "\n\n<!-- DETAILS_SPLIT -->\n\n" + "\n".join(detail_cmp).strip()
 
     # ── DURUM D: TOPARLANMA TAKVİMİ / HEDEF FİYAT ANALİZİ (RECOVERY_TARGET / BIST / SARAE) ──
     if intent == "RECOVERY_TARGET" and valid_intels:
@@ -1359,6 +1813,7 @@ def _synthesize_institutional_response(
         lines.append("### 💼 Midas FIFO Portföy & Lot Röntgeni")
         open_pos = portfolio_intel.get("open_positions", {})
         fx = portfolio_intel.get("usdtry", 49.15)
+        detail_fifo: list[str] = []
 
         if not open_pos:
             lines.append("Portföy defterinde şu an açık pozisyon görünmüyor.")
@@ -1379,16 +1834,6 @@ def _synthesize_institutional_response(
                         f"**1. Lot** satılacaktır!"
                     )
                 lines.append("")
-                lines.append("| Lot Sırası | Alış Tarihi | Adet | Alış Fiyatı ($) | Giriş Kuru (₺) | Güncel Kâr/Zarar ($) | FIFO Durumu |")
-                lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
-                for idx, l in enumerate(p.get("all_lots", []), 1):
-                    lot_pnl = (p["current_price_usd"] - l["fiyat_usd"]) * l["adet_kalan"]
-                    fifo_tag = "🔥 **İLK SATILACAK LOT**" if idx == 1 else f"{idx}. Sırada"
-                    lines.append(
-                        f"| **Lot {idx}** | {l['tarih']} | {l['adet_kalan']:.0f} | **${l['fiyat_usd']:,.2f}** | "
-                        f"{l['usdtry_kuru']:.2f} ₺ | **${lot_pnl:+,.2f}** | {fifo_tag} |"
-                    )
-                lines.append("")
 
                 # Eğer MU için teknik durum da varsa ekle
                 if sym in intel_map and intel_map[sym].get("valid"):
@@ -1398,7 +1843,23 @@ def _synthesize_institutional_response(
                         f"**📈 `{sym}` Güncel Teknik & Algoritma Kararı:** {dip.get('state_badge', 'İzlemede')} — "
                         f"{dip.get('action_advice', '')}"
                     )
-        return "\n".join(lines)
+                    lines.append("")
+
+                detail_fifo.append(f"#### 📊 `{sym}` Kademe Kademe Lot Dökümü (FIFO Sırasıyla)")
+                detail_fifo.append("| Lot Sırası | Alış Tarihi | Adet | Alış Fiyatı ($) | Giriş Kuru (₺) | Güncel Kâr/Zarar ($) | FIFO Durumu |")
+                detail_fifo.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
+                for idx, l in enumerate(p.get("all_lots", []), 1):
+                    lot_pnl = (p["current_price_usd"] - l["fiyat_usd"]) * l["adet_kalan"]
+                    fifo_tag = "🔥 **İLK SATILACAK LOT**" if idx == 1 else f"{idx}. Sırada"
+                    detail_fifo.append(
+                        f"| **Lot {idx}** | {l['tarih']} | {l['adet_kalan']:.0f} | **${l['fiyat_usd']:,.2f}** | "
+                        f"{l['usdtry_kuru']:.2f} ₺ | **${lot_pnl:+,.2f}** | {fifo_tag} |"
+                    )
+                detail_fifo.append("")
+
+        if detail_fifo:
+            return "\n".join(lines).strip() + "\n\n<!-- DETAILS_SPLIT -->\n\n" + "\n".join(detail_fifo).strip()
+        return "\n".join(lines).strip()
 
     # ── DURUM F: GENEL FIRSAT TARAMASI (OPPORTUNITY_SCAN) ──
     if intent == "OPPORTUNITY_SCAN":
@@ -1531,15 +1992,19 @@ def _build_llm_system_and_user_prompt(
 ) -> tuple[str, str]:
     """Bulut LLM için tüm canlı verileri, algoritmaları ve kalıcı hafızayı içeren zengin prompt hazırlar."""
     sys_prompt = (
-        "Sen StockPredictionPro sisteminin başındaki Kıdemli Wall Street & BIST Kurumsal Quant Analisti ve Portföy Stratejistisin.\n"
-        "Kullanıcın: Talha (@talha4111).\n"
-        "Temel Kurallar:\n"
-        "1. ASLA yuvarlak, yüzeysel veya 'araştırmanızı öneririm' tarzı sıradan sohbet robotu cevapları verme.\n"
-        "2. Sana aşağıda verilen CANLI KURUMSAL TELEMETRİ verilerindeki gerçek fiyatları, RSI, SMA20/50/200, İleri F/K, "
-        "Dip Avcısı Kademe 1 ve Kademe 2 alım kutularını, TP1/TP2 hedeflerini, Stop seviyelerini, Üçlü Bariyer AI olasılıklarını ve "
-        "bilanço rakamlarını birebir kullanarak net, rakamsal, tablolu ve karar odaklı Türkçe analiz yap.\n"
-        "3. KALICI HAFIZA'daki geçmiş konuşmaları ve Midas FIFO kuralını (satışta en eski lotun ilk satıldığını) asla unutma.\n"
-        "4. Fiyatları yazarken LaTeX bozulmasını önlemek için dolar işaretini normal ve net kullan, Markdown tabloları oluştur."
+        "Sen StockPredictionPro sisteminin kıdemli borsa analistisin. Kullanıcın: Talha.\n"
+        "EN ÖNEMLİ KURAL: Talha'nın sorduğu SORUNUN KENDİSİNİ cevapla. Sorudaki tek bir anahtar kelimeye göre "
+        "hazır rapor şablonu üretme. Önce soruya 2-4 cümlelik net, doğrudan bir cevap ver (evet/hayır/seviye/olasılık), "
+        "sonra yalnızca bu cevabı destekleyen verileri kısa maddelerle göster.\n"
+        "Diğer kurallar:\n"
+        "1. 'Araştırmanızı öneririm' gibi kaçamak cümleler kurma; verilerle somut konuş.\n"
+        "2. Aşağıdaki canlı verilerdeki gerçek fiyat, RSI, ortalamalar, alım kutuları, hedef/stop, yapay zekâ olasılığı ve "
+        "analist hedeflerini birebir kullan; veri yoksa uydurma, 'veri yok' de.\n"
+        "3. Tablo yalnızca birden fazla hisseyi kıyaslarken ya da çok sayıda seviye varken gerçekten işe yarıyorsa kullan.\n"
+        "4. Sohbet geçmişini takip et: kullanıcı 'peki', 'o zaman', 'bunu' gibi devam soruları sorarsa önceki konuyu sürdür.\n"
+        "5. Kalıcı hafızadaki notları ve Midas FIFO kuralını (satışta en eski lot önce satılır) dikkate al.\n"
+        "6. Sade, günlük Türkçe kullan. Dolar işaretini normal yaz.\n"
+        "7. Kesin getiri vaadi verme; olasılık ve senaryo dili kullan."
     )
 
     # Hafıza özeti
@@ -1547,9 +2012,9 @@ def _build_llm_system_and_user_prompt(
 
     # Sohbet geçmişi özeti (Son 6 mesaj)
     hist_lines = []
-    for m in recent_messages[-6:]:
+    for m in recent_messages[-8:]:
         role_lbl = "Talha" if m.get("role") == "user" else "AI Analist"
-        hist_lines.append(f"[{m.get('timestamp', '')}] {role_lbl}: {m.get('content', '')[:600]}")
+        hist_lines.append(f"[{m.get('timestamp', '')}] {role_lbl}: {m.get('content', '')[:900]}")
     hist_str = "\n".join(hist_lines)
 
     # Canlı telemetri özeti
@@ -1568,9 +2033,22 @@ def _build_llm_system_and_user_prompt(
             "chg_1m_pct": data.get("chg_1m_pct"),
             "drop_52w_pct": data.get("drop_52w_pct"),
             "rsi14": data.get("rsi14"),
+            "rsi_intraday_15m": dip.get("rsi_intra"),
+            "sma5": data.get("sma5"),
+            "sma10": data.get("sma10"),
             "sma20": data.get("sma20"),
             "sma50": data.get("sma50"),
             "sma200": data.get("sma200"),
+            "vol_ratio": data.get("vol_ratio"),
+            "swing_low_5d": data.get("swing_low_5d"),
+            "swing_high_5d": data.get("swing_high_5d"),
+            "rally_from_low_pct": data.get("rally_from_low_pct"),
+            "fibonacci_pullback_stops": {
+                "fib_236_first_cooling": data.get("fib_236"),
+                "fib_382_average_pullback": data.get("fib_382"),
+                "fib_500_deep_pullback": data.get("fib_500"),
+                "fib_618_golden_pocket": data.get("fib_618"),
+            },
             "fundamentals": data.get("fundamentals"),
             "factors": data.get("factors"),
             "dip_hunter": {
@@ -1582,22 +2060,33 @@ def _build_llm_system_and_user_prompt(
                 "target2": dip.get("target2"),
                 "stop_level": dip.get("stop_level"),
                 "upside_pct": dip.get("upside_pct"),
-                "ai_15d_win_prob": (dip.get("ai_pred") or {}).get("p_tp"),
+                "ai_15d_win_prob_pct": (dip.get("ai_pred") or {}).get("win_prob_pct"),
+                "ai_15d_stop_prob_pct": (dip.get("ai_pred") or {}).get("stop_prob_pct"),
+                "historical_analog_win_rate_pct": (dip.get("ai_pred") or {}).get("analog_win_rate_pct"),
+            },
+            "exit_hunter": {
+                "exit_badge": (data.get("exit") or {}).get("exit_badge"),
+                "take_profit_1": (data.get("exit") or {}).get("take_profit_1"),
+                "profit_shield_line": (data.get("exit") or {}).get("profit_shield_line"),
             },
             "earnings_releases": data.get("earnings_releases"),
             "earnings_catalyst_summary": (data.get("earnings") or {}).get("summary_text"),
             "recent_news": data.get("recent_news"),
         }
 
+    focus = detect_question_focus(user_query)
+    focus_hint = ", ".join(focus) if focus else "GENEL_DEGERLENDIRME"
     user_payload = (
         f"=== 1. KALICI HAFIZA NOTLARI (ESKİ KONUŞTUKLARIMIZ & PORTFÖY KURALLARI) ===\n{mem_str}\n\n"
         f"=== 2. SON SOHBET GEÇMİŞİ ===\n{hist_str}\n\n"
         f"=== 3. AKTİF PİYASA REJİMİ ===\n{json.dumps(regime_info, ensure_ascii=False)}\n\n"
         f"=== 4. MİDAS FIFO PORTFÖY DURUMU ===\n{json.dumps(portfolio_intel, ensure_ascii=False)}\n\n"
-        f"=== 5. İLGİLİ HİSSELERİN CANLI KURUMSAL VERİLERİ ({', '.join(symbols)}) ===\n"
+        f"=== 5. İLGİLİ HİSSELERİN CANLI VERİLERİ ({', '.join(symbols)}) ===\n"
         f"{json.dumps(clean_telemetry, ensure_ascii=False, indent=2)}\n\n"
         f"=== TALHA'NIN YENİ SORUSU ===\n{user_query}\n\n"
-        f"Lütfen yukarıdaki canlı verileri ve hafızayı kullanarak doğrudan, kapsamlı, tablolu ve uzman analist seviyesinde yanıtla."
+        f"(Sorunun odağı tahmini: {focus_hint})\n"
+        f"Önce bu soruya doğrudan cevap ver, sonra sadece gerekli destekleyici verileri ekle. "
+        f"Soruyla ilgisi olmayan bölümler (ör. sorulmadıysa bilanço tablosu, portföy dökümü) ekleme."
     )
     return sys_prompt, user_payload
 
@@ -1619,7 +2108,7 @@ def _call_cloud_llm(sys_prompt: str, user_payload: str, cfg: dict) -> tuple[str 
             body = {
                 "system_instruction": {"parts": [{"text": sys_prompt}]},
                 "contents": [{"role": "user", "parts": [{"text": user_payload}]}],
-                "generationConfig": {"temperature": 0.25, "maxOutputTokens": 4096},
+                "generationConfig": {"temperature": 0.4, "maxOutputTokens": 4096},
             }
             for model in models_to_try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
@@ -1652,7 +2141,7 @@ def _call_cloud_llm(sys_prompt: str, user_payload: str, cfg: dict) -> tuple[str 
                     {"role": "system", "content": sys_prompt},
                     {"role": "user", "content": user_payload},
                 ],
-                "temperature": 0.25,
+                "temperature": 0.4,
                 "max_tokens": 4096,
             }
             try:
@@ -1679,7 +2168,7 @@ def _call_cloud_llm(sys_prompt: str, user_payload: str, cfg: dict) -> tuple[str 
                     {"role": "system", "content": sys_prompt},
                     {"role": "user", "content": user_payload},
                 ],
-                "temperature": 0.25,
+                "temperature": 0.4,
                 "max_tokens": 4096,
             }
             try:
