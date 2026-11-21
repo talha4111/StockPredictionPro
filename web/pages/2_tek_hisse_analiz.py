@@ -624,23 +624,47 @@ if active_symbol:
         )
 
     # ═══════════════════════════════════════════════════════════════════════
-    # KATMAN 1: TEK BİRLEŞİK KARAR KARTI (Fiyat + Komite Hükmü + 4 Kritik Sayı + AI Çubuğu)
+    # KATMAN 1: TEK BİRLEŞİK NİHAİ KARAR KARTI (6 Alt-Motorun Tek Hükmü)
     # ═══════════════════════════════════════════════════════════════════════
+    from web.components.unified_verdict import build_unified_verdict, render_vote_strip_html
+
     q_price = quote.get("price") or (dip_res or {}).get("current_price") or 0.0
     q_pct = quote.get("change_pct") or (dip_res or {}).get("daily_change_pct") or 0.0
     ai_pred = (dip_res or {}).get("ai_pred") or {}
+    _news = (dip_res or {}).get("news") or {}
+    _diag = (dip_res or {}).get("diagnosis") or {}
+    _gates = (dip_res or {}).get("gates") or []
+
+    _brake = None
+    try:
+        from web.components.portfolio_risk import evaluate_buy_permission
+        from web.components.portfolio_tracker import calculate_fifo_portfolio
+
+        _open_pos, _ = calculate_fifo_portfolio()
+        if sembol in _open_pos:
+            _brake = evaluate_buy_permission(
+                sembol,
+                q_price,
+                _open_pos,
+                _news or None,
+                float(regime_info.get("vix_val", 18.5)),
+            )
+    except Exception:
+        _brake = None
+
+    unified = build_unified_verdict(
+        symbol=sembol,
+        dip_res=dip_res,
+        regime_info=regime_info,
+        exit_res=exit_res,
+        earnings_info=earnings_info,
+        portfolio_brake=_brake,
+        factors={"kalite": kalite, "deger": deger, "momentum": momentum, "risk": risk, "composite": f_skor},
+    )
 
     extra_badges = []
-    sys_lbl, sys_col = karar_badge_info(karar)
-    extra_badges.append((sys_lbl, sys_col))
-    if ai_pred.get("available"):
-        extra_badges.append((ai_pred.get("ai_badge", "AI"), ai_pred.get("ai_color", BLUE)))
-    _card_diag = (dip_res or {}).get("diagnosis") or {}
-    _card_news = (dip_res or {}).get("news") or {}
-    if _card_diag.get("label"):
-        extra_badges.append((_card_diag["label"], _card_diag.get("color", MUTED)))
-    elif _card_news.get("status_label"):
-        extra_badges.append((_card_news["status_label"], _card_news.get("status_color", MUTED)))
+    if _diag.get("label"):
+        extra_badges.append((_diag["label"], _diag.get("color", MUTED)))
 
     if dip_res:
         z1_str = f"${dip_res['zone1_low']:.2f} – ${dip_res['zone1_high']:.2f}"
@@ -661,6 +685,7 @@ if active_symbol:
     sma200 = float(raw_sma200) if (raw_sma200 is not None and not pd.isna(raw_sma200)) else 0.0
     sma200_str = f"&#36;{sma200:.2f}" if sma200 > 0 else "N/A"
 
+    vote_strip = render_vote_strip_html(unified["votes"], unified["next_trigger_tr"])
     if ai_pred.get("available"):
         wp = int(ai_pred.get("win_prob_pct", 50))
         sp = int(ai_pred.get("stop_prob_pct", 50))
@@ -668,10 +693,11 @@ if active_symbol:
             "🤖 AI 15G Hedef Başarısı",
             f"%{wp}",
             f"Stop riski: %{sp} · Faktör: %{f_skor:.0f}",
-            GREEN if wp >= 58 else (AMBER if wp >= 48 else RED),
+            GREEN if wp >= 58 else (AMBER if wp >= 50 else RED),
         )
         footer_bar = (
-            "<div style='margin-top:12px;'>"
+            vote_strip
+            + "<div style='margin-top:12px;'>"
             + prob_bar_html(
                 wp,
                 f"🎯 15 Günde Kâr Hedefine Ulaşma İhtimali: %{wp}",
@@ -685,7 +711,7 @@ if active_symbol:
         )
     else:
         stat_4 = ("📊 Faktör & RSI", f"%{f_skor:.1f}", f"RSI(14): {rsi_val:.1f} · SMA200: ${sma200:.2f}" if sma200 > 0 else f"RSI(14): {rsi_val:.1f}", ACCENT)
-        footer_bar = ""
+        footer_bar = vote_strip
 
     top_stats = [
         ("🟢 1. Alım Bölgesi", z1_str, z2_sub, GREEN),
@@ -698,119 +724,14 @@ if active_symbol:
         symbol=sembol,
         price=q_price,
         chg_pct=q_pct,
-        status_text=ic_card["verdict_badge"],
-        status_color=ic_card["verdict_color"],
-        headline=ic_card["verdict_summary"],
+        status_text=unified["verdict_badge"],
+        status_color=unified["verdict_color"],
+        headline=unified["summary_tr"],
         stats=top_stats,
         extra_badges=extra_badges,
         name=f"{comp_name} · {sektor}" if comp_name else sektor,
         footer_html=footer_bar,
     )
-
-    if bilanco_var_mi:
-        st.warning("⚠️ **OLAY RİSKİ:** Bu hissenin çeyreklik bilançosu 7 takvim günü içinde açıklanacak!")
-
-    _news = (dip_res or {}).get("news") or {}
-    _diag = (dip_res or {}).get("diagnosis") or {}
-    _gates = (dip_res or {}).get("gates") or []
-    _brake = None
-    try:
-        from web.components.portfolio_risk import evaluate_buy_permission
-        from web.components.portfolio_tracker import calculate_fifo_portfolio
-
-        _open_pos, _ = calculate_fifo_portfolio()
-        if sembol in _open_pos:
-            _brake = evaluate_buy_permission(
-                sembol,
-                q_price,
-                _open_pos,
-                _news or None,
-                float(regime_info.get("vix_val", 18.5)),
-            )
-    except Exception:
-        _brake = None
-
-    if dip_res and dip_res.get("state_code") == "HABER_VETOSU":
-        st.error("⛔ **Haber Şoku Vetosu aktif:** Kötü haber etkisi sindirilmeden alım yapma *(detaylar için aşağıdaki kutuyu aç)*.")
-
-    if _news or _gates or _brake:
-        _exp_parts = ["🗞️ Haber Teşhisi, Kilitler & Portföy Freni"]
-        if _diag.get("label"):
-            _exp_parts.append(_diag["label"])
-        elif _news.get("status_label"):
-            _exp_parts.append(_news["status_label"])
-        if _gates:
-            _exp_parts.append(f"{len(_gates)} Kilit")
-        if _brake and not _brake.get("allowed", True):
-            _exp_parts.append("🛑 Portföy Freni")
-
-        with st.expander(" · ".join(_exp_parts) + " (Tıkla & Genişlet)", expanded=False):
-            _t_hbr, _t_klt = st.tabs(["🗞️ Haber & Neden Düştü?", "🚧 Eksik Şartlar & Portföy Freni"])
-
-            with _t_hbr:
-                if _diag and _diag.get("code"):
-                    _diag_msg = esc_dollars(
-                        f"**{_diag.get('label', '')}** — {_diag.get('advice', '')} "
-                        f"*(1A Hisse: %{_diag.get('stock_1m_pct', 0):+.1f} vs {_diag.get('benchmark', 'Endeks')}: %{_diag.get('bench_1m_pct', 0):+.1f})*"
-                    )
-                    if _diag["code"] == "SIRKET_HASARI":
-                        st.error(_diag_msg)
-                    elif _diag["code"] in ("MAKRO_SEKTOR", "AYRISAN_ZAYIFLIK"):
-                        st.warning(_diag_msg)
-                    else:
-                        st.success(_diag_msg)
-
-                if _news:
-                    st.markdown(
-                        f"**Haber Durumu:** {_news.get('status_label', '⚪ Haber Akışı Temiz')} "
-                        f"(Skor: **{_news.get('score', 0):+d}/100**)"
-                    )
-                    if dip_res and dip_res.get("state_code") == "HABER_VETOSU":
-                        st.error(esc_dollars(dip_res.get("action_advice", "")))
-
-                    if _news.get("red_events"):
-                        st.markdown("**🔴 Tespit Edilen Kötü Haber / Olaylar:**")
-                        for _rev in _news["red_events"]:
-                            st.markdown(
-                                esc_dollars(
-                                    f"- **{_rev.get('date', '')}** · *{_rev.get('source', '')}* · "
-                                    f"`{_rev.get('category_label', '')}` — {_rev.get('title', '')}"
-                                )
-                            )
-
-                    if _news.get("headlines"):
-                        st.markdown("**📰 Son Haber Başlıkları (İlk 5):**")
-                        for _hl in _news["headlines"][:5]:
-                            _t = str(_hl.get("title", "")).replace("[", "(").replace("]", ")")
-                            _lnk = _hl.get("link") or ""
-                            _src = _hl.get("source", "")
-                            _dt = _hl.get("date", "")
-                            _cat = _hl.get("category_label", "")
-                            if _lnk:
-                                st.markdown(esc_dollars(f"- [{_t}]({_lnk}) — *{_src} ({_dt})* · `{_cat}`"))
-                            else:
-                                st.markdown(esc_dollars(f"- {_t} — *{_src} ({_dt})* · `{_cat}`"))
-
-            with _t_klt:
-                if _gates:
-                    _gate_lines = "\n".join(f"- {esc_dollars(g)}" for g in _gates)
-                    st.warning(f"🚧 **Alım İçin Eksik Şartlar ({len(_gates)}):**\n{_gate_lines}")
-                else:
-                    st.success("✅ Tüm teknik, makro ve haber güvenlik kilitleri açık.")
-
-                if _brake:
-                    if not _brake.get("allowed", True):
-                        _b_reasons = " · ".join(esc_dollars(r) for r in _brake.get("reasons", []))
-                        st.error(
-                            f"🛑 **Portföy Freni ({sembol} portföyünde mevcut — son alış \\${_brake.get('last_buy_price', 0):.2f}):** {_b_reasons}"
-                        )
-                    else:
-                        st.info(
-                            f"🛑 **Portföy Freni ({sembol} portföyünde mevcut):** Ortalama düşürme şartları sağlanıyor "
-                            f"(son alıştan %{_brake.get('drop_from_last_buy_pct', 0):.1f} aşağıda, haber temiz ve VIX uygun)."
-                        )
-                else:
-                    st.caption(f"{sembol} şu an Midas portföyünde açık pozisyon olarak görünmüyor.")
 
     # ═══════════════════════════════════════════════════════════════════════
     # KATMAN 2: FİYAT GRAFİĞİ (ALIM BÖLGESİ, STOP VE HEDEFLER GRAFİK ÜZERİNDE)
@@ -832,230 +753,228 @@ if active_symbol:
         st.info("Fiyat grafiği verisi alınamadı.")
 
     # ═══════════════════════════════════════════════════════════════════════
-    # KATMAN 3: DÜZENLİ DETAY SEKMELERİ (Hiçbir açıklama veya grafik eksilmeden!)
+    # KATMAN 3: DETAYLAR & KANITLAR (Tıkla-Genişlet İçinde 4 Temiz Sekme)
     # ═══════════════════════════════════════════════════════════════════════
-    tab_uzman, tab_komite, tab_faktor, tab_bilanco = st.tabs([
-        "🧠 Uzman Yorumu & AI Analizi",
-        "🏛️ Yatırım Komitesi & 3 Senaryo",
-        "📡 4-Faktör Radarı & Temel/Teknik Veriler",
-        "📅 Bilanço Karnesi & Alternatif Kıyas",
-    ])
+    _det_title = f"🔍 {sembol} Detaylı Kanıtlar · Haberler, AI, Senaryolar & Bilanço (Tıkla & Genişlet)"
+    with st.expander(_det_title, expanded=False):
+        tab_haber, tab_ai, tab_faktor, tab_bilanco = st.tabs([
+            "🗞️ Haberler, Kilitler & Portföy Freni",
+            "🤖 AI & 8 Şart Kontrolü",
+            "🏛️ 3 Senaryo & 4-Faktör Radarı",
+            "📅 Bilanço Karnesi & Alternatif Kıyas",
+        ])
 
-    # ─── SEKME 1: UZMAN YORUMU & AI ANALİZİ ───
-    with tab_uzman:
-        st.markdown(
-            f"""
-            <div class="spp-card accent" style="--c:{ACCENT};">
-                <div style="font-size:1.1rem; font-weight:800; color:{ACCENT}; margin-bottom:8px;">
-                    🧠 Quant &amp; Uzman Değerlendirmesi: {esc(sembol)}
-                </div>
-                <p style="font-size:0.95rem; color:{TEXT}; line-height:1.6; margin:0 0 10px 0;">
-                    <b>Mevcut Trend:</b> {esc(sembol)}, {md_to_html(commentary['trend_metni'])}
-                </p>
-                <p style="font-size:0.95rem; color:{TEXT}; line-height:1.6; margin:0 0 10px 0;">
-                    {md_to_html(commentary['teshis'])}<br>{md_to_html(commentary['neden'])}
-                </p>
-                <div style="background:{CARD_2}; border:1px solid {BORDER}; border-radius:10px; padding:12px 14px; margin:10px 0;">
-                    <div style="color:{ACCENT}; font-size:0.95rem; line-height:1.55;">
-                        {md_to_html(commentary['tavsiye'])}
-                    </div>
-                </div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-                    {badge(f"🎯 İdeal Giriş: {commentary['hedef_giris']}", GREEN)}
-                    {badge(f"🛡️ Zarar Durdur (SL): {commentary['stop_level']}", RED)}
-                    {badge(f"💰 Hedef Kâr (TP): {commentary['tp_level']}", BLUE)}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        if dip_res and dip_res.get("action_advice"):
-            st.info(esc_dollars(dip_res["action_advice"]))
-
-        if ai_pred.get("available"):
-            section("🤖 Yapay Zeka (Üçlü Bariyer) 15 Günlük Hedef vs Stop Analizi")
-            st.caption(
-                "QuantBot yapay zeka motorunun 20 ABD hissesi ve bu hissenin kendi geçmişindeki benzer günleri (Tarihsel İkizler) "
-                "tarayarak hesapladığı 15 işlem günlük Hedef / Stop olasılığı:"
-            )
-            st.markdown(esc_dollars(ai_pred.get("ai_summary_tr", "")))
-            ai_c1, ai_c2 = st.columns(2)
-            with ai_c1:
-                st.markdown("**➕ Yapay Zekaya Göre Güçlü Yanlar**")
-                for p_txt in ai_pred.get("positives", []):
-                    st.success(esc_dollars(f"🟢 {p_txt}"))
-            with ai_c2:
-                st.markdown("**➖ Yapay Zekaya Göre Dikkat Edilecek Riskler**")
-                for n_txt in ai_pred.get("negatives", []):
-                    st.warning(esc_dollars(f"🟠 {n_txt}"))
-
-        if dip_res and dip_res.get("checklist"):
-            total_chk = dip_res.get("total_checks", len(dip_res["checklist"]))
-            section(f"📋 {sembol} Alım Avcısı Güven Kontrol Listesi ({dip_res['passed_count']}/{total_chk} Şart Hazır)")
-            for item in dip_res["checklist"]:
-                icon = "✅" if item["ok"] else "⏳"
-                st.markdown(esc_dollars(f"{icon} **{item['kriter']}** — *{item['detay']}*"))
-
-    # ─── SEKME 2: YATIRIM KOMİTESİ & 3 SENARYO ───
-    with tab_komite:
-        vc = ic_card["verdict_color"]
-        st.markdown(
-            f"""
-            <div class="spp-card accent" style="--c:{vc};">
-                <div class="spp-row">
-                    <span style="font-size:1.1rem; font-weight:800; color:{TEXT};">📋 Komite Ortak Hükmü ({esc(sembol)})</span>
-                    {badge(ic_card['verdict_badge'], vc)}
-                </div>
-                <p style="color:{TEXT}; font-size:0.95rem; margin:10px 0 4px 0; line-height:1.55;">
-                    {md_to_html(ic_card['verdict_summary'])}
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        sc1, sc2, sc3 = st.columns(3)
-        with sc1:
-            st.markdown(
-                f"""
-                <div class="spp-card accent" style="--c:{GREEN}; height:100%;">
-                    <div style="color:{GREEN}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟢 Boğa (İyi) Senaryosu</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['bull_case'])}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with sc2:
-            st.markdown(
-                f"""
-                <div class="spp-card accent" style="--c:{BLUE}; height:100%;">
-                    <div style="color:{BLUE}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟡 Baz (Normal) Senaryo</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['base_case'])}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with sc3:
-            st.markdown(
-                f"""
-                <div class="spp-card accent" style="--c:{RED}; height:100%;">
-                    <div style="color:{RED}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🔴 Ayı (Kötü) Senaryosu</div>
-                    <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['bear_case'])}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        st.write("")
-        st.error(esc_dollars(ic_card["invalidation_rule"]))
-
-    # ─── SEKME 3: 4-FAKTÖR RADARI & TEMEL/TEKNİK VERİLER ───
-    with tab_faktor:
-        col_left, col_right = st.columns([1, 1])
-
-        with col_left:
-            section("📡 4-Sütun Faktör Radarı")
-            fig_radar = radar_chart(kalite, deger, momentum, risk)
-            st.plotly_chart(fig_radar, use_container_width=True)
-
-            section(f"📋 Faktör Puan Dağılımı ({score_source})")
-            faktor_df = pd.DataFrame({
-                "Sütun": ["Kalite (%35)", "Değer (%20)", "Momentum (%30)", "Risk Dayanımı (%15)"],
-                "Puan (0-100)": [f"{kalite:.1f}", f"{deger:.1f}", f"{momentum:.1f}", f"{risk:.1f}"],
-                "Durum": [
-                    "Çok Güçlü 🟢" if kalite >= 70 else ("Orta 🟡" if kalite >= 45 else "Zayıf 🔴"),
-                    "İskontolu 🟢" if deger >= 60 else ("Makul 🟡" if deger >= 40 else "Pahalı 🔴"),
-                    "Güçlü Trend 🟢" if momentum >= 60 else ("Yatay 🟡" if momentum >= 40 else "Zayıf 🔴"),
-                    "Düşük Risk 🟢" if risk >= 60 else ("Orta Risk 🟡" if risk >= 40 else "Yüksek Risk 🔴"),
-                ],
-            })
-            st.dataframe(faktor_df, use_container_width=True, hide_index=True)
-
-        with col_right:
-            section("📊 Teknik ve Temel Göstergeler")
-            t_col1, t_col2 = st.columns(2)
-            with t_col1:
-                st.markdown("**Teknik Seviyeler**")
-                teknik_data = {
-                    "SMA 20": sma20_val,
-                    "SMA 50": f"${raw_result.get('sma_50', 'N/A')}",
-                    "SMA 200": f"${raw_result.get('sma_200', 'N/A')}",
-                    "RSI (14)": f"{rsi_val:.1f}",
-                    "SMA50 Uzaklık": f"{raw_result.get('sma50_atr_uzaklik', 'N/A')} ATR",
-                    "12-1 Momentum": f"%{(raw_result.get('momentum_12_1', 0) or 0) * 100:.1f}",
-                }
-                st.dataframe(pd.DataFrame(list(teknik_data.items()), columns=["Metrik", "Değer"]), use_container_width=True, hide_index=True)
-            with t_col2:
-                st.markdown("**Temel Rasyolar**")
-                temel_data = {
-                    "F/K Oranı": f"{raw_result.get('pe_orani', 'N/A')}",
-                    "Borç/Özkaynak": f"{raw_result.get('borc_ozkaynak', 'N/A')}",
-                    "FCF Getirisi": f"%{raw_result.get('fcf_getiri', 'N/A')}",
-                    "Gelir Büyümesi": f"%{raw_result.get('gelir_buyume', 'N/A')}",
-                    "Temettü Verimi": f"%{raw_result.get('temettu_verimi') or 0.0:.2f}",
-                    "Toplam Faktör Skoru": f"%{f_skor:.1f}",
-                }
-                st.dataframe(pd.DataFrame(list(temel_data.items()), columns=["Metrik", "Değer"]), use_container_width=True, hide_index=True)
-
-            section("⚖️ 4-Faktör Çatışma & Uyum Analizi")
-            if conflict_info["has_conflict"]:
-                for c_txt in conflict_info["conflicts"]:
-                    st.warning(esc_dollars(c_txt))
-            else:
-                st.success(esc_dollars(conflict_info["headline"]))
-            for s_txt in conflict_info["strengths"]:
-                st.info(esc_dollars(s_txt))
-
-        with st.expander("❓ 4 Faktör Sütunu (Kalite, Değer, Momentum, Risk) Ne Anlama Gelir?", expanded=False):
-            st.markdown(
-                """
-                * **Kalite (Quality - %35 Ağırlık):** Şirketin kârlılığı, özkaynak kârlılığı (ROE), borç durumu ve gelir büyümesi. Yüksek puan = Kaya gibi sağlam bilanço.
-                * **Değer (Value - %20 Ağırlık):** Hissenin ucuzluğu (F/K oranı, Serbest Nakit Akımı verimi ve teknik iskonto). Yüksek puan = İskontolu / Fırsat fiyatı.
-                * **Momentum (%30 Ağırlık):** Hissenin son 6 ve 12 aydaki yükseliş gücü ve trend yönü. Yüksek puan = Kurumsal para hisseyi yukarı itiyor.
-                * **Risk Dayanımı (%15 Ağırlık):** Hissenin dalgalanması (volatilitesi) ve geçmiş düşüş derinliği. Yüksek puan = Sert düşüşlere karşı korunaklı, az sarsan hisse.
-                """
-            )
-
-    # ─── SEKME 4: BİLANÇO KARNESİ & ALTERNATİF KIYAS ───
-    with tab_bilanco:
-        section("📅 Katalizör & Bilanço Geçmişi Karnesi (Bilanço Kumarı Röntgeni)")
-        st.caption("Bir şirketin iyi bilanço açıklaması her zaman yükseliş getirmez. Son bilançolarda ertesi gün ne yaptığını buradan kontrol et.")
-
-        if earnings_info.get("next_earnings_date"):
-            st.markdown(
-                f"📌 **Bir Sonraki Bilanço Tarihi:** `{earnings_info['next_earnings_date']}` "
-                f"(**{earnings_info['days_to_earnings']} gün** kaldı) | "
-                f"**Son 15 Günlük Fiyat Değişimi:** `%{earnings_info['pre_earnings_runup_15d_pct']:+.1f}`"
-            )
-        if earnings_info.get("priced_in_warning"):
-            st.warning(
-                f"⚠️ **Beklenti Önceden Fiyatlanmış Olabilir!** {sembol} bilançoya günler kala son 15 günde "
-                f"**+%{earnings_info['pre_earnings_runup_15d_pct']:.1f}** yükselmiş. İyi bilanço gelse bile 'beklenti bitti' satışı (Sell the news) yaşanabilir!"
-            )
-
-        st.info(esc_dollars(f"📊 **Bilanço İstatistiği:** {earnings_info['summary_text']}"))
-
-        if earnings_info.get("history_rows"):
-            clean_e_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in earnings_info["history_rows"]]
-            st.dataframe(pd.DataFrame(clean_e_rows), use_container_width=True, hide_index=True)
-
-        if opp_info and opp_info.get("stats"):
-            section("🔄 Alternatif Fırsat Kıyası (Endeks veya Çip ETF'i Alsaydın Ne Olurdu?)")
-            st.caption(f"{sembol} hissesinde tekil şirket riski almak yerine S&P 500 (SPY) veya Yarı İletken ETF'i (SMH) tutmanın 3 aylık karşılaştırması:")
-            st.markdown(esc_dollars(opp_info["verdict"]))
-            opp_rows = []
-            for k_sym, k_val in opp_info["stats"].items():
-                label_name = (
-                    f"🎯 {k_sym} (İncelenen Hisse)"
-                    if k_sym == sembol
-                    else ("🇺🇸 SPY (S&P 500 Endeksi)" if k_sym == "SPY" else "🔌 SMH (Yarı İletken / Çip ETF)")
+        # ─── SEKME 1: HABERLER, KİLİTLER & PORTFÖY FRENİ ───
+        with tab_haber:
+            if _diag and _diag.get("code"):
+                _diag_msg = esc_dollars(
+                    f"**{_diag.get('label', '')}** — {_diag.get('advice', '')} "
+                    f"*(1A Hisse: %{_diag.get('stock_1m_pct', 0):+.1f} vs {_diag.get('benchmark', 'Endeks')}: %{_diag.get('bench_1m_pct', 0):+.1f})*"
                 )
-                opp_rows.append({
-                    "Varlık": label_name,
-                    "1 Aylık Getiri": f"%{k_val['ret_1m']:+.1f}",
-                    "3 Aylık Getiri": f"%{k_val['ret_3m']:+.1f}",
-                    "Zirveden En Derin Düşüş (6 Ay)": f"%{k_val['max_dd']:.1f}",
-                    "Yıllık Oynaklık (Volatilite)": f"%{k_val['vol']:.1f}",
+                if _diag["code"] == "SIRKET_HASARI":
+                    st.error(_diag_msg)
+                elif _diag["code"] in ("MAKRO_SEKTOR", "AYRISAN_ZAYIFLIK"):
+                    st.warning(_diag_msg)
+                else:
+                    st.success(_diag_msg)
+
+            if _gates:
+                _gate_lines = "\n".join(f"- {esc_dollars(g)}" for g in _gates)
+                st.warning(f"🚧 **Alım İçin Eksik Şartlar ({len(_gates)}):**\n{_gate_lines}")
+            else:
+                st.success("✅ Tüm teknik, makro ve haber güvenlik kilitleri açık.")
+
+            if _brake:
+                if not _brake.get("allowed", True):
+                    _b_reasons = " · ".join(esc_dollars(r) for r in _brake.get("reasons", []))
+                    st.error(
+                        f"🛑 **Portföy Freni ({sembol} portföyünde mevcut — son alış \\${_brake.get('last_buy_price', 0):.2f}):** {_b_reasons}"
+                    )
+                else:
+                    st.info(
+                        f"🛑 **Portföy Freni ({sembol} portföyünde mevcut):** Ortalama düşürme şartları sağlanıyor "
+                        f"(son alıştan %{_brake.get('drop_from_last_buy_pct', 0):.1f} aşağıda, haber temiz ve VIX uygun)."
+                    )
+
+            if _news:
+                st.markdown(
+                    f"**Haber Durumu:** {_news.get('status_label', '⚪ Haber Akışı Temiz')} "
+                    f"(Skor: **{_news.get('score', 0):+d}/100**)"
+                )
+                if _news.get("red_events"):
+                    st.markdown("**🔴 Tespit Edilen Kötü Haber / Olaylar:**")
+                    for _rev in _news["red_events"]:
+                        st.markdown(
+                            esc_dollars(
+                                f"- **{_rev.get('date', '')}** · *{_rev.get('source', '')}* · "
+                                f"`{_rev.get('category_label', '')}` — {_rev.get('title', '')}"
+                            )
+                        )
+                if _news.get("headlines"):
+                    st.markdown("**📰 Son Haber Başlıkları (İlk 5):**")
+                    for _hl in _news["headlines"][:5]:
+                        _t = str(_hl.get("title", "")).replace("[", "(").replace("]", ")")
+                        _lnk = _hl.get("link") or ""
+                        _src = _hl.get("source", "")
+                        _dt = _hl.get("date", "")
+                        _cat = _hl.get("category_label", "")
+                        if _lnk:
+                            st.markdown(esc_dollars(f"- [{_t}]({_lnk}) — *{_src} ({_dt})* · `{_cat}`"))
+                        else:
+                            st.markdown(esc_dollars(f"- {_t} — *{_src} ({_dt})* · `{_cat}`"))
+
+        # ─── SEKME 2: AI & 8 ŞART KONTROLÜ ───
+        with tab_ai:
+            if ai_pred.get("available"):
+                section("🤖 Yapay Zeka (Üçlü Bariyer) 15 Günlük Hedef vs Stop Analizi")
+                st.markdown(esc_dollars(ai_pred.get("ai_summary_tr", "")))
+                ai_c1, ai_c2 = st.columns(2)
+                with ai_c1:
+                    st.markdown("**➕ Yapay Zekaya Göre Güçlü Yanlar**")
+                    for p_txt in ai_pred.get("positives", []):
+                        st.success(esc_dollars(f"🟢 {p_txt}"))
+                with ai_c2:
+                    st.markdown("**➖ Yapay Zekaya Göre Dikkat Edilecek Riskler**")
+                    for n_txt in ai_pred.get("negatives", []):
+                        st.warning(esc_dollars(f"🟠 {n_txt}"))
+
+            if dip_res and dip_res.get("checklist"):
+                total_chk = dip_res.get("total_checks", len(dip_res["checklist"]))
+                section(f"📋 {sembol} Alım Avcısı Güven Kontrol Listesi ({dip_res['passed_count']}/{total_chk} Şart Hazır)")
+                for item in dip_res["checklist"]:
+                    icon = "✅" if item["ok"] else "⏳"
+                    st.markdown(esc_dollars(f"{icon} **{item['kriter']}** — *{item['detay']}*"))
+
+        # ─── SEKME 3: 3 SENARYO & 4-FAKTÖR RADARI ───
+        with tab_faktor:
+            sc1, sc2, sc3 = st.columns(3)
+            with sc1:
+                st.markdown(
+                    f"""
+                    <div class="spp-card accent" style="--c:{GREEN}; height:100%;">
+                        <div style="color:{GREEN}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟢 Boğa (İyi) Senaryosu</div>
+                        <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['bull_case'])}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with sc2:
+                st.markdown(
+                    f"""
+                    <div class="spp-card accent" style="--c:{BLUE}; height:100%;">
+                        <div style="color:{BLUE}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🟡 Baz (Normal) Senaryo</div>
+                        <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['base_case'])}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with sc3:
+                st.markdown(
+                    f"""
+                    <div class="spp-card accent" style="--c:{RED}; height:100%;">
+                        <div style="color:{RED}; font-weight:700; font-size:0.92rem; margin-bottom:6px;">🔴 Ayı (Kötü) Senaryosu</div>
+                        <div style="color:{TEXT}; font-size:0.86rem; line-height:1.5;">{md_to_html(ic_card['bear_case'])}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            st.write("")
+            st.error(esc_dollars(ic_card["invalidation_rule"]))
+
+            col_left, col_right = st.columns([1, 1])
+
+            with col_left:
+                section("📡 4-Sütun Faktör Radarı")
+                fig_radar = radar_chart(kalite, deger, momentum, risk)
+                st.plotly_chart(fig_radar, use_container_width=True)
+
+                section(f"📋 Faktör Puan Dağılımı ({score_source})")
+                faktor_df = pd.DataFrame({
+                    "Sütun": ["Kalite (%35)", "Değer (%20)", "Momentum (%30)", "Risk Dayanımı (%15)"],
+                    "Puan (0-100)": [f"{kalite:.1f}", f"{deger:.1f}", f"{momentum:.1f}", f"{risk:.1f}"],
+                    "Durum": [
+                        "Çok Güçlü 🟢" if kalite >= 70 else ("Orta 🟡" if kalite >= 45 else "Zayıf 🔴"),
+                        "İskontolu 🟢" if deger >= 60 else ("Makul 🟡" if deger >= 40 else "Pahalı 🔴"),
+                        "Güçlü Trend 🟢" if momentum >= 60 else ("Yatay 🟡" if momentum >= 40 else "Zayıf 🔴"),
+                        "Düşük Risk 🟢" if risk >= 60 else ("Orta Risk 🟡" if risk >= 40 else "Yüksek Risk 🔴"),
+                    ],
                 })
-            st.dataframe(pd.DataFrame(opp_rows), use_container_width=True, hide_index=True)
+                st.dataframe(faktor_df, use_container_width=True, hide_index=True)
+
+            with col_right:
+                section("📊 Teknik ve Temel Göstergeler")
+                t_col1, t_col2 = st.columns(2)
+                with t_col1:
+                    st.markdown("**Teknik Seviyeler**")
+                    teknik_data = {
+                        "SMA 20": sma20_val,
+                        "SMA 50": f"${raw_result.get('sma_50', 'N/A')}",
+                        "SMA 200": f"${raw_result.get('sma_200', 'N/A')}",
+                        "RSI (14)": f"{rsi_val:.1f}",
+                        "SMA50 Uzaklık": f"{raw_result.get('sma50_atr_uzaklik', 'N/A')} ATR",
+                        "12-1 Momentum": f"%{(raw_result.get('momentum_12_1', 0) or 0) * 100:.1f}",
+                    }
+                    st.dataframe(pd.DataFrame(list(teknik_data.items()), columns=["Metrik", "Değer"]), use_container_width=True, hide_index=True)
+                with t_col2:
+                    st.markdown("**Temel Rasyolar**")
+                    temel_data = {
+                        "F/K Oranı": f"{raw_result.get('pe_orani', 'N/A')}",
+                        "Borç/Özkaynak": f"{raw_result.get('borc_ozkaynak', 'N/A')}",
+                        "FCF Getirisi": f"%{raw_result.get('fcf_getiri', 'N/A')}",
+                        "Gelir Büyümesi": f"%{raw_result.get('gelir_buyume', 'N/A')}",
+                        "Temettü Verimi": f"%{raw_result.get('temettu_verimi') or 0.0:.2f}",
+                        "Toplam Faktör Skoru": f"%{f_skor:.1f}",
+                    }
+                    st.dataframe(pd.DataFrame(list(temel_data.items()), columns=["Metrik", "Değer"]), use_container_width=True, hide_index=True)
+
+                section("⚖️ 4-Faktör Çatışma & Uyum Analizi")
+                if conflict_info["has_conflict"]:
+                    for c_txt in conflict_info["conflicts"]:
+                        st.warning(esc_dollars(c_txt))
+                else:
+                    st.success(esc_dollars(conflict_info["headline"]))
+                for s_txt in conflict_info["strengths"]:
+                    st.info(esc_dollars(s_txt))
+
+        # ─── SEKME 4: BİLANÇO KARNESİ & ALTERNATİF KIYAS ───
+        with tab_bilanco:
+            section("📅 Katalizör & Bilanço Geçmişi Karnesi (Bilanço Kumarı Röntgeni)")
+            st.caption("Bir şirketin iyi bilanço açıklaması her zaman yükseliş getirmez. Son bilançolarda ertesi gün ne yaptığını buradan kontrol et.")
+
+            if earnings_info.get("next_earnings_date"):
+                st.markdown(
+                    f"📌 **Bir Sonraki Bilanço Tarihi:** `{earnings_info['next_earnings_date']}` "
+                    f"(**{earnings_info['days_to_earnings']} gün** kaldı) | "
+                    f"**Son 15 Günlük Fiyat Değişimi:** `%{earnings_info['pre_earnings_runup_15d_pct']:+.1f}`"
+                )
+            if earnings_info.get("priced_in_warning"):
+                st.warning(
+                    f"⚠️ **Beklenti Önceden Fiyatlanmış Olabilir!** {sembol} bilançoya günler kala son 15 günde "
+                    f"**+%{earnings_info['pre_earnings_runup_15d_pct']:.1f}** yükselmiş. İyi bilanço gelse bile 'beklenti bitti' satışı (Sell the news) yaşanabilir!"
+                )
+
+            st.info(esc_dollars(f"📊 **Bilanço İstatistiği:** {earnings_info['summary_text']}"))
+
+            if earnings_info.get("history_rows"):
+                clean_e_rows = [{k: v for k, v in r.items() if not k.startswith("_")} for r in earnings_info["history_rows"]]
+                st.dataframe(pd.DataFrame(clean_e_rows), use_container_width=True, hide_index=True)
+
+            if opp_info and opp_info.get("stats"):
+                section("🔄 Alternatif Fırsat Kıyası (Endeks veya Çip ETF'i Alsaydın Ne Olurdu?)")
+                st.caption(f"{sembol} hissesinde tekil şirket riski almak yerine S&P 500 (SPY) veya Yarı İletken ETF'i (SMH) tutmanın 3 aylık karşılaştırması:")
+                st.markdown(esc_dollars(opp_info["verdict"]))
+                opp_rows = []
+                for k_sym, k_val in opp_info["stats"].items():
+                    label_name = (
+                        f"🎯 {k_sym} (İncelenen Hisse)"
+                        if k_sym == sembol
+                        else ("🇺🇸 SPY (S&P 500 Endeksi)" if k_sym == "SPY" else "🔌 SMH (Yarı İletken / Çip ETF)")
+                    )
+                    opp_rows.append({
+                        "Varlık": label_name,
+                        "1 Aylık Getiri": f"%{k_val['ret_1m']:+.1f}",
+                        "3 Aylık Getiri": f"%{k_val['ret_3m']:+.1f}",
+                        "Zirveden En Derin Düşüş (6 Ay)": f"%{k_val['max_dd']:.1f}",
+                        "Yıllık Oynaklık (Volatilite)": f"%{k_val['vol']:.1f}",
+                    })
+                st.dataframe(pd.DataFrame(opp_rows), use_container_width=True, hide_index=True)

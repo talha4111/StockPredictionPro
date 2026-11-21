@@ -1024,6 +1024,18 @@ def collect_symbol_intelligence(symbol: str) -> dict:
 
         intel["conflicts"] = detect_factor_conflicts(sym, kalite, deger, momentum, risk_sc)
 
+        try:
+            from web.components.unified_verdict import build_unified_verdict
+            intel["unified_verdict"] = build_unified_verdict(
+                symbol=sym,
+                dip_res=dip_res,
+                exit_res=intel.get("exit"),
+                earnings_info=intel.get("earnings"),
+                factors=intel.get("factors"),
+            )
+        except Exception:
+            intel["unified_verdict"] = None
+
     except Exception:
         pass
 
@@ -2106,6 +2118,12 @@ def _build_llm_system_and_user_prompt(
                 "label": (data.get("diagnosis") or {}).get("label"),
                 "advice": (data.get("diagnosis") or {}).get("advice"),
             } if data.get("diagnosis") else None,
+            "unified_verdict": {
+                "verdict_code": (data.get("unified_verdict") or {}).get("verdict_code"),
+                "verdict_badge": (data.get("unified_verdict") or {}).get("verdict_badge"),
+                "summary_tr": (data.get("unified_verdict") or {}).get("summary_tr"),
+                "next_trigger_tr": (data.get("unified_verdict") or {}).get("next_trigger_tr"),
+            } if data.get("unified_verdict") else None,
             "recent_news": data.get("recent_news"),
         }
 

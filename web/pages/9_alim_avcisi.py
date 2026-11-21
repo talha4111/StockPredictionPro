@@ -31,6 +31,7 @@ from web.components.mobile import COMPANY_NAMES, get_vix_status
 from web.components.portfolio_risk import evaluate_buy_permission, portfolio_concentration
 from web.components.portfolio_tracker import calculate_fifo_portfolio
 from web.components.signal_journal import journal_summary, load_journal_for_ui
+from web.components.unified_verdict import build_unified_verdict, render_vote_strip_html
 from web.components.ui import (
     esc_dollars,
     ACCENT,
@@ -263,19 +264,31 @@ with tab_buy:
         news_info = res.get("news") or {}
         diag_info = res.get("diagnosis") or {}
 
+        _brake = None
+        if sym in open_positions:
+            _brake = evaluate_buy_permission(
+                sym, price, open_positions, news_info, float(res.get("vix_value", vix_val))
+            )
+
+        unified = build_unified_verdict(
+            symbol=sym,
+            dip_res=res,
+            regime_info=regime_info,
+            portfolio_brake=_brake,
+        )
+
         extra_badges = []
         if diag_info and diag_info.get("label"):
             extra_badges.append((diag_info["label"], diag_info.get("color", MUTED)))
-        elif news_info and news_info.get("status_label"):
-            extra_badges.append((news_info["status_label"], news_info.get("status_color", MUTED)))
-        footer_html = ""
+
+        vote_strip = render_vote_strip_html(unified["votes"], unified["next_trigger_tr"])
+        footer_html = vote_strip
         if ai_pred.get("available"):
             wp = int(ai_pred.get("win_prob_pct", 50))
             sp = int(ai_pred.get("stop_prob_pct", 50))
-            ac = ai_pred.get("ai_color", BLUE)
-            extra_badges.append((ai_pred.get("ai_badge", "AI"), ac))
             footer_html = (
-                "<div style='margin-top:12px;'>"
+                vote_strip
+                + "<div style='margin-top:10px;'>"
                 + prob_bar_html(
                     wp,
                     f"🎯 15 Günde Önce Kâr Hedefine (${res['target1']:.2f}) Ulaşma İhtimali: %{wp}",
@@ -294,33 +307,18 @@ with tab_buy:
             ("🎯 Kâr Alma Hedefi", f"${res['target1']:.2f} – ${res['target2']:.2f}", f"+%{res['upside_pct']} kazanç potansiyeli", BLUE),
         ]
 
-        headline_txt = f"🗣️ {res['headline']} (Son zirvesi ${res['recent_peak']:.2f} seviyesinden %{abs(res['drop_from_peak_pct']):.1f} uzakta)"
-
         decision_card(
             symbol=sym,
             price=price,
             chg_pct=chg,
-            status_text=res["state_badge"],
-            status_color=border_col,
-            headline=headline_txt,
+            status_text=unified["verdict_badge"],
+            status_color=unified["verdict_color"],
+            headline=unified["summary_tr"],
             stats=card_stats,
             extra_badges=extra_badges,
             name=comp,
             footer_html=footer_html,
         )
-
-        _brake = None
-        if sym in open_positions:
-            _brake = evaluate_buy_permission(
-                sym, price, open_positions, news_info, float(res.get("vix_value", vix_val))
-            )
-            if res["state_code"] == "ALIM_FIRSATI" and not _brake.get("allowed", True):
-                _b_txt = " · ".join(_brake.get("reasons", []))
-                st.error(
-                    esc_dollars(
-                        f"🛑 **Portföy Freni:** Bu hisse zaten portföyünde (son alış ${_brake.get('last_buy_price', 0):.2f}). {_b_txt}"
-                    )
-                )
 
         total_chk = res.get("total_checks", len(res["checklist"]))
         _gate_cnt = len(res.get("gates") or [])
