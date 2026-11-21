@@ -28,7 +28,9 @@ from web.components.dip_hunter import (
 )
 from web.components.investment_committee import analyze_earnings_catalyst, get_market_regime_summary
 from web.components.mobile import COMPANY_NAMES, get_vix_status
+from web.components.portfolio_risk import evaluate_buy_permission, portfolio_concentration
 from web.components.portfolio_tracker import calculate_fifo_portfolio
+from web.components.signal_journal import journal_summary, load_journal_for_ui
 from web.components.ui import (
     esc_dollars,
     ACCENT,
@@ -134,14 +136,14 @@ with c_top2:
 from concurrent.futures import ThreadPoolExecutor
 
 @st.cache_data(ttl=300, show_spinner=False)
-def _cached_dip_analyses(sym_tuple: tuple, vix: float) -> list[dict]:
-    v_rnd = round(float(vix or 18.0), 1)
+def _cached_dip_analyses(sym_tuple: tuple, vix: float, regime_code: str = "SECICI_YATAY") -> list[dict]:
+    v_rnd = round(float(vix or 18.5), 1)
     with ThreadPoolExecutor(max_workers=min(6, len(sym_tuple) or 1)) as ex:
-        futs = [ex.submit(analyze_stock_dip, s, vix_value=v_rnd) for s in sym_tuple]
+        futs = [ex.submit(analyze_stock_dip, s, vix_value=v_rnd, regime_code=regime_code) for s in sym_tuple]
         out = []
         for f in futs:
             try:
-                res = f.result(timeout=10)
+                res = f.result(timeout=25)
                 if res:
                     out.append(res)
             except Exception:
@@ -157,7 +159,7 @@ def _cached_exit_analyses(sym_tuple: tuple, pos_json: str) -> list[dict]:
         out = []
         for f in futs:
             try:
-                res = f.result(timeout=10)
+                res = f.result(timeout=25)
                 if res:
                     out.append(res)
             except Exception:
@@ -173,18 +175,23 @@ def _cached_price_df(sym: str) -> _pd.DataFrame:
         return _pd.DataFrame()
 
 
-# ─── İKİ ANA SEKME: ALIM AVCISI & SATIŞ/KÂR KORUMA AVCISI ───
-tab_buy, tab_sell = st.tabs([
+# ─── ÜÇ ANA SEKME: ALIM AVCISI, SATIŞ AVCISI & SİNYAL KARNESİ ───
+tab_buy, tab_sell, tab_journal = st.tabs([
     "🟢 Alım Avcısı (Ne Zaman Alayım?)",
     "💰 Satış & Kâr Koruma Avcısı (Ne Zaman Satayım?)",
+    "📒 Sinyal Karnesi (Sistem Ne Kadar Tuttu?)",
 ])
 
 # =========================================================================
 # SEKME 1: ALIM AVCISI (NE ZAMAN ALAYIM?)
 # =========================================================================
 with tab_buy:
-    with st.spinner("Hisselerin gün içi (15 dk) ve günlük alım bölgeleri hesaplanıyor..."):
-        results = _cached_dip_analyses(tuple(symbols), float(vix_val))
+    with st.spinner("Hisselerin gün içi (15 dk), günlük alım bölgeleri ve haber şoku radarı hesaplanıyor..."):
+        results = _cached_dip_analyses(
+            tuple(symbols),
+            float(regime_info.get("vix_val", vix_val)),
+            str(regime_info.get("regime_code", "SECICI_YATAY")),
+        )
 
     auto_sent_buy = sync_and_notify_from_ui(dip_results=results)
     if auto_sent_buy:
@@ -193,18 +200,26 @@ with tab_buy:
     cnt_buy = sum(1 for r in results if r["state_code"] == "ALIM_FIRSATI")
     cnt_watch = sum(1 for r in results if r["state_code"] == "PUSUDA_IZLE")
     cnt_wait = sum(1 for r in results if r["state_code"] == "BEKLEMEDE")
-    cnt_danger = sum(1 for r in results if r["state_code"] == "TEHLIKE")
+    cnt_danger = sum(1 for r in results if r["state_code"] in ("TEHLIKE", "HABER_VETOSU"))
 
     st.markdown(
         stat_grid([
-            ("🟢 Şimdi Alım Fırsatı", f"{cnt_buy} Hisse", "Dipten dönüş başladı", GREEN),
-            ("🟡 Ucuzluk Bölgesinde", f"{cnt_watch} Hisse", "Henüz alma, dönüşü bekle", AMBER),
+            ("🟢 Şimdi Alım Fırsatı", f"{cnt_buy} Hisse", "Tüm kalkanlardan geçti", GREEN),
+            ("🟡 Ucuzluk Bölgesinde", f"{cnt_watch} Hisse", "Henüz alma, şartları bekle", AMBER),
             ("🔵 Beklemede", f"{cnt_wait} Hisse", "Fiyat henüz yüksek", BLUE),
-            ("🔴 Tehlike / Kırılım", f"{cnt_danger} Hisse", "Düşen bıçak, uzak dur", RED),
+            ("🔴 Tehlike / Haber Şoku", f"{cnt_danger} Hisse", "Düşen bıçak veya kötü haber", RED),
         ]),
         unsafe_allow_html=True,
     )
     st.write("")
+
+    if open_positions:
+        _price_map = {r["symbol"]: r["current_price"] for r in results}
+        _conc = portfolio_concentration(open_positions, price_map=_price_map)
+        if _conc.get("warnings"):
+            with st.expander(f"⚖️ Portföy Yoğunlaşma Uyarısı ({len(_conc['warnings'])} Uyarı · Tıkla & Gör)", expanded=False):
+                for _cw in _conc["warnings"]:
+                    st.warning(esc_dollars(f"- {_cw}"))
 
     b_col1, b_col2 = st.columns([1, 1])
     with b_col1:
@@ -235,7 +250,7 @@ with tab_buy:
         )
 
     st.write("")
-    priority_order = {"ALIM_FIRSATI": 0, "PUSUDA_IZLE": 1, "TEHLIKE": 2, "BEKLEMEDE": 3}
+    priority_order = {"ALIM_FIRSATI": 0, "PUSUDA_IZLE": 1, "TEHLIKE": 2, "HABER_VETOSU": 2, "BEKLEMEDE": 3}
     sorted_results = sorted(results, key=lambda x: priority_order.get(x["state_code"], 9))
 
     for res in sorted_results:
@@ -245,8 +260,14 @@ with tab_buy:
         chg = res["daily_change_pct"]
         border_col = res["state_color"]
         ai_pred = res.get("ai_pred") or {}
+        news_info = res.get("news") or {}
+        diag_info = res.get("diagnosis") or {}
 
         extra_badges = []
+        if diag_info and diag_info.get("label"):
+            extra_badges.append((diag_info["label"], diag_info.get("color", MUTED)))
+        elif news_info and news_info.get("status_label"):
+            extra_badges.append((news_info["status_label"], news_info.get("status_color", MUTED)))
         footer_html = ""
         if ai_pred.get("available"):
             wp = int(ai_pred.get("win_prob_pct", 50))
@@ -288,19 +309,35 @@ with tab_buy:
             footer_html=footer_html,
         )
 
+        _brake = None
+        if sym in open_positions:
+            _brake = evaluate_buy_permission(
+                sym, price, open_positions, news_info, float(res.get("vix_value", vix_val))
+            )
+            if res["state_code"] == "ALIM_FIRSATI" and not _brake.get("allowed", True):
+                _b_txt = " · ".join(_brake.get("reasons", []))
+                st.error(
+                    esc_dollars(
+                        f"🛑 **Portföy Freni:** Bu hisse zaten portföyünde (son alış ${_brake.get('last_buy_price', 0):.2f}). {_b_txt}"
+                    )
+                )
+
         total_chk = res.get("total_checks", len(res["checklist"]))
-        with st.expander(f"📋 {sym} Uzman Tavsiyesi, Güven Kontrol Listesi ({res['passed_count']}/{total_chk} Şart) & Seviye Grafiği"):
-            st.info(esc_dollars(res["action_advice"]))
+        _gate_cnt = len(res.get("gates") or [])
+        _exp_title = f"📋 {sym} Detaylar · {res['passed_count']}/{total_chk} Şart"
+        if _gate_cnt:
+            _exp_title += f" · {_gate_cnt} Kilit"
+        _exp_title += " & Grafik (Tıkla & Genişlet)"
 
-            c_chk, c_chart = st.columns([1.15, 1])
-            with c_chk:
-                st.markdown("##### ✅ 5 Adımlı Güven Kontrol Listesi")
-                for item in res["checklist"]:
-                    icon = "✅" if item["ok"] else "⏳"
-                    st.markdown(f"{icon} **{item['kriter']}** — *{esc_dollars(item['detay'])}*")
+        with st.expander(_exp_title, expanded=False):
+            _t_ozet, _t_haber, _t_kontrol = st.tabs([
+                "📈 Özet & Grafik",
+                "🗞️ Haber & Kilitler",
+                f"✅ {total_chk} Şart & AI",
+            ])
 
-            with c_chart:
-                st.markdown("##### 📈 Fiyat & Alım Bölgeleri Grafiği")
+            with _t_ozet:
+                st.info(esc_dollars(res["action_advice"]))
                 df_p = _cached_price_df(sym)
                 fig_m = price_chart_with_levels(
                     df_p,
@@ -314,36 +351,85 @@ with tab_buy:
                 if fig_m:
                     st.plotly_chart(fig_m, use_container_width=True, key=f"buy_chart_{sym}")
 
-            if ai_pred.get("available"):
-                st.markdown("---")
-                st.markdown(esc_dollars(ai_pred.get("ai_summary_tr", "")))
-                ac1, ac2 = st.columns(2)
-                with ac1:
-                    st.markdown("**➕ İhtimali Artıran Güçlü Yanlar:**")
-                    for p_txt in ai_pred.get("positives", []):
-                        st.markdown(f"- 🟢 {esc_dollars(p_txt)}")
-                with ac2:
-                    st.markdown("**➖ İhtimali Düşüren Riskler:**")
-                    for n_txt in ai_pred.get("negatives", []):
-                        st.markdown(f"- 🟠 {esc_dollars(n_txt)}")
-
-            btn_c1, btn_c2 = st.columns(2)
-            with btn_c1:
-                if st.button(f"🔍 {sym} Tam Analiz Sayfasına Git", key=f"go_an_buy_{sym}", use_container_width=True):
-                    st.session_state["selected_symbol"] = sym
-                    st.session_state["auto_analyze"] = True
-                    st.switch_page("pages/2_tek_hisse_analiz.py")
-            with btn_c2:
-                if st.button(f"📲 Sadece {sym} Alım Raporunu Telegram'a Gönder", key=f"tg_single_buy_{sym}", use_container_width=True):
-                    if not tg_ready:
-                        st.warning("Telegram ayarları eksik.")
-                    else:
-                        msg = format_plain_telegram_message(res)
-                        ok, err = send_telegram_message(cfg["telegram_bot_token"], cfg["telegram_chat_id"], msg)
-                        if ok:
-                            st.success(f"{sym} alım raporu telefonuna gönderildi!")
+                btn_c1, btn_c2 = st.columns(2)
+                with btn_c1:
+                    if st.button(f"🔍 {sym} Tam Analiz Sayfasına Git", key=f"go_an_buy_{sym}", use_container_width=True):
+                        st.session_state["selected_symbol"] = sym
+                        st.session_state["auto_analyze"] = True
+                        st.switch_page("pages/2_tek_hisse_analiz.py")
+                with btn_c2:
+                    if st.button(f"📲 Sadece {sym} Alım Raporunu Telegram'a Gönder", key=f"tg_single_buy_{sym}", use_container_width=True):
+                        if not tg_ready:
+                            st.warning("Telegram ayarları eksik.")
                         else:
-                            st.error(err)
+                            msg = format_plain_telegram_message(res)
+                            ok, err = send_telegram_message(cfg["telegram_bot_token"], cfg["telegram_chat_id"], msg)
+                            if ok:
+                                st.success(f"{sym} alım raporu telefonuna gönderildi!")
+                            else:
+                                st.error(err)
+
+            with _t_haber:
+                if diag_info and diag_info.get("label"):
+                    st.markdown(
+                        esc_dollars(
+                            f"**Teşhis:** {diag_info['label']} — {diag_info.get('advice', '')} "
+                            f"*(1A Hisse: %{diag_info.get('stock_1m_pct', 0):+.1f} vs {diag_info.get('benchmark', 'Endeks')}: %{diag_info.get('bench_1m_pct', 0):+.1f})*"
+                        )
+                    )
+                st.markdown(
+                    f"**Haber Durumu:** {news_info.get('status_label', '⚪ Haber Akışı Temiz')} "
+                    f"(Skor: **{news_info.get('score', 0):+d}/100**)"
+                )
+                if res.get("gates"):
+                    st.markdown("**🚧 Alım İçin Eksik Şartlar:**")
+                    for _g in res["gates"]:
+                        st.markdown(f"- {esc_dollars(_g)}")
+                if _brake and not _brake.get("allowed", True):
+                    st.error(
+                        esc_dollars(
+                            f"🛑 **Portföy Freni (Son alış ${_brake.get('last_buy_price', 0):.2f}):** "
+                            + " · ".join(_brake.get("reasons", []))
+                        )
+                    )
+                if news_info.get("red_events"):
+                    st.markdown("**🔴 Kötü Haber / Olaylar:**")
+                    for _rev in news_info["red_events"]:
+                        st.markdown(
+                            esc_dollars(
+                                f"- **{_rev.get('date', '')}** · *{_rev.get('source', '')}* · "
+                                f"`{_rev.get('category_label', '')}` — {_rev.get('title', '')}"
+                            )
+                        )
+                if news_info.get("headlines"):
+                    st.markdown("**📰 Son Haber Başlıkları (İlk 5):**")
+                    for _hl in news_info["headlines"][:5]:
+                        _t = str(_hl.get("title", "")).replace("[", "(").replace("]", ")")
+                        _lnk = _hl.get("link") or ""
+                        _src = _hl.get("source", "")
+                        _dt = _hl.get("date", "")
+                        _cat = _hl.get("category_label", "")
+                        if _lnk:
+                            st.markdown(esc_dollars(f"- [{_t}]({_lnk}) — *{_src} ({_dt})* · `{_cat}`"))
+                        else:
+                            st.markdown(esc_dollars(f"- {_t} — *{_src} ({_dt})* · `{_cat}`"))
+
+            with _t_kontrol:
+                for item in res["checklist"]:
+                    icon = "✅" if item["ok"] else "⏳"
+                    st.markdown(f"{icon} **{item['kriter']}** — *{esc_dollars(item['detay'])}*")
+                if ai_pred.get("available"):
+                    st.markdown("---")
+                    st.markdown(esc_dollars(ai_pred.get("ai_summary_tr", "")))
+                    ac1, ac2 = st.columns(2)
+                    with ac1:
+                        st.markdown("**➕ İhtimali Artıran Güçlü Yanlar:**")
+                        for p_txt in ai_pred.get("positives", []):
+                            st.markdown(f"- 🟢 {esc_dollars(p_txt)}")
+                    with ac2:
+                        st.markdown("**➖ İhtimali Düşüren Riskler:**")
+                        for n_txt in ai_pred.get("negatives", []):
+                            st.markdown(f"- 🟠 {esc_dollars(n_txt)}")
 
 
 # =========================================================================
@@ -480,3 +566,72 @@ with tab_sell:
                         st.success(f"{sym} satış & kâr koruma raporu telefonuna gönderildi!")
                     else:
                         st.error(err)
+
+# =========================================================================
+# SEKME 3: SİNYAL KARNESİ (SİSTEM NE KADAR TUTTU?)
+# =========================================================================
+with tab_journal:
+    _j_records = load_journal_for_ui()
+    if not _j_records:
+        st.info(
+            "Henüz kayıt yok. Kayıtlar borsa açıkken 20 dakikada bir çalışan otomatik taramadan gelir; "
+            "ilk sonuçlar 5 işlem günü sonra oluşur."
+        )
+    else:
+        _j_sum = journal_summary(_j_records)
+        _al = _j_sum["AL"]
+        _eng = _j_sum["ENGELLENDI"]
+
+        st.markdown("##### 🟢 Yeni Kurallarla Verilen 'AL' Sinyalleri Karnesi")
+        st.markdown(
+            stat_grid([
+                ("Toplam AL Sinyali", f"{_al['total']}", f"Kapanan: {_al['closed']}", GREEN),
+                ("Hedefe Ulaşan %", f"%{_al['hedef_pct']:.1f}" if _al["closed"] else "—", f"{_al['hedef']} işlem", GREEN),
+                ("Stop Olan %", f"%{_al['stop_pct']:.1f}" if _al["closed"] else "—", f"{_al['stop']} işlem", RED),
+                ("Ort. 15G Getiri", f"%{_al['avg_ret_15d']:+.2f}" if _al["avg_ret_15d"] is not None else "—", "Kapanan işlemler", BLUE),
+            ]),
+            unsafe_allow_html=True,
+        )
+        st.write("")
+
+        st.markdown("##### 🛡️ Eski Kuralların 'AL' Deyip Yeni Kuralların Engellediği Sinyaller")
+        st.markdown(
+            stat_grid([
+                ("Engellenen Toplam", f"{_eng['total']}", f"Kapanan: {_eng['closed']}", AMBER),
+                ("Hedefe Ulaşan %", f"%{_eng['hedef_pct']:.1f}" if _eng["closed"] else "—", f"{_eng['hedef']} işlem", GREEN),
+                ("Stop Olan %", f"%{_eng['stop_pct']:.1f}" if _eng["closed"] else "—", f"{_eng['stop']} işlem", RED),
+                ("Ort. 15G Getiri", f"%{_eng['avg_ret_15d']:+.2f}" if _eng["avg_ret_15d"] is not None else "—", "Kapanan işlemler", BLUE),
+            ]),
+            unsafe_allow_html=True,
+        )
+        st.write("")
+
+        with st.expander(f"📑 Tüm Sinyal Kayıtları & Açıklama ({len(_j_records)} Kayıt · Tıkla & Genişlet)", expanded=False):
+            st.caption(
+                "ENGELLENDI: Eski Dip Avcısı kurallarına göre yeşil AL verecekken yeni VIX, haber şoku, "
+                "düşen bıçak, %58 AI veya 1.5 Ödül/Risk kilitleri tarafından durdurulan sinyalleri takip eder."
+            )
+            _sorted_recs = sorted(
+                _j_records,
+                key=lambda r: (str(r.get("date", "")), str(r.get("ts", ""))),
+                reverse=True,
+            )
+            _rows = []
+            for _r in _sorted_recs:
+                _rows.append({
+                    "Tarih": _r.get("date", ""),
+                    "Hisse": _r.get("symbol", ""),
+                    "Tür": _r.get("type", ""),
+                    "Giriş": f"${float(_r.get('entry_price') or 0):.2f}",
+                    "Hedef": f"${float(_r.get('target1') or 0):.2f}" if _r.get("target1") is not None else "—",
+                    "Stop": f"${float(_r.get('stop_level') or 0):.2f}" if _r.get("stop_level") is not None else "—",
+                    "AI %": f"%{_r.get('ai_win_prob', '')}" if _r.get("ai_win_prob") is not None else "—",
+                    "VIX": f"{float(_r.get('vix_value')):.1f}" if _r.get("vix_value") is not None else "—",
+                    "Haber": _r.get("news_status", "—"),
+                    "Teşhis": _r.get("diagnosis_code") or "—",
+                    "Sonuç": _r.get("result") or "AÇIK",
+                    "5G %": f"{float(_r['ret_5d']):+.1f}%" if _r.get("ret_5d") is not None else "—",
+                    "10G %": f"{float(_r['ret_10d']):+.1f}%" if _r.get("ret_10d") is not None else "—",
+                    "15G %": f"{float(_r['ret_15d']):+.1f}%" if _r.get("ret_15d") is not None else "—",
+                })
+            st.dataframe(_pd.DataFrame(_rows), use_container_width=True, hide_index=True)

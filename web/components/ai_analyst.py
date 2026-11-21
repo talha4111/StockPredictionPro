@@ -128,13 +128,24 @@ US_NAME_ALIAS_MAP = {
     "TAIWAN SEMI": "TSM",
     "TSMC": "TSM",
     "VISTRA": "VST",
+    "ROUNDHILL MEMORY": "DRAM",
+    "MEMORY ETF": "DRAM",
+    "SANDISK": "SNDK",
+    "TAKE-TWO": "TTWO",
+    "TAKE TWO": "TTWO",
+    "ROCKSTAR": "TTWO",
+    "GTA 6": "TTWO",
+    "GTA VI": "TTWO",
+    "RAMBUS": "RMBS",
+    "WESTERN DIGITAL": "WDC",
+    "LAM RESEARCH": "LRCX",
 }
 
 KNOWN_US_TICKERS = {
     "MU", "MRVL", "COHR", "BE", "RKLB", "AVGO", "NVDA", "AMD", "TSM", "VRT",
-    "CEG", "GEV", "EOG", "VST", "PLTR", "SMCI", "ANET", "CRWD", "PANW", "MSFT",
+    "CEG", "GEV", "EOG", "VST", "DRAM", "SNDK", "TTWO", "PLTR", "SMCI", "ANET", "CRWD", "PANW", "MSFT",
     "META", "AMZN", "GOOGL", "GOOG", "AAPL", "TSLA", "ARM", "KLAC", "LRCX",
-    "AMAT", "ASML", "WDC", "STX", "DELL", "IONQ", "INTC", "QCOM", "TXN", "NFLX",
+    "AMAT", "ASML", "WDC", "STX", "RMBS", "DELL", "IONQ", "INTC", "QCOM", "TXN", "NFLX",
     "CRM", "NOW", "SNOW", "DDOG", "NET", "MDB", "LLY", "NVO", "UNH", "JPM", "GS",
 }
 
@@ -648,10 +659,13 @@ def extract_symbols_and_intent(
         if re.search(pattern, q_upper):
             _add_sym(bist_sym)
 
-    # 2) ABD şirket adı eşleştirmesi
+    # 2) ABD şirket adı ve ETF eşleştirmesi
     for alias, us_sym in US_NAME_ALIAS_MAP.items():
         if alias.lower() in q_lower:
             _add_sym(us_sym)
+
+    if "dram" in q_lower:
+        _add_sym("DRAM")
 
     # 3) Bilinen ABD ticker eşleştirmesi (Kelime sınırlarıyla)
     tokens = re.findall(r"[A-Za-zÇĞİÖŞÜçğıöşü0-9\.]+", q_raw)
@@ -932,9 +946,6 @@ def collect_symbol_intelligence(symbol: str) -> dict:
             "recent_ratings": recent_ratings,
         }
 
-        # Son haber başlıkları (yfinance.news bazen askıda kalabildiği için boş tutulur; haber gerekirse LLM web/katalizörden beslenir)
-        intel["recent_news"] = []
-
         # Dip Avcısı + Satış Avcısı + Üçlü Bariyer AI + Bilanço Katalizörü
         try:
             dip_res = analyze_stock_dip(sym)
@@ -942,6 +953,12 @@ def collect_symbol_intelligence(symbol: str) -> dict:
         except Exception:
             dip_res = None
             intel["dip"] = None
+
+        intel["news"] = (dip_res or {}).get("news")
+        intel["diagnosis"] = (dip_res or {}).get("diagnosis")
+        intel["recent_news"] = [
+            h.get("title", "") for h in ((intel["news"] or {}).get("headlines") or [])[:8] if h.get("title")
+        ]
 
         try:
             exit_res = analyze_stock_exit(sym)
@@ -1090,6 +1107,9 @@ def score_stock_for_selection(intel: dict) -> tuple[float, list[str], list[str]]
     elif state_code == "TEHLIKE":
         score -= 20.0
         cons.append("🔴 **Destek Kırılımı:** Ana güvenlik çizgisinin altında, düşen bıçak riski var.")
+    elif state_code == "HABER_VETOSU":
+        score -= 22.0
+        cons.append("⛔ **Haber Şoku Vetosu:** Şirkete özel kötü haber şoku var; hasar sindirilmeden alım yok.")
 
     # 2. RSI Aşırı Satım İskontosu
     rsi = intel.get("rsi14", 50.0)
@@ -1103,8 +1123,8 @@ def score_stock_for_selection(intel: dict) -> tuple[float, list[str], list[str]]
         score -= 10.0
         cons.append(f"⚠️ **Aşırı Alım Bölgesi:** RSI **{rsi:.1f}** ile kısa vadede yorulma sınırında.")
 
-    # 3. Değerleme (Forward P/E)
-    fpe = fnd.get("forward_pe")
+    # 3. Değerleme (Forward P/E veya ETF/Sepet F/K)
+    fpe = fnd.get("forward_pe") or fnd.get("trailing_pe")
     if fpe:
         if fpe <= 20.0:
             score += 14.0
@@ -2004,7 +2024,8 @@ def _build_llm_system_and_user_prompt(
         "4. Sohbet geçmişini takip et: kullanıcı 'peki', 'o zaman', 'bunu' gibi devam soruları sorarsa önceki konuyu sürdür.\n"
         "5. Kalıcı hafızadaki notları ve Midas FIFO kuralını (satışta en eski lot önce satılır) dikkate al.\n"
         "6. Sade, günlük Türkçe kullan. Dolar işaretini normal yaz.\n"
-        "7. Kesin getiri vaadi verme; olasılık ve senaryo dili kullan."
+        "7. Kesin getiri vaadi verme; olasılık ve senaryo dili kullan.\n"
+        "8. Haber şoku (HABER_VETOSU) veya kriz rejimi varsa teknik ucuzluğa rağmen alım önermeyeceksin."
     )
 
     # Hafıza özeti
@@ -2071,6 +2092,20 @@ def _build_llm_system_and_user_prompt(
             },
             "earnings_releases": data.get("earnings_releases"),
             "earnings_catalyst_summary": (data.get("earnings") or {}).get("summary_text"),
+            "news": {
+                "status": (data.get("news") or {}).get("status"),
+                "status_label": (data.get("news") or {}).get("status_label"),
+                "score": (data.get("news") or {}).get("score"),
+                "veto_active": (data.get("news") or {}).get("veto_active"),
+                "absorbed": (data.get("news") or {}).get("absorbed"),
+                "red_events": (data.get("news") or {}).get("red_events", []),
+                "headlines": data.get("recent_news", []),
+            },
+            "diagnosis": {
+                "code": (data.get("diagnosis") or {}).get("code"),
+                "label": (data.get("diagnosis") or {}).get("label"),
+                "advice": (data.get("diagnosis") or {}).get("advice"),
+            } if data.get("diagnosis") else None,
             "recent_news": data.get("recent_news"),
         }
 

@@ -1,9 +1,9 @@
 {
   "MU": {
-    "state_code": "PUSUDA_IZLE",
+    "state_code": "HABER_VETOSU",
     "exit_code": null,
-    "price": 884.75,
-    "timestamp": "2026-10-23T17:42:11.577923"
+    "price": 594.39,
+    "timestamp": "2026-11-22T00:46:09.361609"
   },
   "COHR": {
     "state_code": "PUSUDA_IZLE",
@@ -12,16 +12,16 @@
     "timestamp": "2026-10-23T17:42:12.551386"
   },
   "MRVL": {
-    "state_code": "ALIM_FIRSATI",
+    "state_code": "PUSUDA_IZLE",
     "exit_code": null,
-    "price": 223.55,
-    "timestamp": "2026-10-22T21:12:09.270453"
+    "price": 122.25,
+    "timestamp": "2026-11-22T00:46:09.691765"
   },
   "RKLB": {
-    "state_code": "PUSUDA_IZLE",
+    "state_code": "HABER_VETOSU",
     "exit_code": "SIMDI_KAR_AL",
-    "price": 52.26499938964844,
-    "timestamp": "2026-10-23T17:42:14.818121"
+    "price": 45.46,
+    "timestamp": "2026-11-22T00:46:09.985063"
   },
   "VST": {
     "state_code": "PUSUDA_IZLE",
@@ -30,9 +30,9 @@
     "timestamp": "2026-10-23T17:42:15.591308"
   },
   "AVGO": {
-    "state_code": "PUSUDA_IZLE",
-    "price": 338.6449890136719,
-    "timestamp": "2026-10-21T17:54:30.314483",
+    "state_code": "HABER_VETOSU",
+    "price": 304.17,
+    "timestamp": "2026-11-22T00:58:36.572009",
     "exit_code": "SIMDI_KAR_AL"
   }
 }

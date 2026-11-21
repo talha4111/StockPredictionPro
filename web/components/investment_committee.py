@@ -443,7 +443,7 @@ def build_investment_committee_card(
             "Bilanço açıklamasına çok az kaldı. Yeni alım yapmak yazı-tura atmaktır; "
             "elde yüksek kârlı lot varsa bir kısmını nakde çevirip bilançoyu görmek en güvenli komite kararıdır."
         )
-    elif dip_code == "TEHLIKE" or (kalite < 45 and momentum < 45):
+    elif dip_code in ("TEHLIKE", "HABER_VETOSU") or (kalite < 45 and momentum < 45):
         verdict_badge = "🔴 KAÇIN / NAKİTTE BEKLE"
         verdict_color = "#ef5350"
         verdict_summary = (

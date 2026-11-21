@@ -30,6 +30,7 @@ STATE_STYLE = {
     "PUSUDA_IZLE": ("Ucuzluk Bölgesi · İzle", AMBER),
     "BEKLEMEDE": ("Beklemede", BLUE),
     "TEHLIKE": ("Destek Kırıldı", RED),
+    "HABER_VETOSU": ("Haber Şoku · Alma", RED),
     # Satış Avcısı durumları
     "SIMDI_KAR_AL": ("Kâr Al", GREEN),
     "BILANCO_UYARISI": ("Bilanço Yakın", AMBER),

@@ -182,14 +182,29 @@ def _calc_atr(df: pd.DataFrame, period: int = 14) -> float:
 
 
 @_cache_data(ttl=300, show_spinner=False)
-def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
+def analyze_stock_dip(
+    symbol: str,
+    vix_value: float | None = None,
+    regime_code: str | None = None,
+) -> dict | None:
     """
-    Bir hisse için hem günlük (6 aylık) hem de gün içi (15 dakikalık) verileri tarar.
-    Alım bölgelerini, kaçış (stop) noktasını, kâr hedeflerini ve dönüş onaylarını
-    tamamen sade ve anlaşılır bir dille döndürür.
+    Bir hisse için hem günlük (2 yıllık) hem de gün içi (15 dakikalık) verileri tarar.
+    Alım bölgelerini, haber/olay şokunu, piyasa rejimini, kaçış (stop) noktasını,
+    kâr hedeflerini ve dönüş onaylarını sade Türkçe ile döndürür.
     """
     symbol = symbol.strip().upper()
-    vix_value = round(float(vix_value or 18.0), 1)
+    if vix_value is None or regime_code is None:
+        try:
+            from web.components.investment_committee import get_market_regime_summary
+            _reg = get_market_regime_summary()
+            if vix_value is None:
+                vix_value = _reg.get("vix_val", 18.5)
+            if regime_code is None:
+                regime_code = _reg.get("regime_code", "SECICI_YATAY")
+        except Exception:
+            pass
+    vix_value = round(float(vix_value if vix_value is not None else 18.5), 1)
+    regime_code = str(regime_code or "SECICI_YATAY")
     try:
         tk = yf.Ticker(symbol)
         df_daily = tk.history(period="2y", interval="1d")
@@ -244,10 +259,10 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
         already_discounted = (drop_from_peak_pct <= -15.0 and current_price < sma20 and rsi_daily <= 49.0)
 
         if already_discounted and current_price < fib_50:
-            # Hisse zaten %15-%45 düşmüş; şu anki indirimli bölge 1. Parça (Kademe 1) alım yeridir
-            zone1_center = max(recent_swing_low * 1.01, min(current_price, fib_618))
-            zone1_low = round(min(zone1_center - band_half, current_price - band_half * 0.6), 2)
-            zone1_high = round(max(zone1_center + band_half, current_price + band_half * 0.5), 2)
+            # Hisse zaten %15-%45 düşmüş; 1. Kademe alım kutusunu düşen fiyatla kaydırmadan sabit yapısal desteğe kur
+            zone1_center = max(recent_swing_low * 1.01, fib_618)
+            zone1_low = round(zone1_center - band_half, 2)
+            zone1_high = round(zone1_center + band_half, 2)
             # Kademe 2: Son panik dibi veya onun bir kademe altı
             zone2_center = min(recent_swing_low * 0.99, zone1_low - atr * 0.75)
         else:
@@ -279,10 +294,11 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
 
         # ── GÜN İÇİ (15 DK) VE GÜNLÜK DÖNÜŞ ONAYLARI ──
         # 1. Fiyat Ucuzluk Bölgesinde mi?
-        in_buy_zone = bool(
+        in_buy_zone_legacy = bool(
             (stop_level <= current_price <= zone1_high * 1.015)
             or (already_discounted and current_price >= stop_level)
         )
+        in_buy_zone = bool(stop_level <= current_price <= zone1_high * 1.015)
         near_buy_zone = (not in_buy_zone) and (zone1_high * 1.015 < current_price <= zone1_high * 1.05)
         broken_support = current_price < stop_level
 
@@ -324,10 +340,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             or (daily_change_pct >= 1.5 and lower_wick_ratio >= 0.50)
         )
 
-        # 4. Genel Borsa Havası Güvenli mi? (VIX < 32)
-        market_calm = vix_value < 32.0
-
-        # 5. Yapay Zeka (Üçlü Bariyer: Hedef vs Stop) 15 Günlük Olasılık Motoru
+        # 4. Yapay Zeka (Üçlü Bariyer: Hedef vs Stop) 15 Günlük Olasılık Motoru & Ek Kilitler
         days_to_earnings, _ = _get_days_to_earnings(tk)
         try:
             from web.components.stock_ai_predictor import predict_stock_triple_barrier
@@ -354,9 +367,82 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             }
 
         ai_win_prob = int(ai_pred.get("win_prob_pct", 50))
-        ai_ok = ai_win_prob >= 53
+        new_low_recent = float(low_s.tail(3).min()) <= float(low_s.tail(20).min()) * 1.0001
+        daily_confirm = bool(
+            (not new_low_recent)
+            and current_price > prev_close
+            and (current_price >= float(high_s.iloc[-2]) or close_pos >= 0.6)
+        )
+        rr_ratio = round((target1 - current_price) / max(current_price - stop_level, 1e-6), 2)
+        crisis = (regime_code == "KRIZ_YUKSEK_RISK") or vix_value >= 25.0
+        market_calm = vix_value < 25.0
+        ai_ok = ai_win_prob >= 58
+        earnings_imminent = bool(days_to_earnings is not None and 0 <= days_to_earnings <= 4)
+        earnings_block = bool(days_to_earnings is not None and 0 <= days_to_earnings <= 14)
 
-        # Kontrol Listesi (Sade Türkçe)
+        try:
+            from web.components.news_intelligence import diagnose_drawdown, get_news_intelligence
+            news = get_news_intelligence(symbol, df_daily)
+            diagnosis = diagnose_drawdown(symbol, news, regime_code, df_daily)
+        except Exception:
+            news = {
+                "symbol": symbol,
+                "status": "TEMIZ",
+                "status_label": "⚪ Haber Akışı Temiz",
+                "status_color": "#8b9bb4",
+                "score": 0,
+                "veto_active": False,
+                "absorbed": False,
+                "post_shock_low": None,
+                "shock_date": None,
+                "red_events": [],
+                "positive_events": [],
+                "headlines": [],
+                "analyst_actions": [],
+                "fetched_ok": False,
+            }
+            diagnosis = None
+
+        legacy_buy = bool(
+            in_buy_zone_legacy
+            and intraday_bounce
+            and (strong_buyers or rsi_daily < 38 or rsi_intra < 40)
+            and ai_win_prob >= 50
+            and not earnings_imminent
+        )
+
+        gates: list[str] = []
+        if new_low_recent:
+            gates.append("Son 3 işlem gününde yeni dip yapıldı (düşen bıçak bitmedi)")
+        if not daily_confirm:
+            gates.append("Günlük kapanışta dönüş onayı yok")
+        if ai_win_prob < 58:
+            gates.append(f"Yapay zeka hedef olasılığı %{ai_win_prob} (en az %58 gerekli)")
+        if rr_ratio < 1.5:
+            gates.append(f"Ödül/Risk oranı {rr_ratio} (en az 1.5 gerekli)")
+        if earnings_block:
+            gates.append(f"Bilançoya {days_to_earnings} gün var (14 günden az)")
+        if crisis and current_price > zone2_high:
+            gates.append(
+                f"Piyasa yüksek korku rejiminde (VIX {vix_value:.1f}); sadece 2. kademe (${zone2_low:.2f}–${zone2_high:.2f}) bölgesinde alım"
+            )
+
+        top_red = (news.get("red_events") or [{}])[0] if news.get("red_events") else None
+        if news.get("status") == "SOK" and not news.get("absorbed"):
+            news_check_ok = False
+            news_detail = (
+                f"{top_red.get('category_label', 'Kötü Haber')}: {top_red.get('title', '')}"
+                if top_red else "Son 7 günde şirkete özel kötü haber şoku tespit edildi"
+            )
+        elif news.get("absorbed"):
+            news_check_ok = True
+            post_l = news.get("post_shock_low")
+            news_detail = f"Haber şoku fiyatlandı (dip ${post_l:.2f} üzerinde tutunuyor)" if post_l else "Haber şoku sindirildi"
+        else:
+            news_check_ok = True
+            news_detail = news.get("status_label", "Haber Akışı Temiz")
+
+        # Kontrol Listesi (8 Şartlı Kurumsal Kalkan)
         checklist = [
             {
                 "kriter": "Fiyat hedeflediğimiz ucuzluk (alım) bölgesine indi",
@@ -374,21 +460,35 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
                 "detay": "Kurumsal alım tepkisi görülüyor" if strong_buyers else "Henüz güçlü bir alıcı dalgası görülmedi"
             },
             {
-                "kriter": "Genel piyasa havası sakin (Büyük borsa paniği yok)",
+                "kriter": "Korku endeksi (VIX) 25'in altında",
                 "ok": bool(market_calm),
-                "detay": f"Korku endeksi normal seviyede ({vix_value:.1f})" if market_calm else f"Piyasada genel korku yüksek ({vix_value:.1f})"
+                "detay": f"Korku endeksi normal seviyede (VIX {vix_value:.1f})" if market_calm else f"Piyasada genel korku yüksek (VIX {vix_value:.1f})"
             },
             {
                 "kriter": "Yapay Zeka (Üçlü Bariyer) 15 günlük hedef olasılığı güçlü",
                 "ok": bool(ai_ok),
-                "detay": f"Stopa değmeden önce hedefe ulaşma ihtimali %{ai_win_prob} (Geçmiş benzer gün başarısı: %{ai_pred.get('analog_win_rate_pct', 50):.0f})"
+                "detay": f"Stopa değmeden önce hedefe ulaşma ihtimali %{ai_win_prob} (en az %58 şart · geçmiş benzer gün başarısı: %{ai_pred.get('analog_win_rate_pct', 50):.0f})"
+            },
+            {
+                "kriter": "Son 7 günde şirkete özel kötü haber şoku yok",
+                "ok": bool(news_check_ok),
+                "detay": news_detail,
+            },
+            {
+                "kriter": "Düşen bıçak bitti (son 3 günde yeni dip yok)",
+                "ok": bool(not new_low_recent),
+                "detay": "Son 3 işlem gününde taban korunuyor" if not new_low_recent else "Son 3 işlem gününde yeni dip görüldü",
+            },
+            {
+                "kriter": "Ödül/Risk oranı en az 1.5",
+                "ok": bool(rr_ratio >= 1.5),
+                "detay": f"Oran: {rr_ratio:.2f}R",
             },
         ]
         passed_count = sum(1 for item in checklist if item["ok"])
 
-        earnings_imminent = bool(days_to_earnings is not None and 0 <= days_to_earnings <= 4)
-
-        # ── 4 ANA DURUM KARARI VE SADE TÜRKÇE REHBER ──
+        # ── ANA DURUM KARARI VE SADE TÜRKÇE REHBER ──
+        size_hint = "YOK"
         if broken_support:
             state_code = "TEHLIKE"
             state_badge = "🔴 TEHLİKE — DESTEK KIRILDI (ALMA!)"
@@ -399,40 +499,61 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
                 f"Satışların nerede duracağını görmeden ortalama düşürmeye çalışmak tehlikelidir. "
                 f"Yeniden güvenli olması için fiyatın en az **\\${zone2_high:.2f}** üzerine çıkıp tutunmasını beklemelisin."
             )
-        elif in_buy_zone and intraday_bounce and (strong_buyers or rsi_daily < 38 or rsi_intra < 40) and ai_win_prob >= 50 and not earnings_imminent:
+        elif news.get("veto_active"):
+            state_code = "HABER_VETOSU"
+            state_badge = "⛔ HABER ŞOKU — HASAR SİNDİRİLMEDEN ALMA"
+            state_color = "#ef5350"
+            red_cat = top_red.get("category_label", "Kötü Haber Şoku") if top_red else "Şirkete Özel Kötü Haber"
+            red_title = top_red.get("title", "Kritik olumsuz gelişme tespit edildi") if top_red else "Olumsuz haber akışı"
+            post_low = news.get("post_shock_low")
+            post_low_txt = f" (**\\${post_low:.2f}**)" if post_low else ""
+            headline = f"{symbol}: {red_title}"
+            action_advice = (
+                f"⛔ **Haber Şoku Vetosu ({red_cat}):** {red_title}. "
+                f"Kötü haberle düşen hisse teknik olarak ucuzlamış değil, **hasar almış** kabul edilir; kesinlikle ortalama düşürme. "
+                f"Vetonun kalkması için fiyatın haber sonrası gördüğü dibin{post_low_txt} üzerinde **3–5 işlem günü** yeni dip yapmadan tutunması gerekir."
+            )
+        elif in_buy_zone and intraday_bounce and (strong_buyers or rsi_daily < 38 or rsi_intra < 40) and not gates:
             state_code = "ALIM_FIRSATI"
             state_badge = "🟢 ŞİMDİ ALIM FIRSATI (DÖNÜŞ BAŞLADI)"
             state_color = "#00c853"
             which_tier = "1. Parça (Kademe 1)" if current_price >= zone2_high else "2. Parça (Derin İskonto)"
-            headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} indirimli bölgede ve dipten alıcılar devreye girdi!"
+            size_hint = "YARIM" if (crisis or news.get("absorbed") or news.get("status") == "BASKI") else "TAM_PLAN"
+            headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} indirimli bölgede ve tüm kalkanlardan geçti!"
+            extra_notes = []
+            if size_hint == "YARIM":
+                extra_notes.append("Bu ortamda planlanan parçanın **sadece yarısıyla** gir.")
+            if news.get("absorbed") and news.get("post_shock_low"):
+                extra_notes.append(f"Haber şoku fiyatlandı (dip **\\${news['post_shock_low']:.2f}** üzerinde tutunuyor), veto kaldırıldı.")
+            extra_txt = (" " + " ".join(extra_notes)) if extra_notes else ""
             action_advice = (
                 f"✅ **{which_tier} alımı için şartlar olgunlaştı!** Hisse son zirvesinden %{abs(drop_from_peak_pct):.1f} "
                 f"ucuzladı ve **\\${current_price:.2f}** seviyesinde düşüş hızı kesilip yukarı dönüş başladı. "
-                f"Yapay zeka motorumuz da önümüzdeki 15 işlem gününde stopa değmeden önce kâr hedefine ulaşma ihtimalini **%{ai_win_prob}** olarak hesaplıyor. "
-                f"Tüm paranla tek seferde değil, planlanan ilk parçayla giriş yapabilirsin. "
-                f"Olası terslikte kaçış (iptal) sınırımız **\\${stop_level:.2f}**, ilk kâr alma hedefimiz ise **\\${target1:.2f}** (+%{upside_pct})."
+                f"Yapay zeka motorumuz önümüzdeki 15 işlem gününde hedef olasılığını **%{ai_win_prob}**, Ödül/Risk oranını **{rr_ratio:.2f}R** hesaplıyor. "
+                f"Kaçış sınırımız **\\${stop_level:.2f}**, ilk kâr hedefimiz **\\${target1:.2f}** (+%{upside_pct}).{extra_txt}"
             )
         elif in_buy_zone or near_buy_zone:
             state_code = "PUSUDA_IZLE"
             state_badge = "🟡 UCUZLUK BÖLGESİNDE — HENÜZ ALMA, İZLE"
             state_color = "#ffa726"
-            if earnings_imminent:
+            gate_bullets = "\n".join(f"- {g}" for g in gates)
+            gate_block = f"\n\n**Alım için eksik şartlar:**\n{gate_bullets}" if gates else ""
+            if earnings_block:
                 headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} ucuzladı (${current_price:.2f}) ancak {days_to_earnings} gün sonra bilançosu var!"
                 action_advice = (
-                    f"⚠️ **Fiyat ucuzladı ama bilanço kumarına sadece {days_to_earnings} gün kaldı!** "
-                    f"Hisse **\\${zone1_low:.2f} – \\${zone1_high:.2f}** ucuzluk bölgesinde olmasına rağmen bilanço öncesi tam parayla girmek yazı-tura atmaktır. "
-                    f"Ya bilançonun açıklanmasını bekle ya da çok küçük bir izleme lotuyla sınırla."
+                    f"⚠️ **Fiyat ucuzladı ama bilanço riskine sadece {days_to_earnings} gün kaldı!** "
+                    f"Hisse **\\${zone1_low:.2f} – \\${zone1_high:.2f}** ucuzluk bölgesinde olmasına rağmen bilanço öncesi tam parayla girmek yazı-tura atmaktır."
+                    f"{gate_block}"
                 )
             else:
-                headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} ucuzluk bölgesinde (${current_price:.2f}) ama dönüş onayı henüz tamamlanmadı."
+                headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} ucuzluk bölgesinde (${current_price:.2f}) ama kalkan şartları henüz tamamlanmadı."
                 ai_note = (
                     f" (Yapay zeka 15 günlük hedef olasılığını şu an **%{ai_win_prob}** olarak görüyor)."
                     if ai_pred.get("available") else ""
                 )
                 action_advice = (
-                    f"⏳ **Fiyat ucuzladı, elimiz tetikte!** Hisse istediğimiz **${zone1_low:.2f} – ${zone1_high:.2f}** "
-                    f"indirim bölgesinde işlem görüyor fakat güçlü alıcı/yapay zeka teyidi henüz tam tamamlanmadı{ai_note} "
-                    f"Satışların durup net dönüş sinyalinin yanmasını bekliyoruz."
+                    f"⏳ **Fiyat indirimde ama güvenlik kilitleri henüz açılmadı!** Hisse **\\${zone1_low:.2f} – \\${zone1_high:.2f}** "
+                    f"bölgesinde{ai_note} Tüm koruma şartları sağlanmadan alım yapmıyoruz.{gate_block}"
                 )
         else:
             state_code = "BEKLEMEDE"
@@ -442,7 +563,7 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             action_advice = (
                 f"☕ **Şu an tepeden kovalamıyoruz, sabırla bekliyoruz.** Bu hisseyi güvenle almak için belirlediğimiz "
                 f"ilk ideal ucuzluk bölgesi **\\${zone1_low:.2f} – \\${zone1_high:.2f}** aralığıdır. "
-                f"Fiyat bu seviyeye gevşediğinde sistem sana haber verecek."
+                f"Fiyat bu seviyeye gevşediğinde ve haber/rejim temizse sistem sana haber verecek."
             )
 
         return {
@@ -470,6 +591,16 @@ def analyze_stock_dip(symbol: str, vix_value: float = 18.0) -> dict | None:
             "passed_count": passed_count,
             "total_checks": len(checklist),
             "ai_pred": ai_pred,
+            "news": news,
+            "diagnosis": diagnosis,
+            "regime_code": regime_code,
+            "vix_value": vix_value,
+            "rr_ratio": rr_ratio,
+            "gates": gates,
+            "size_hint": size_hint,
+            "legacy_buy": legacy_buy,
+            "new_low_recent": new_low_recent,
+            "days_to_earnings": days_to_earnings,
             "updated_at": datetime.now().strftime("%H:%M:%S"),
         }
     except Exception:
@@ -844,19 +975,28 @@ def format_plain_telegram_message(res: dict) -> str:
     chg = res["daily_change_pct"]
     chg_sign = "+" if chg >= 0 else ""
 
-    if res["state_code"] == "ALIM_FIRSATI":
+    if res.get("state_code") == "ALIM_FIRSATI":
         header = f"🟢 *ŞİMDİ ALIM FIRSATI: {sym}*"
         what_happened = (
-            f"{sym} hedeflediğimiz ucuzluk bölgesine indi ve dipten güçlü alıcılar gelerek düşüşü durdurdu! "
-            f"Zirvesinden *%{abs(res['drop_from_peak_pct'])}* indirimli durumda."
+            f"{sym} hedeflediğimiz ucuzluk bölgesine indi ve tüm koruma kalkanlarından geçti! "
+            f"Zirvesinden *%{abs(res.get('drop_from_peak_pct', 0))}* indirimli durumda."
         )
-    elif res["state_code"] == "PUSUDA_IZLE":
+    elif res.get("state_code") == "HABER_VETOSU":
+        header = f"⛔ *HABER ŞOKU — ALIM YAPMA: {sym}*"
+        red_evs = (res.get("news") or {}).get("red_events") or []
+        if red_evs:
+            what_happened = (
+                f"{red_evs[0].get('category_label', 'Kötü Haber')}: {red_evs[0].get('title', '')}"
+            )
+        else:
+            what_happened = res.get("headline", "Şirkete özel kötü haber tespit edildi.")
+    elif res.get("state_code") == "PUSUDA_IZLE":
         header = f"🟡 *HAZIR OL (UCUZLUK BÖLGESİ): {sym}*"
         what_happened = (
-            f"{sym} beklediğimiz alım bölgesine girdi (*${price:.2f}*) ancak satışlar henüz tam durmadı. "
-            f"Biraz daha sarkabilir, dönüş onayını bekliyoruz."
+            f"{sym} beklediğimiz alım bölgesine girdi (*${price:.2f}*) ancak koruma kilitleri henüz açılmadı. "
+            f"Eksik şartlar tamamlanmadan alım yapmıyoruz."
         )
-    elif res["state_code"] == "TEHLIKE":
+    elif res.get("state_code") == "TEHLIKE":
         header = f"🔴 *TEHLİKE UYARISI (ALIM YAPMA): {sym}*"
         what_happened = (
             f"{sym} güvenlik sınırımız olan *${res['stop_level']:.2f}* seviyesini aşağı kırdı! "
@@ -864,12 +1004,12 @@ def format_plain_telegram_message(res: dict) -> str:
         )
     else:
         header = f"🔵 *DURUM BİLGİSİ: {sym}*"
-        what_happened = res["headline"]
+        what_happened = res.get("headline", "")
 
     checks_text = "\n".join(
-        f"{'✅' if c['ok'] else '⏳'} {c['kriter']}" for c in res["checklist"]
+        f"{'✅' if c['ok'] else '⏳'} {c['kriter']}" for c in res.get("checklist", [])
     )
-    total_chk = res.get("total_checks", len(res["checklist"]))
+    total_chk = res.get("total_checks", len(res.get("checklist", [])))
 
     ai_block = ""
     ai_pred = res.get("ai_pred") or {}
@@ -881,11 +1021,32 @@ def format_plain_telegram_message(res: dict) -> str:
             f"(Son {ai_pred['analog_count']} benzer günde ort. %{ai_pred['analog_avg_ret_pct']:+.1f})\n\n"
         )
 
+    news_info = res.get("news") or {}
+    diag_info = res.get("diagnosis") or {}
+    news_line = f"🗞️ *Haber Durumu:* {news_info.get('status_label', '⚪ Haber Akışı Temiz')}"
+    if diag_info and diag_info.get("label"):
+        news_line += f" | *Teşhis:* {diag_info['label']}"
+    news_line += "\n"
+
+    gates_block = ""
+    if res.get("gates"):
+        g_lines = "\n".join(f"• {g}" for g in res["gates"])
+        gates_block = f"🚧 *Eksik Şartlar:*\n{g_lines}\n\n"
+
+    brake_block = ""
+    brake = res.get("portfolio_brake") or {}
+    if brake and not brake.get("allowed", True):
+        b_lines = "\n".join(f"• {r}" for r in brake.get("reasons", []))
+        brake_block = f"🛑 *Portföy Freni:*\n{b_lines}\n\n"
+
     msg = (
         f"{header}\n\n"
-        f"💵 *Anlık Fiyat:* ${price:.2f} ({chg_sign}%{chg:.1f})\n\n"
+        f"💵 *Anlık Fiyat:* ${price:.2f} ({chg_sign}%{chg:.1f})\n"
+        f"{news_line}\n"
         f"🗣️ *Ne Oluyor?*\n{what_happened}\n\n"
         f"{ai_block}"
+        f"{gates_block}"
+        f"{brake_block}"
         f"🎯 *Oyun Planımız:*\n"
         f"• *1. Parça Alım Yeri:* ${res['zone1_low']:.2f} – ${res['zone1_high']:.2f}\n"
         f"• *2. Parça (Çok Düşerse):* ${res['zone2_low']:.2f} – ${res['zone2_high']:.2f}\n"
@@ -893,7 +1054,7 @@ def format_plain_telegram_message(res: dict) -> str:
         f"• *Kâr Alma Hedefi:* ${res['target1']:.2f} – ${res['target2']:.2f} (+%{res['upside_pct']} potansiyel)\n\n"
         f"📋 *Güven Kontrolü ({res['passed_count']}/{total_chk}):*\n"
         f"{checks_text}\n\n"
-        f"💡 *Tavsiye:* {res['action_advice'].replace('**', '*')}"
+        f"💡 *Tavsiye:* {res.get('action_advice', '').replace('**', '*')}"
     )
     return msg.replace("\\$", "$")
 
@@ -947,22 +1108,45 @@ def scan_and_notify_all(force_notify: bool = False) -> list[dict]:
     except Exception:
         open_positions = {}
 
-    # VIX kontrolü
-    vix_val = 18.0
+    # Piyasa rejimi ve VIX kontrolü
+    vix_val = 18.5
+    regime_code = "SECICI_YATAY"
     try:
-        vix_hist = yf.Ticker("^VIX").history(period="2d")
-        if not vix_hist.empty:
-            vix_val = float(vix_hist["Close"].iloc[-1])
+        from web.components.investment_committee import get_market_regime_summary
+        reg = get_market_regime_summary()
+        vix_val = float(reg.get("vix_val", 18.5))
+        regime_code = str(reg.get("regime_code", "SECICI_YATAY"))
     except Exception:
-        pass
+        try:
+            vix_hist = yf.Ticker("^VIX").history(period="2d")
+            if not vix_hist.empty:
+                vix_val = float(vix_hist["Close"].iloc[-1])
+        except Exception:
+            pass
 
     # Portföyde olup takip listesinde olmayan hisseleri de taramaya dahil et
     all_symbols = list(dict.fromkeys(list(symbols) + list(open_positions.keys())))
 
     for sym in all_symbols:
-        res = analyze_stock_dip(sym, vix_value=vix_val)
+        res = analyze_stock_dip(sym, vix_value=vix_val, regime_code=regime_code)
         if not res:
             continue
+
+        try:
+            if sym in open_positions:
+                from web.components.portfolio_risk import evaluate_buy_permission
+                res["portfolio_brake"] = evaluate_buy_permission(
+                    sym, res["current_price"], open_positions, res.get("news"), vix_val
+                )
+        except Exception:
+            pass
+
+        try:
+            from web.components.signal_journal import record_signal
+            record_signal(res)
+        except Exception:
+            pass
+
         results.append(res)
 
         curr_code = res["state_code"]
@@ -972,7 +1156,7 @@ def scan_and_notify_all(force_notify: bool = False) -> list[dict]:
         if force_notify:
             should_send_dip = True
         elif notify_on and bot_token and chat_id:
-            if curr_code in ("ALIM_FIRSATI", "PUSUDA_IZLE", "TEHLIKE") and curr_code != last_recorded:
+            if curr_code in ("ALIM_FIRSATI", "PUSUDA_IZLE", "TEHLIKE", "HABER_VETOSU") and curr_code != last_recorded:
                 should_send_dip = True
 
         if should_send_dip and bot_token and chat_id:
@@ -1008,6 +1192,12 @@ def scan_and_notify_all(force_notify: bool = False) -> list[dict]:
                     entry["timestamp"] = datetime.now().isoformat()
                     new_state[sym] = entry
 
+    try:
+        from web.components.signal_journal import evaluate_open_signals
+        evaluate_open_signals()
+    except Exception:
+        pass
+
     save_alert_state(new_state)
     return results
 
@@ -1039,7 +1229,7 @@ def sync_and_notify_from_ui(
             sym = res["symbol"]
             curr_code = res["state_code"]
             last_code = new_state.get(sym, {}).get("state_code")
-            if curr_code in ("ALIM_FIRSATI", "PUSUDA_IZLE", "TEHLIKE") and curr_code != last_code:
+            if curr_code in ("ALIM_FIRSATI", "PUSUDA_IZLE", "TEHLIKE", "HABER_VETOSU") and curr_code != last_code:
                 msg = format_plain_telegram_message(res)
                 ok, _ = send_telegram_message(bot_token, chat_id, msg)
                 if ok:

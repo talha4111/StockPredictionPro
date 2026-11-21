@@ -189,7 +189,7 @@ def _render_structured_answer(ans: dict, key_suffix: str):
 # ═══════════════════════════════════════════════════════════════════════
 with tab_chat:
     # ─── 1. HEDEF HİSSE SEÇİCİ & TEK TIKLA SORU ODAKLI ANALİZ ÇUBUĞU ───
-    DEFAULT_WATCHLIST = ["MU", "COHR", "MRVL", "BE", "RKLB", "AVGO", "NVDA", "EOG", "SARAE.IS", "AMD", "PLTR", "TSLA", "AAPL", "MSFT"]
+    DEFAULT_WATCHLIST = ["MU", "SNDK", "COHR", "DRAM", "TTWO", "MRVL", "VST", "BE", "RKLB", "AVGO", "NVDA", "EOG", "SARAE.IS", "AMD", "PLTR", "TSLA", "AAPL", "MSFT"]
     default_sel = [s for s in (ctx_syms[:3] if ctx_syms else ["MU", "COHR", "MRVL"]) if s in DEFAULT_WATCHLIST] or ["MU", "COHR"]
 
     sel_col1, sel_col2, sel_col3 = st.columns([2.8, 1.3, 0.9])

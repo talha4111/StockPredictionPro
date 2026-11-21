@@ -12,7 +12,7 @@ permissions:
 jobs:
   scan_dips:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -30,6 +30,7 @@ jobs:
         run: |
           git fetch origin alert-state:alert-state 2>/dev/null || true
           git checkout alert-state -- web/data/dip_alert_state.json 2>/dev/null || true
+          git checkout alert-state -- web/data/signal_journal.json 2>/dev/null || true
 
       - name: Run Dip & Exit Hunter Scanner
         env:
@@ -40,10 +41,10 @@ jobs:
 
       - name: Persist Alert State to alert-state branch (main dalını kirletmeden kaydet)
         run: |
-          if [ -f web/data/dip_alert_state.json ]; then
+          if [ -f web/data/dip_alert_state.json ] || [ -f web/data/signal_journal.json ]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git checkout -B alert-state
-            git add -f web/data/dip_alert_state.json
+            for f in web/data/dip_alert_state.json web/data/signal_journal.json; do [ -f "$f" ] && git add -f "$f"; done
             git diff --staged --quiet || (git commit -m "Update dip alert state [skip ci]" && git push origin alert-state --force)
           fi

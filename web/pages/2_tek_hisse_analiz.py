@@ -585,7 +585,11 @@ if active_symbol:
         )
 
         regime_info = get_market_regime_summary()
-        dip_res = analyze_stock_dip(sembol, vix_value=float(regime_info.get("vix_val", 18.5)))
+        dip_res = analyze_stock_dip(
+            sembol,
+            vix_value=float(regime_info.get("vix_val", 18.5)),
+            regime_code=regime_info.get("regime_code", "SECICI_YATAY"),
+        )
         exit_res = analyze_stock_exit(sembol)
         earnings_info = analyze_earnings_catalyst(sembol)
         conflict_info = detect_factor_conflicts(sembol, kalite, deger, momentum, risk)
@@ -631,6 +635,12 @@ if active_symbol:
     extra_badges.append((sys_lbl, sys_col))
     if ai_pred.get("available"):
         extra_badges.append((ai_pred.get("ai_badge", "AI"), ai_pred.get("ai_color", BLUE)))
+    _card_diag = (dip_res or {}).get("diagnosis") or {}
+    _card_news = (dip_res or {}).get("news") or {}
+    if _card_diag.get("label"):
+        extra_badges.append((_card_diag["label"], _card_diag.get("color", MUTED)))
+    elif _card_news.get("status_label"):
+        extra_badges.append((_card_news["status_label"], _card_news.get("status_color", MUTED)))
 
     if dip_res:
         z1_str = f"${dip_res['zone1_low']:.2f} – ${dip_res['zone1_high']:.2f}"
@@ -699,6 +709,108 @@ if active_symbol:
 
     if bilanco_var_mi:
         st.warning("⚠️ **OLAY RİSKİ:** Bu hissenin çeyreklik bilançosu 7 takvim günü içinde açıklanacak!")
+
+    _news = (dip_res or {}).get("news") or {}
+    _diag = (dip_res or {}).get("diagnosis") or {}
+    _gates = (dip_res or {}).get("gates") or []
+    _brake = None
+    try:
+        from web.components.portfolio_risk import evaluate_buy_permission
+        from web.components.portfolio_tracker import calculate_fifo_portfolio
+
+        _open_pos, _ = calculate_fifo_portfolio()
+        if sembol in _open_pos:
+            _brake = evaluate_buy_permission(
+                sembol,
+                q_price,
+                _open_pos,
+                _news or None,
+                float(regime_info.get("vix_val", 18.5)),
+            )
+    except Exception:
+        _brake = None
+
+    if dip_res and dip_res.get("state_code") == "HABER_VETOSU":
+        st.error("⛔ **Haber Şoku Vetosu aktif:** Kötü haber etkisi sindirilmeden alım yapma *(detaylar için aşağıdaki kutuyu aç)*.")
+
+    if _news or _gates or _brake:
+        _exp_parts = ["🗞️ Haber Teşhisi, Kilitler & Portföy Freni"]
+        if _diag.get("label"):
+            _exp_parts.append(_diag["label"])
+        elif _news.get("status_label"):
+            _exp_parts.append(_news["status_label"])
+        if _gates:
+            _exp_parts.append(f"{len(_gates)} Kilit")
+        if _brake and not _brake.get("allowed", True):
+            _exp_parts.append("🛑 Portföy Freni")
+
+        with st.expander(" · ".join(_exp_parts) + " (Tıkla & Genişlet)", expanded=False):
+            _t_hbr, _t_klt = st.tabs(["🗞️ Haber & Neden Düştü?", "🚧 Eksik Şartlar & Portföy Freni"])
+
+            with _t_hbr:
+                if _diag and _diag.get("code"):
+                    _diag_msg = esc_dollars(
+                        f"**{_diag.get('label', '')}** — {_diag.get('advice', '')} "
+                        f"*(1A Hisse: %{_diag.get('stock_1m_pct', 0):+.1f} vs {_diag.get('benchmark', 'Endeks')}: %{_diag.get('bench_1m_pct', 0):+.1f})*"
+                    )
+                    if _diag["code"] == "SIRKET_HASARI":
+                        st.error(_diag_msg)
+                    elif _diag["code"] in ("MAKRO_SEKTOR", "AYRISAN_ZAYIFLIK"):
+                        st.warning(_diag_msg)
+                    else:
+                        st.success(_diag_msg)
+
+                if _news:
+                    st.markdown(
+                        f"**Haber Durumu:** {_news.get('status_label', '⚪ Haber Akışı Temiz')} "
+                        f"(Skor: **{_news.get('score', 0):+d}/100**)"
+                    )
+                    if dip_res and dip_res.get("state_code") == "HABER_VETOSU":
+                        st.error(esc_dollars(dip_res.get("action_advice", "")))
+
+                    if _news.get("red_events"):
+                        st.markdown("**🔴 Tespit Edilen Kötü Haber / Olaylar:**")
+                        for _rev in _news["red_events"]:
+                            st.markdown(
+                                esc_dollars(
+                                    f"- **{_rev.get('date', '')}** · *{_rev.get('source', '')}* · "
+                                    f"`{_rev.get('category_label', '')}` — {_rev.get('title', '')}"
+                                )
+                            )
+
+                    if _news.get("headlines"):
+                        st.markdown("**📰 Son Haber Başlıkları (İlk 5):**")
+                        for _hl in _news["headlines"][:5]:
+                            _t = str(_hl.get("title", "")).replace("[", "(").replace("]", ")")
+                            _lnk = _hl.get("link") or ""
+                            _src = _hl.get("source", "")
+                            _dt = _hl.get("date", "")
+                            _cat = _hl.get("category_label", "")
+                            if _lnk:
+                                st.markdown(esc_dollars(f"- [{_t}]({_lnk}) — *{_src} ({_dt})* · `{_cat}`"))
+                            else:
+                                st.markdown(esc_dollars(f"- {_t} — *{_src} ({_dt})* · `{_cat}`"))
+
+            with _t_klt:
+                if _gates:
+                    _gate_lines = "\n".join(f"- {esc_dollars(g)}" for g in _gates)
+                    st.warning(f"🚧 **Alım İçin Eksik Şartlar ({len(_gates)}):**\n{_gate_lines}")
+                else:
+                    st.success("✅ Tüm teknik, makro ve haber güvenlik kilitleri açık.")
+
+                if _brake:
+                    if not _brake.get("allowed", True):
+                        _b_reasons = " · ".join(esc_dollars(r) for r in _brake.get("reasons", []))
+                        st.error(
+                            f"🛑 **Portföy Freni ({sembol} portföyünde mevcut — son alış \\${_brake.get('last_buy_price', 0):.2f}):** {_b_reasons}"
+                        )
+                    else:
+                        st.info(
+                            f"🛑 **Portföy Freni ({sembol} portföyünde mevcut):** Ortalama düşürme şartları sağlanıyor "
+                            f"(son alıştan %{_brake.get('drop_from_last_buy_pct', 0):.1f} aşağıda, haber temiz ve VIX uygun)."
+                        )
+                else:
+                    st.caption(f"{sembol} şu an Midas portföyünde açık pozisyon olarak görünmüyor.")
 
     # ═══════════════════════════════════════════════════════════════════════
     # KATMAN 2: FİYAT GRAFİĞİ (ALIM BÖLGESİ, STOP VE HEDEFLER GRAFİK ÜZERİNDE)
