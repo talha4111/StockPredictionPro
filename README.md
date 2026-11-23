@@ -4,10 +4,27 @@
 
   [![Live App](https://img.shields.io/badge/Streamlit_Cloud-Live_Platform-FF4B4B?logo=streamlit&logoColor=white)](https://stockpredictionpro-fejhzqeqvphuetsafqnun.streamlit.app)
   [![Python Version](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
-  [![MCP Compatible](https://img.shields.io/badge/MCP-Stdio_Server_Ready-7C3AED)](#🔌-mcp-server-integration-workbuddy--claude--cursor)
+  [![MCP Compatible](https://img.shields.io/badge/MCP-Stdio_Server_Ready-7C3AED)](#🔌-mcp-server-integration-workbuddy--mcp-clients)
   [![Security](https://img.shields.io/badge/Security-PBKDF2_%2B_TOTP_2FA_%2B_WAF-0D9488)](#🔐-enterprise-security--architecture)
   [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 </div>
+
+---
+
+## 🤖 Featured MCP Workflow: Tencent WorkBuddy + Hy4 Preview
+
+**StockPredictionPro** integrates directly with **Tencent WorkBuddy** (tested live using the **Hy4 preview** model) via a local `stdio` JSON-RPC 2.0 **Model Context Protocol (MCP) Server** ([`mcp_server.py`](mcp_server.py), configured via `~/.workbuddy-ai/mcp.json`).
+
+In our verified live workflow (**Hy4 preview** orchestrating the local MCP tools over `COHR`, `MRVL`, and `MU`), **WorkBuddy** executed and synthesized 4 custom quantitative tools:
+
+| Tool Actually Invoked | Model & Transport | Verified Quantitative Output Used by WorkBuddy |
+| :--- | :--- | :--- |
+| `get_market_regime` | **Hy4 preview** via `stdio` MCP | Detected defensive macro regime (`KRIZ_YUKSEK_RISK`, `VIX 29.91`, rising US 10Y yields) and locked aggressive Tier-1 entries. |
+| `get_stock_quant_snapshot` | **Hy4 preview** via `stdio` MCP | Pulled technicals (`SMA20/50/200`, `RSI14`), Dip-Hunter staged Zone-1 / Zone-2 / Stop / Target levels, 15-day Triple-Barrier AI probabilities (`67/33` win/stop), factor scores, and active risk gates. |
+| `check_earnings_catalyst` | **Hy4 preview** via `stdio` MCP | Caught `MRVL`'s upcoming earnings (`12 days away`) and historical `±13.3%` post-earnings gap risk, deferring entry until after the print. |
+| `inspect_fifo_lots` | **Hy4 preview** via `stdio` MCP | Audited existing `MU` FIFO tax lots (`Midas` USD vs. TRY cost basis) to prevent unnecessary concentration and premature selling/tax events. |
+
+*(See the [MCP Server Integration](#🔌-mcp-server-integration-workbuddy--mcp-clients) section below for full `mcp.json` setup.)*
 
 ---
 
@@ -42,9 +59,9 @@ An **11-page Streamlit FinTech & Quant Platform** for US equities (`NVDA`, `MU`,
 
 ---
 
-## 🔌 MCP Server Integration (WorkBuddy / Claude / Cursor)
+## 🔌 MCP Server Integration (WorkBuddy & MCP Clients)
 
-`StockPredictionPro` includes a local `stdio` JSON-RPC 2.0 **MCP Server** ([`mcp_server.py`](mcp_server.py)) exposing 4 live quantitative tools to AI agent workspaces (verified with **Tencent WorkBuddy + Hy4**, **Claude Desktop**, and **Cursor**):
+`StockPredictionPro` includes a local `stdio` JSON-RPC 2.0 **MCP Server** ([`mcp_server.py`](mcp_server.py)) exposing 4 live quantitative tools. It has been tested live with **Tencent WorkBuddy (Hy4 preview)** and follows the standard `stdio` MCP schema compatible with other MCP clients such as Claude Desktop and Cursor:
 
 | MCP Tool Name | Description |
 | :--- | :--- |

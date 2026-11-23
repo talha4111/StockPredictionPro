@@ -1,9 +1,9 @@
 {
-  "son_guncelleme": "2026-11-08T21:00:43.698273",
+  "son_guncelleme": "2026-11-22T21:00:34.795170",
   "lider": "Challenger (m00_r15)",
-  "vix": 25.639999389648438,
-  "baseline_return": 0.032936946294506865,
-  "challenger_return": 0.04154402260569841,
+  "vix": 35.88999938964844,
+  "baseline_return": 0.0329369498154724,
+  "challenger_return": 0.04154402933831542,
   "status": "COLLECTING_GENUINELY_NEW_DATA",
   "mature_cohorts": 1,
   "required_cohorts": 3
