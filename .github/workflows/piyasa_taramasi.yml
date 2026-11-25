@@ -30,19 +30,29 @@ jobs:
         run: |
           pip install --quiet yfinance pandas numpy scipy requests scikit-learn matplotlib
 
+      - name: Restore Persistent Scan DB from scan-data branch (if available)
+        run: |
+          git fetch origin scan-data:scan-data 2>/dev/null || true
+          git checkout scan-data -- trading_bot.db 2>/dev/null || true
+
       - name: Run Full Market Scan
+        env:
+          STOCK_OUTCOME_TRACKING: '1'
         run: |
           python web/scripts/piyasa_tarama_job.py
 
-      - name: Publish scan to scan-data branch (main dalini kirletmeden)
+      - name: Publish scan & persistent DB to scan-data branch (main dalini kirletmeden)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           cp web/data/piyasa_tarama_son.json /tmp/piyasa_tarama_son.json
+          if [ -f trading_bot.db ]; then cp trading_bot.db /tmp/trading_bot.db; fi
           git checkout --orphan scan-data
           git rm -rf --quiet . || true
           mkdir -p web/data
           cp /tmp/piyasa_tarama_son.json web/data/piyasa_tarama_son.json
+          if [ -f /tmp/trading_bot.db ]; then cp /tmp/trading_bot.db trading_bot.db; fi
           git add -f web/data/piyasa_tarama_son.json
+          if [ -f trading_bot.db ]; then git add -f trading_bot.db; fi
           git commit -m "Update market scan $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
           git push origin scan-data --force

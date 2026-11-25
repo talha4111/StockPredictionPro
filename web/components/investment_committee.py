@@ -228,7 +228,20 @@ def analyze_earnings_catalyst(symbol: str) -> dict:
             p_15d = float(close_s.iloc[-16])
             out["pre_earnings_runup_15d_pct"] = round(((cur_p / p_15d) - 1.0) * 100.0, 1)
 
-        # Gelecek bilanço tarihi
+        # Geçmiş ve gelecek bilanço tarihleri (yfinance earnings_dates yedeklemesi dahil)
+        ed_df = getattr(tk, "earnings_dates", None)
+        ed_clean = None
+        today_d = datetime.now().date()
+        if ed_df is not None and not ed_df.empty:
+            idx_raw = pd.to_datetime(ed_df.index)
+            if getattr(idx_raw, "tz", None) is not None:
+                idx_dates = idx_raw.tz_convert("America/New_York").tz_localize(None).normalize()
+            else:
+                idx_dates = idx_raw.normalize()
+            ed_clean = ed_df.copy()
+            ed_clean.index = idx_dates
+
+        # Gelecek bilanço tarihi: Önce calendar, boşsa earnings_dates tablosundan yakala
         try:
             cal = tk.calendar
             edates = None
@@ -239,12 +252,22 @@ def analyze_earnings_catalyst(symbol: str) -> dict:
             if edates:
                 first_dt = edates[0] if isinstance(edates, (list, tuple, np.ndarray)) else edates
                 target_d = first_dt.date() if hasattr(first_dt, "date") else pd.to_datetime(str(first_dt)).date()
-                diff = (target_d - datetime.now().date()).days
+                diff = (target_d - today_d).days
                 if -1 <= diff <= 120:
                     out["days_to_earnings"] = int(diff)
                     out["next_earnings_date"] = target_d.strftime("%d.%m.%Y")
         except Exception:
             pass
+
+        if out["days_to_earnings"] is None and ed_clean is not None and not ed_clean.empty:
+            try:
+                fut_dates = [ts.date() for ts in ed_clean.index if -1 <= (ts.date() - today_d).days <= 120]
+                if fut_dates:
+                    nearest_d = min(fut_dates, key=lambda d: (d - today_d).days)
+                    out["days_to_earnings"] = int((nearest_d - today_d).days)
+                    out["next_earnings_date"] = nearest_d.strftime("%d.%m.%Y")
+            except Exception:
+                pass
 
         # Eğer bilançoya 14 günden az kaldıysa ve hisse son 15 günde +%10'dan fazla yükseldiyse
         if (
@@ -254,16 +277,10 @@ def analyze_earnings_catalyst(symbol: str) -> dict:
         ):
             out["priced_in_warning"] = True
 
-        # Geçmiş bilanço tarihleri ve EPS sürprizleri
-        ed_df = getattr(tk, "earnings_dates", None)
-        if ed_df is None or ed_df.empty:
+        if ed_clean is None or ed_clean.empty:
             return out
 
-        # Sadece geçmişteki bilançoları al
-        idx_dates = pd.to_datetime(ed_df.index).tz_localize(None)
-        ed_clean = ed_df.copy()
-        ed_clean.index = idx_dates
-        today_ts = pd.Timestamp(datetime.now().date())
+        today_ts = pd.Timestamp(today_d)
         past_ed = ed_clean[ed_clean.index < today_ts].sort_index(ascending=False).head(8)
 
         hist_idx = pd.to_datetime(hist.index).tz_localize(None)

@@ -809,12 +809,13 @@ def collect_symbol_intelligence(symbol: str) -> dict:
         fib_500 = round(swing_high_5d - 0.500 * swing_range, 2)
         fib_618 = round(swing_high_5d - 0.618 * swing_range, 2)
 
-        # RSI (14)
-        delta = close.diff()
-        gain = delta.clip(lower=0).rolling(14).mean()
-        loss = (-delta.clip(upper=0)).rolling(14).mean()
-        rs = gain / (loss + 1e-9)
-        rsi14 = float((100.0 - (100.0 / (1.0 + rs))).iloc[-1]) if len(close) >= 15 else 50.0
+        # RSI (14) — Wilder EMA (kurumsal standart ile uyumlu)
+        delta = close.astype(float).diff()
+        gain = delta.clip(lower=0.0).ewm(alpha=1.0 / 14.0, adjust=False, min_periods=14).mean()
+        loss = (-delta.clip(upper=0.0)).ewm(alpha=1.0 / 14.0, adjust=False, min_periods=14).mean()
+        rs = gain / loss.replace(0.0, np.nan)
+        rsi_s = (100.0 - (100.0 / (1.0 + rs))).mask((loss == 0) & (gain > 0), 100.0)
+        rsi14 = float(rsi_s.iloc[-1]) if (len(close) >= 15 and pd.notna(rsi_s.iloc[-1])) else 50.0
 
         # Değişimler ve Zirve/Dip
         high_52w = float(hist["High"].max())
@@ -908,24 +909,41 @@ def collect_symbol_intelligence(symbol: str) -> dict:
         try:
             ud_df = getattr(tk, "upgrades_downgrades", None)
             if ud_df is not None and not ud_df.empty:
+                # Hisse bölünmesi (split) sonrası eski düzeltilmemiş hedefleri tespit etmek için referans oran
+                ref_target = float(target_mean) if (target_mean and float(target_mean) > 0) else last_price
                 for dt_idx, urow in ud_df.head(5).iterrows():
-                    dt_s = pd.to_datetime(dt_idx).strftime("%d.%m.%Y")
+                    dt_ts = pd.to_datetime(dt_idx)
+                    if getattr(dt_ts, "tz", None) is not None:
+                        dt_ts = dt_ts.tz_convert("America/New_York")
+                    dt_s = dt_ts.strftime("%d.%m.%Y")
                     cur_t = urow.get("currentPriceTarget")
                     pri_t = urow.get("priorPriceTarget")
+                    cur_f = float(cur_t) if pd.notna(cur_t) and float(cur_t) > 0 else None
+                    pri_f = float(pri_t) if pd.notna(pri_t) and float(pri_t) > 0 else None
+                    # Split öncesi kalmış hedefleri (örn. 8:1 veya 10:1) referans hedefle oranlayarak normalize et
+                    if cur_f and ref_target > 0 and cur_f >= ref_target * 4.5:
+                        approx_split = round(cur_f / ref_target)
+                        if approx_split in (4, 5, 8, 10, 20):
+                            cur_f = cur_f / approx_split
+                            if pri_f and pri_f >= ref_target * 4.5:
+                                pri_f = pri_f / approx_split
                     recent_ratings.append({
                         "date": dt_s,
                         "firm": str(urow.get("Firm", "")),
                         "to_grade": str(urow.get("ToGrade", "")),
                         "pt_action": str(urow.get("priceTargetAction", "")),
-                        "current_target": round(float(cur_t), 2) if pd.notna(cur_t) and float(cur_t) > 0 else None,
-                        "prior_target": round(float(pri_t), 2) if pd.notna(pri_t) and float(pri_t) > 0 else None,
+                        "current_target": round(cur_f, 2) if cur_f else None,
+                        "prior_target": round(pri_f, 2) if pri_f else None,
                     })
         except Exception:
             recent_ratings = []
 
+        clean_fpe = round(float(fpe), 1) if (fpe and 3.0 <= float(fpe) <= 250.0) else None
+        clean_tpe = round(float(tpe), 1) if (tpe and 3.0 <= float(tpe) <= 300.0) else None
+
         intel["fundamentals"] = {
-            "forward_pe": round(float(fpe), 1) if fpe and fpe > 0 else None,
-            "trailing_pe": round(float(tpe), 1) if tpe and tpe > 0 else None,
+            "forward_pe": clean_fpe,
+            "trailing_pe": clean_tpe,
             "price_to_sales": round(float(ps), 1) if ps else None,
             "price_to_book": round(float(pb), 2) if pb else None,
             "gross_margin_pct": round(float(gross_margin) * 100.0, 1) if gross_margin else None,
@@ -987,7 +1005,10 @@ def collect_symbol_intelligence(symbol: str) -> dict:
             ed_df = getattr(tk, "earnings_dates", None)
             if ed_df is not None and not ed_df.empty:
                 for dt_idx, erow in ed_df.head(5).iterrows():
-                    dt_str = pd.to_datetime(dt_idx).strftime("%d.%m.%Y")
+                    dt_ts = pd.to_datetime(dt_idx)
+                    if getattr(dt_ts, "tz", None) is not None:
+                        dt_ts = dt_ts.tz_convert("America/New_York")
+                    dt_str = dt_ts.strftime("%d.%m.%Y")
                     est = erow.get("EPS Estimate")
                     rep = erow.get("Reported EPS")
                     surp = erow.get("Surprise(%)")
@@ -1001,18 +1022,33 @@ def collect_symbol_intelligence(symbol: str) -> dict:
             pass
         intel["earnings_releases"] = recent_earnings_list
 
-        # 4 Sütun Faktör Puanları (Dinamik Hesaplama + Tarama Skoru Entegrasyonu)
+        # Eğer split sonrası yfinance forwardPE bozuksa (<3.0) çeyreklik EPS beklentisinden makul ileri F/K tahmin et
+        if intel["fundamentals"].get("forward_pe") is None and recent_earnings_list and last_price > 0:
+            next_est = next((r["eps_estimate"] for r in recent_earnings_list if r.get("eps_reported") is None and r.get("eps_estimate") and r["eps_estimate"] > 0), None)
+            if next_est and next_est * 4.0 > 0:
+                est_fpe = last_price / (next_est * 4.0)
+                if 3.0 <= est_fpe <= 200.0:
+                    intel["fundamentals"]["forward_pe"] = round(est_fpe, 1)
+
+        # 4 Sütun Faktör Puanları (Önce resmi scan-data v3.1 skorları, yoksa tutarlı canlı hesaplama)
         db_map = get_db_symbol_data((sym,)) if not is_bist else {}
         db_row = db_map.get(sym)
-        gm = intel["fundamentals"].get("gross_margin_pct") or 38.0
-        rg = intel["fundamentals"].get("rev_growth_yoy_pct") or 18.0
-        kalite = float(np.clip(45.0 + (gm * 0.55) + (rg * 0.35), 25.0, 95.0))
-        fpe_val = intel["fundamentals"].get("forward_pe") or intel["fundamentals"].get("trailing_pe") or 25.0
-        deger = float(np.clip(90.0 - (fpe_val * 1.3), 20.0, 92.0))
-        momentum = float(np.clip(50.0 + chg_3m * 0.7 + (rsi14 - 50.0) * 0.4, 20.0, 95.0))
-        beta_val = intel["fundamentals"].get("beta") or 1.5
-        risk_sc = float(np.clip(90.0 - (beta_val * 16.0), 20.0, 88.0))
-        comp_sc = float(db_row.get("score")) if (db_row and db_row.get("score")) else round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk_sc * 0.15, 1)
+        if db_row and all(db_row.get(k) is not None for k in ("kalite", "deger", "momentum", "risk")):
+            kalite = float(db_row["kalite"])
+            deger = float(db_row["deger"])
+            momentum = float(db_row["momentum"])
+            risk_sc = float(db_row["risk"])
+            comp_sc = float(db_row.get("score") or round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk_sc * 0.15, 1))
+        else:
+            gm = intel["fundamentals"].get("gross_margin_pct") or 38.0
+            rg = float(np.clip(intel["fundamentals"].get("rev_growth_yoy_pct") or 18.0, -40.0, 120.0))
+            kalite = float(np.clip(45.0 + (gm * 0.50) + (rg * 0.25), 15.0, 95.0))
+            fpe_val = intel["fundamentals"].get("forward_pe") or intel["fundamentals"].get("trailing_pe") or 25.0
+            deger = float(np.clip(88.0 - (fpe_val * 1.15) + (12.0 if rsi14 <= 36.0 else 0.0), 15.0, 95.0))
+            momentum = float(np.clip(50.0 + chg_3m * 0.65 + (rsi14 - 50.0) * 0.4, 15.0, 95.0))
+            beta_val = intel["fundamentals"].get("beta") or 1.4
+            risk_sc = float(np.clip(88.0 - (beta_val * 15.0) - max(0.0, abs(drop_3m_pct) - 20.0) * 0.35, 15.0, 92.0))
+            comp_sc = float(db_row.get("score")) if (db_row and db_row.get("score")) else round(kalite * 0.35 + deger * 0.20 + momentum * 0.30 + risk_sc * 0.15, 1)
 
         intel["factors"] = {
             "kalite": round(kalite, 1),

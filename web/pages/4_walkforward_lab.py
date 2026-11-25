@@ -62,63 +62,130 @@ strategy_mode = st.sidebar.selectbox(
 )
 
 
+_WF_UNIVERSE: dict[str, str] = {
+    "NVDA": "Teknoloji", "AVGO": "Teknoloji", "AMD": "Teknoloji", "MU": "Teknoloji",
+    "MRVL": "Teknoloji", "QCOM": "Teknoloji", "AMAT": "Teknoloji", "COHR": "Teknoloji",
+    "MSFT": "Yazılım", "AAPL": "Tüketici Tek.", "GOOGL": "İletişim", "AMZN": "Perakende",
+    "NOW": "Yazılım", "CRWD": "Siber Güvenlik", "PANW": "Siber Güvenlik", "DELL": "Teknoloji",
+    "VRT": "Sanayi", "VST": "Enerji", "CEG": "Enerji", "NEE": "Altyapı",
+    "EOG": "Petrol", "XOM": "Petrol", "CVX": "Petrol", "JPM": "Finans",
+    "LLY": "Sağlık", "UNH": "Sağlık", "COST": "Tüketim", "WMT": "Tüketim",
+    "UNP": "Lojistik", "KO": "Tüketim",
+}
+
+
 @st.cache_data(ttl=1800, show_spinner=False)
-def _load_spy_monthly_returns(start_iso: str, end_iso: str) -> pd.Series:
-    """SPY gerçek aylık getirilerini çeker; hata durumunda deterministik seriye döner."""
+def _load_wf_monthly_panel(start_iso: str, end_iso: str) -> pd.DataFrame:
+    """30 hisselik kurumsal havuz + SPY gerçek aylık kapanış panelini sızıntısız indirir."""
+    fetch_start = (pd.Timestamp(start_iso) - pd.DateOffset(months=14)).strftime("%Y-%m-%d")
+    syms = list(_WF_UNIVERSE.keys()) + ["SPY"]
     try:
-        df = yf.Ticker("SPY").history(start=start_iso, end=end_iso, auto_adjust=True)
-        if not df.empty and len(df) > 25:
-            monthly_close = df["Close"].resample("ME").last().dropna()
-            ret = monthly_close.pct_change().dropna()
-            if len(ret) >= 3:
-                ret.index = ret.index.tz_localize(None) if ret.index.tz is not None else ret.index
-                return ret
+        raw = yf.download(syms, start=fetch_start, end=end_iso, auto_adjust=True, progress=False, group_by="ticker")
+        closes = {}
+        for s in syms:
+            if s in raw and "Close" in raw[s]:
+                ser = raw[s]["Close"].dropna()
+                if len(ser) > 30:
+                    ser.index = ser.index.tz_localize(None) if ser.index.tz is not None else ser.index
+                    closes[s] = ser.resample("ME").last().dropna()
+        panel = pd.DataFrame(closes).ffill()
+        if "SPY" in panel.columns and len(panel) >= 8:
+            return panel
     except Exception:
         pass
-    dates = pd.date_range(start=start_iso, end=end_iso, freq="ME")
-    if len(dates) < 3:
-        dates = pd.date_range(start="2023-01-01", periods=36, freq="ME")
-    rng = np.random.default_rng(42)
-    return pd.Series(rng.normal(0.011, 0.041, len(dates)), index=dates)
+    return pd.DataFrame()
 
 
 def simulate_walkforward(start_d: date, end_d: date, n_stocks: int, sec_cap: int, bps: int, mode_str: str):
-    """Sidebar parametrelerine duyarlı sızıntısız Walk-Forward portföy simülasyonu."""
+    """Gerçek tarihsel aylık kapanışlar üzerinde sıfır geleceği-görme (zero look-ahead) Walk-Forward portföy motoru."""
     if end_d <= start_d:
         end_d = default_end
-    spy_ret = _load_spy_monthly_returns(start_d.isoformat(), end_d.isoformat())
-    dates = spy_ret.index
-    n_months = len(dates)
+    panel = _load_wf_monthly_panel(start_d.isoformat(), end_d.isoformat())
+    if panel.empty or "SPY" not in panel.columns:
+        dates = pd.date_range(start=start_d.isoformat(), end=end_d.isoformat(), freq="ME")
+        if len(dates) < 3:
+            dates = pd.date_range(start="2023-01-01", periods=24, freq="ME")
+        zero_s = pd.Series(np.zeros(len(dates)), index=dates)
+        return zero_s, zero_s
 
+    rets_all = panel.pct_change()
+    stock_cols = [c for c in _WF_UNIVERSE.keys() if c in panel.columns]
     is_full = mode_str.startswith("full_factor")
-    rng = np.random.default_rng(42 + int(is_full) * 7)
+    max_per_sector = max(1, int(np.ceil(n_stocks * (sec_cap / 100.0))))
 
-    # Konsantrasyon etkisi: Top 10-14 arası optimal alpha, aşırı yayılma (>20) endekse yakınsatır
-    conc_mult = 1.0 + (12 - n_stocks) * 0.018
-    conc_vol = 1.0 + max(0, 12 - n_stocks) * 0.025
+    eval_mask = (rets_all.index >= pd.Timestamp(start_d)) & (rets_all.index <= pd.Timestamp(end_d))
+    eval_indices = [i for i, flag in enumerate(eval_mask) if flag and i >= 6]
+    if len(eval_indices) < 2:
+        eval_indices = list(range(max(1, len(rets_all) - 12), len(rets_all)))
 
-    # Sektör sınırı etkisi: %25 civarı düşüşleri (drawdown) azaltır, %40 vol'ü artırır
-    cap_vol_adj = 1.0 + (sec_cap - 25) * 0.008
-    cap_downside_shield = 0.78 if sec_cap <= 25 else (0.86 if sec_cap <= 32 else 0.94)
+    strat_rets: list[float] = []
+    spy_rets: list[float] = []
+    out_dates: list[pd.Timestamp] = []
+    prev_holdings: set[str] = set()
 
-    # Strateji modu etkisi: full_factor ayı aylarında güçlü koruma sağlar, price_sleeve daha yüksek beta taşır
-    base_alpha = 0.0058 if is_full else 0.0032
-    up_beta = 1.04 if is_full else 1.15
-    down_beta = (0.68 if is_full else 0.92) * cap_downside_shield
+    for idx_t in eval_indices:
+        # Sadece t-1 ay sonuna kadar bilinen verilerle seçim yapılır, getiri ise t ayında ölçülür!
+        sig_i = idx_t - 1
+        hist_p = panel[stock_cols].iloc[: sig_i + 1]
+        hist_r = rets_all[stock_cols].iloc[max(0, sig_i - 11) : sig_i + 1]
 
-    # Aylık işlem maliyeti (portföy devir hızı ~%35/ay * gidiş-dönüş 2x)
-    monthly_cost = (bps / 10000.0) * 0.70
+        scores: dict[str, float] = {}
+        for s in stock_cols:
+            ps = hist_p[s].dropna()
+            if len(ps) < 6:
+                continue
+            r_6m = (float(ps.iloc[-1]) / float(ps.iloc[-6])) - 1.0
+            r_12_1 = ((float(ps.iloc[-2]) / float(ps.iloc[-min(12, len(ps))])) - 1.0) if len(ps) >= 7 else r_6m
+            r_1m = (float(ps.iloc[-1]) / float(ps.iloc[-2])) - 1.0
+            vol_m = float(hist_r[s].dropna().std()) if len(hist_r[s].dropna()) >= 4 else 0.10
+            dd_m = float(((ps - ps.cummax()) / ps.cummax()).min())
+            sharpe_proxy = (r_12_1 / max(vol_m * np.sqrt(12), 0.12))
 
-    idio_noise = rng.normal(0.0, 0.013 * conc_vol * cap_vol_adj, n_months)
-    strat_rets = []
-    for i, r_m in enumerate(spy_ret.values):
-        beta = up_beta if r_m >= 0 else down_beta
-        alpha_m = base_alpha * conc_mult
-        r_s = (r_m * beta) + alpha_m + idio_noise[i] - monthly_cost
-        strat_rets.append(r_s)
+            if is_full:
+                # Kalite/İstikrar + Makul Geri Çekilme (Değer) + Momentum + Düşük Risk
+                pullback_bonus = 0.15 if (-0.12 <= r_1m <= 0.04 and r_6m > 0) else (-0.10 if r_1m > 0.22 else 0.0)
+                sc = 0.35 * sharpe_proxy + 0.30 * (0.65 * r_12_1 + 0.35 * r_6m) + 0.20 * pullback_bonus - 0.15 * (vol_m * 2.5 + abs(dd_m) * 0.8)
+            else:
+                # Sadece Fiyat & Trend Kolu
+                sc = 0.65 * r_6m + 0.35 * r_12_1 - 0.15 * vol_m
+            scores[s] = sc
 
-    strat_s = pd.Series(strat_rets, index=dates)
-    return strat_s, spy_ret
+        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        chosen: list[str] = []
+        sec_counts: dict[str, int] = {}
+        for sym, _ in ranked:
+            sec = _WF_UNIVERSE.get(sym, "Diğer")
+            if sec_counts.get(sec, 0) >= max_per_sector:
+                continue
+            chosen.append(sym)
+            sec_counts[sec] = sec_counts.get(sec, 0) + 1
+            if len(chosen) >= n_stocks:
+                break
+        if len(chosen) < min(5, len(ranked)):
+            for sym, _ in ranked:
+                if sym not in chosen:
+                    chosen.append(sym)
+                if len(chosen) >= min(n_stocks, len(ranked)):
+                    break
+
+        chosen_set = set(chosen)
+        if not prev_holdings:
+            turnover = 1.0
+        else:
+            changed = len(chosen_set.symmetric_difference(prev_holdings)) / max(2.0 * max(len(chosen_set), 1), 1.0)
+            turnover = float(np.clip(changed * 2.0, 0.0, 2.0))
+        prev_holdings = chosen_set
+
+        cost_drag = turnover * (bps / 10000.0)
+        month_stock_rets = rets_all.loc[rets_all.index[idx_t], chosen].dropna()
+        gross_r = float(month_stock_rets.mean()) if not month_stock_rets.empty else 0.0
+        spy_r = float(rets_all.loc[rets_all.index[idx_t], "SPY"]) if pd.notna(rets_all.loc[rets_all.index[idx_t], "SPY"]) else 0.0
+
+        strat_rets.append(gross_r - cost_drag)
+        spy_rets.append(spy_r)
+        out_dates.append(rets_all.index[idx_t])
+
+    return pd.Series(strat_rets, index=out_dates), pd.Series(spy_rets, index=out_dates)
 
 
 strat_s, spy_s = simulate_walkforward(start_date, end_date, top_n, sector_cap, cost_bps, strategy_mode)

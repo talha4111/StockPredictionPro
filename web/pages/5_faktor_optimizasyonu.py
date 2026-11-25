@@ -36,7 +36,16 @@ st.caption("Kalite ve Değer omurgası korunarak Momentum ve Risk oranlarının 
 
 if specs:
     df_specs = pd.DataFrame(specs).copy()
-    raw_sums = df_specs[["kalite", "deger", "momentum", "risk"]].sum(axis=1)
+    col_map = {
+        "quality": "kalite",
+        "value": "deger",
+        "momentum": "momentum",
+        "risk": "risk",
+    }
+    for src_col, dst_col in col_map.items():
+        if dst_col not in df_specs.columns and src_col in df_specs.columns:
+            df_specs[dst_col] = pd.to_numeric(df_specs[src_col], errors="coerce").fillna(0.0)
+    raw_sums = df_specs[["kalite", "deger", "momentum", "risk"]].sum(axis=1).replace(0, 1.0)
     df_specs["Kalite (%)"] = (df_specs["kalite"] / raw_sums * 100).round(1)
     df_specs["Değer (%)"] = (df_specs["deger"] / raw_sums * 100).round(1)
     df_specs["Momentum (%)"] = (df_specs["momentum"] / raw_sums * 100).round(1)

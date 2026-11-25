@@ -126,7 +126,7 @@ def evaluate_signals(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     open_syms = sorted({
         str(r["symbol"]).upper()
         for r in updated
-        if r.get("status") == "ACIK" and r.get("symbol")
+        if r.get("symbol") and (r.get("status") == "ACIK" or r.get("realized_ret_pct") is None or r.get("ret_15d") is None)
     })
     if not open_syms:
         return updated
@@ -142,7 +142,7 @@ def evaluate_signals(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     now_iso = datetime.now().isoformat()
     for rec in updated:
-        if rec.get("status") != "ACIK":
+        if rec.get("status") != "ACIK" and rec.get("realized_ret_pct") is not None and rec.get("ret_15d") is not None:
             continue
         sym = str(rec.get("symbol") or "").upper()
         df = hist_map.get(sym)
@@ -173,23 +173,39 @@ def evaluate_signals(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
             if len(closes) >= 15 and pd.notna(closes.iloc[14]):
                 rec["ret_15d"] = round(((float(closes.iloc[14]) / entry) - 1.0) * 100.0, 2)
 
+            if rec.get("status") != "ACIK":
+                # Önceden kapanmış kaydın eksik realized_ret_pct alanını tamamla
+                if rec.get("realized_ret_pct") is None:
+                    res_t = rec.get("result")
+                    if res_t == "STOP" and stop_lvl > 0:
+                        rec["realized_ret_pct"] = round(((stop_lvl / entry) - 1.0) * 100.0, 2)
+                    elif res_t == "HEDEF" and target1 > 0:
+                        rec["realized_ret_pct"] = round(((target1 / entry) - 1.0) * 100.0, 2)
+                    elif rec.get("ret_15d") is not None:
+                        rec["realized_ret_pct"] = rec["ret_15d"]
+                continue
+
             eval_len = min(15, len(bars))
             result = None
+            realized_ret = None
             exit_bar_count = eval_len
             for i in range(eval_len):
                 b_low = float(lows.iloc[i]) if pd.notna(lows.iloc[i]) else entry
                 b_high = float(highs.iloc[i]) if pd.notna(highs.iloc[i]) else entry
                 if stop_lvl > 0 and b_low <= stop_lvl:
                     result = "STOP"
+                    realized_ret = round(((stop_lvl / entry) - 1.0) * 100.0, 2)
                     exit_bar_count = i + 1
                     break
                 if target1 > 0 and b_high >= target1:
                     result = "HEDEF"
+                    realized_ret = round(((target1 / entry) - 1.0) * 100.0, 2)
                     exit_bar_count = i + 1
                     break
 
             if result is None and len(bars) >= 15:
                 result = "SURE_DOLDU"
+                realized_ret = rec.get("ret_15d")
 
             eval_lows = lows.iloc[:exit_bar_count].dropna()
             if not eval_lows.empty:
@@ -198,6 +214,7 @@ def evaluate_signals(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
             if result is not None:
                 rec["result"] = result
+                rec["realized_ret_pct"] = realized_ret
                 rec["status"] = "KAPANDI"
             rec["evaluated_at"] = now_iso
         except Exception:
@@ -248,7 +265,11 @@ def journal_summary(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         sure_cnt = sum(1 for r in closed if r.get("result") == "SURE_DOLDU")
         closed_cnt = len(closed)
 
-        r15 = [float(r["ret_15d"]) for r in closed if r.get("ret_15d") is not None]
+        r15 = [
+            float(r["realized_ret_pct"] if r.get("realized_ret_pct") is not None else r["ret_15d"])
+            for r in closed
+            if (r.get("realized_ret_pct") is not None or r.get("ret_15d") is not None)
+        ]
         r5 = [float(r["ret_5d"]) for r in group if r.get("ret_5d") is not None]
 
         out[sig_type] = {

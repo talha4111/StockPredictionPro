@@ -36,8 +36,10 @@ def get_historical_returns(symbols: tuple, benchmark: str = "SPY", period: str =
                     closes[s] = data[s]["Close"]
             except Exception:
                 pass
-        closes = closes.dropna(how="all").ffill().dropna()
-        returns = closes.pct_change().dropna()
+        closes = closes.dropna(how="all").ffill()
+        if benchmark in closes.columns:
+            closes = closes.dropna(subset=[benchmark])
+        returns = closes.pct_change().iloc[1:]
         return returns
     except Exception:
         return pd.DataFrame()
@@ -89,16 +91,23 @@ def calculate_portfolio_metrics(
     sizing_rows = []
 
     if not ret_df.empty and benchmark in ret_df.columns:
-        bench_ret = ret_df[benchmark]
-        bench_var = bench_ret.var()
+        bench_ret = ret_df[benchmark].dropna()
 
         for s in combined_syms:
             if s in ret_df.columns:
-                cov = ret_df[s].cov(bench_ret)
-                b = (cov / bench_var) if bench_var > 0 else 1.0
-                betas[s] = round(float(b), 2)
-                vol_d = float(ret_df[s].std())
-                vols_annual[s] = round(vol_d * np.sqrt(252) * 100.0, 1)
+                pair = pd.concat([ret_df[s], bench_ret], axis=1).dropna()
+                if len(pair) >= 15:
+                    s_ret = pair.iloc[:, 0]
+                    b_ret_al = pair.iloc[:, 1]
+                    b_var = float(b_ret_al.var())
+                    cov = float(s_ret.cov(b_ret_al))
+                    b = (cov / b_var) if b_var > 0 else 1.0
+                    betas[s] = round(float(b), 2)
+                    vol_d = float(s_ret.std())
+                    vols_annual[s] = round(vol_d * np.sqrt(252) * 100.0, 1)
+                else:
+                    betas[s] = 1.30
+                    vols_annual[s] = 45.0
             else:
                 betas[s] = 1.30
                 vols_annual[s] = 45.0
@@ -108,15 +117,17 @@ def calculate_portfolio_metrics(
 
         port_syms_in_df = [s for s in symbols if s in ret_df.columns]
         if port_syms_in_df:
-            port_daily_ret = sum(ret_df[s] * weights[s] for s in port_syms_in_df)
-            var_95_pct = float(np.percentile(port_daily_ret, 5))
-            tail_losses = port_daily_ret[port_daily_ret <= var_95_pct]
-            cvar_95_pct = float(tail_losses.mean()) if len(tail_losses) > 0 else var_95_pct * 1.35
+            port_sub = ret_df[port_syms_in_df].dropna(how="any")
+            if len(port_sub) >= 10:
+                port_daily_ret = sum(port_sub[s] * weights[s] for s in port_syms_in_df)
+                var_95_pct = float(np.percentile(port_daily_ret, 5))
+                tail_losses = port_daily_ret[port_daily_ret <= var_95_pct]
+                cvar_95_pct = float(tail_losses.mean()) if len(tail_losses) > 0 else var_95_pct * 1.35
 
-            cum_curve = (1.0 + port_daily_ret).cumprod()
-            peak_curve = cum_curve.cummax()
-            dd_series = (cum_curve - peak_curve) / peak_curve
-            max_dd_pct = float(dd_series.min())
+                cum_curve = (1.0 + port_daily_ret).cumprod()
+                peak_curve = cum_curve.cummax()
+                dd_series = (cum_curve - peak_curve) / peak_curve
+                max_dd_pct = float(dd_series.min())
 
         # Korelasyon Matrisi (Portföyde tek hisse olsa bile takip listesiyle birlikte göster!)
         sym_in_df = [s for s in combined_syms if s in ret_df.columns]

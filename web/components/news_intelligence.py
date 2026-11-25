@@ -274,6 +274,9 @@ def fetch_analyst_actions(symbol: str, days: int = 10) -> list[dict]:
                     "date_str": dt.strftime("%Y-%m-%d"),
                 })
             elif pt_act == "Lowers" and prior_pt_f > 0 and curr_pt_f > 0:
+                # Hisse bölünmesi (örn. 4:1, 8:1, 10:1 split) kaynaklı sahte %75+ düşüş artefaktlarını ele
+                if prior_pt_f >= curr_pt_f * 3.5:
+                    continue
                 cut_pct = ((prior_pt_f - curr_pt_f) / prior_pt_f) * 100.0
                 if cut_pct >= 15.0:
                     actions.append({
@@ -316,40 +319,59 @@ def fetch_analyst_actions(symbol: str, days: int = 10) -> list[dict]:
         return []
 
 
+_BENIGN_REGEXES: list[str] = [
+    r"\b(?:space|lunar|mars|venus|deep-space|solar|interplanetary|nasa)\s+probes?\b",
+    r"\bstrike(?:s|d|ing)?\b[^.,;]{0,30}\b(?:deal|deals|agreement|partnership|pact|alliance|contract|price|prices)\b",
+    r"\b(?:options?|calls?|puts?)\b[^.,;]{0,20}\bstrikes?\b",
+    r"\bhalt(?:s|ed|ing)?\b[^.,;]{0,30}\b(?:losing|losses|slide|drop|decline|selloff|sell-off|slump|skid|bleeding)\b",
+    r"\bby\s+default\b",
+    r"\b(?:analysts?|investors?|traders?)\s+recalls?\b",
+]
+
+
+def _has_keyword(text_low: str, kw: str) -> bool:
+    """Kelime sınırı (word-boundary) duyarlı eşleşme yapar; alt-dize hatalarını önler."""
+    pattern = rf"(?<![a-zçğıöşü0-9]){re.escape(kw.lower())}(?:s|ed|ing)?(?![a-zçğıöşü0-9])" if len(kw) >= 4 and " " not in kw else rf"(?<![a-zçğıöşü0-9]){re.escape(kw.lower())}(?![a-zçğıöşü0-9])"
+    return bool(re.search(pattern, text_low))
+
+
 def classify_headline(title: str, symbol: str) -> dict[str, Any]:
     """Haber başlığını olay kategorisine ayırır ve şirkete özel olup olmadığını belirler."""
     sym = symbol.strip().upper()
     base = sym.replace(".IS", "")
     aliases = _get_aliases(sym)
     low = (title or "").lower()
+    cleaned_low = low
+    for rx in _BENIGN_REGEXES:
+        cleaned_low = re.sub(rx, " ", cleaned_low)
 
-    company_specific = any(a in low for a in aliases) or bool(
+    company_specific = any(_has_keyword(low, a) for a in aliases) or bool(
         re.search(rf"\b{re.escape(base)}\b", title or "")
     )
 
     for label, keywords in RED_EVENTS.items():
-        if any(kw in low for kw in keywords):
+        if any(_has_keyword(cleaned_low, kw) for kw in keywords):
             return {
                 "category_level": "RED",
                 "category_label": label,
                 "company_specific": company_specific,
             }
 
-    if any(kw in low for kw in GREEN_EVENTS):
+    if any(_has_keyword(cleaned_low, kw) for kw in GREEN_EVENTS):
         return {
             "category_level": "GREEN",
             "category_label": "Pozitif Katalizör",
             "company_specific": company_specific,
         }
 
-    if any(kw in low for kw in ORANGE_MACRO):
+    if any(_has_keyword(cleaned_low, kw) for kw in ORANGE_MACRO):
         return {
             "category_level": "ORANGE",
             "category_label": "Sektör / Makro Baskı",
             "company_specific": company_specific,
         }
 
-    if any(kw in low for kw in PRICE_MOVE_WORDS):
+    if any(_has_keyword(cleaned_low, kw) for kw in PRICE_MOVE_WORDS):
         return {
             "category_level": "PRICE_MOVE",
             "category_label": "Fiyat Hareketi Özeti",

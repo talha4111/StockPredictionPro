@@ -286,13 +286,15 @@ with tab_buy:
         if ai_pred.get("available"):
             wp = int(ai_pred.get("win_prob_pct", 50))
             sp = int(ai_pred.get("stop_prob_pct", 50))
+            _ai_tp = float(ai_pred.get("ai_target") or res["target1"])
+            _ai_sl = float(ai_pred.get("ai_stop") or res["stop_level"])
             footer_html = (
                 vote_strip
                 + "<div style='margin-top:10px;'>"
                 + prob_bar_html(
                     wp,
-                    f"🎯 15 Günde Önce Kâr Hedefine (${res['target1']:.2f}) Ulaşma İhtimali: %{wp}",
-                    f"⛔ Önce Kaçış Sınırına (${res['stop_level']:.2f}) Değme Riski: %{sp}",
+                    f"🎯 15 Günde Önce Kâr Hedefine (${_ai_tp:.2f}) Ulaşma İhtimali: %{wp}",
+                    f"⛔ Önce Kaçış Sınırına (${_ai_sl:.2f}) Değme Riski: %{sp}",
                 )
                 + f"<div class='spp-muted' style='margin-top:4px;'>"
                 f"📊 <b>Geçmiş Benzer Günler:</b> {esc(sym)} son 2 yılda benzer duruma <b>{ai_pred['analog_count']} kez</b> geldi; "

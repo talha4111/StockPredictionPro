@@ -107,7 +107,7 @@ def export_latest_scan(db_path: str = DB_PATH, out_path: str = OUT_PATH) -> int:
 if __name__ == "__main__":
     export_only = "--export-only" in sys.argv
     if not export_only:
-        os.environ.setdefault("STOCK_OUTCOME_TRACKING", "0")
+        os.environ.setdefault("STOCK_OUTCOME_TRACKING", "1")
         from stock_value_engine import tam_tarama_baslat
 
         print("Tam piyasa taraması başlatılıyor...")

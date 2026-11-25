@@ -162,6 +162,10 @@ def get_db_symbol_data(symbols: tuple):
                 result[sym] = {
                     "decision": row.get("Karar") or "IZLE",
                     "score": float(row.get("Faktör Skor (%)") or 50.0),
+                    "kalite": float(row["Kalite"]) if pd.notna(row.get("Kalite")) else None,
+                    "deger": float(row["Değer"]) if pd.notna(row.get("Değer")) else None,
+                    "momentum": float(row["Momentum"]) if pd.notna(row.get("Momentum")) else None,
+                    "risk": float(row["Risk"]) if pd.notna(row.get("Risk")) else None,
                     "db_fiyat": float(row.get("Fiyat ($)") or 0.0),
                     "as_of_date": str(row.get("Tarama Tarihi") or as_of),
                 }
@@ -177,7 +181,8 @@ def get_db_symbol_data(symbols: tuple):
         c = conn.cursor()
         placeholders = ",".join(["?"] * len(missing))
         c.execute(f"""
-            SELECT sembol, decision, ai_skor, fiyat, as_of_date
+            SELECT sembol, decision, ai_skor, fiyat, as_of_date,
+                   quality_score, value_score, momentum_score, risk_score
             FROM hisse_sinyalleri
             WHERE sembol IN ({placeholders})
               AND model_role IS NULL
@@ -191,6 +196,10 @@ def get_db_symbol_data(symbols: tuple):
                     "score": r[2] or 50.0,
                     "db_fiyat": r[3] or 0.0,
                     "as_of_date": r[4] or "",
+                    "kalite": float(r[5]) if r[5] is not None else None,
+                    "deger": float(r[6]) if r[6] is not None else None,
+                    "momentum": float(r[7]) if r[7] is not None else None,
+                    "risk": float(r[8]) if r[8] is not None else None,
                 }
         conn.close()
     except Exception:

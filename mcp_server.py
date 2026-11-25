@@ -189,6 +189,7 @@ def _handle_stock_quant_snapshot(args: dict[str, Any]) -> dict[str, Any]:
         },
         "factors": intel.get("factors"),
         "factor_conflicts": conflicts.get("conflicts", []),
+        "unified_verdict": intel.get("unified_verdict"),
     }
 
 

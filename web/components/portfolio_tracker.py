@@ -171,8 +171,19 @@ def calculate_fifo_portfolio(transactions=None):
     if transactions is None:
         transactions = load_transactions()
 
-    # Tarihe ve ID'ye göre sırala (kronolojik sıra)
-    sorted_tx = sorted(transactions, key=lambda x: (x.get("tarih", ""), x.get("id", "")))
+    # Tarihe, işlem tipine (aynı gün ALIS her zaman SATIS'tan önce) ve kayıt sırasına göre sırala
+    indexed_tx = list(enumerate(transactions))
+    sorted_tx = [
+        tx
+        for _, tx in sorted(
+            indexed_tx,
+            key=lambda item: (
+                str(item[1].get("tarih", "")),
+                0 if str(item[1].get("islem_tipi", "ALIS")).upper() == "ALIS" else 1,
+                item[0],
+            ),
+        )
+    ]
 
     buy_pools = {}   # sembol -> list of available buy lots
     closed_trades = []
@@ -180,10 +191,10 @@ def calculate_fifo_portfolio(transactions=None):
     for tx in sorted_tx:
         sym = tx["sembol"]
         tx_type = tx["islem_tipi"]
-        qty = tx["adet"]
-        price = tx["fiyat_usd"]
-        fee = tx.get("komisyon_usd", 0.0)
-        fx = tx.get("usdtry_kuru", 49.0)
+        qty = float(tx["adet"] or 0.0)
+        price = float(tx["fiyat_usd"] or 0.0)
+        fee = float(tx.get("komisyon_usd") or 0.0)
+        fx = float(tx.get("usdtry_kuru") or 49.0)
         tarih = tx["tarih"]
         tx_id = tx.get("id")
 
@@ -202,18 +213,23 @@ def calculate_fifo_portfolio(transactions=None):
                 "maliyet_lot_tl": price * fx,
             })
 
-        elif tx_type == "SATIS":
+        elif tx_type == "SATIS" and qty > 0:
             qty_to_sell = qty
-            while qty_to_sell > 0 and len(buy_pools[sym]) > 0:
+            while qty_to_sell > 0.00001 and len(buy_pools[sym]) > 0:
                 first_lot = buy_pools[sym][0]
                 matched_qty = min(qty_to_sell, first_lot["adet_kalan"])
+                orig_buy_qty = float(first_lot.get("adet_orijinal") or first_lot["adet_kalan"] or 1.0)
 
-                buy_cost_usd = matched_qty * first_lot["fiyat_usd"]
-                sell_val_usd = matched_qty * price
-                profit_usd = sell_val_usd - buy_cost_usd - fee
+                # Satış komisyonunu bu lota düşen pay oranında, alış komisyonunu ise orijinal alış lotu oranında düş
+                sell_fee_share = fee * (matched_qty / qty) if qty > 0 else 0.0
+                buy_fee_share = float(first_lot.get("komisyon_usd", 0.0)) * (matched_qty / orig_buy_qty) if orig_buy_qty > 0 else 0.0
 
-                buy_cost_tl = matched_qty * (first_lot["fiyat_usd"] * first_lot["usdtry_kuru"])
-                sell_val_tl = matched_qty * (price * fx) - (fee * fx)
+                buy_cost_usd = (matched_qty * first_lot["fiyat_usd"]) + buy_fee_share
+                sell_val_usd = (matched_qty * price) - sell_fee_share
+                profit_usd = sell_val_usd - buy_cost_usd
+
+                buy_cost_tl = matched_qty * (first_lot["fiyat_usd"] * first_lot["usdtry_kuru"]) + (buy_fee_share * first_lot["usdtry_kuru"])
+                sell_val_tl = matched_qty * (price * fx) - (sell_fee_share * fx)
                 profit_tl = sell_val_tl - buy_cost_tl
 
                 try:

@@ -102,11 +102,25 @@ def load_ai_weights() -> dict:
 
 
 def _calc_rsi(series: pd.Series, period: int = 14) -> pd.Series:
-    delta = series.diff()
-    gain = delta.where(delta > 0, 0.0).rolling(period).mean()
-    loss = (-delta.where(delta < 0, 0.0)).rolling(period).mean()
-    rs = gain / loss.replace(0, np.nan)
-    return (100.0 - (100.0 / (1.0 + rs))).fillna(50.0)
+    """Wilder EMA RSI (TradingView / kurumsal standart ile birebir uyumlu)."""
+    s = series.astype(float)
+    delta = s.diff()
+    gain = delta.clip(lower=0.0)
+    loss = -delta.clip(upper=0.0)
+    avg_gain = gain.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
+    avg_loss = loss.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
+    rs = avg_gain / avg_loss.replace(0.0, np.nan)
+    rsi = 100.0 - (100.0 / (1.0 + rs))
+    rsi = rsi.mask((avg_loss == 0) & (avg_gain > 0), 100.0)
+    return rsi.fillna(50.0)
+
+
+def _to_naive_date_index(idx: pd.Index) -> pd.DatetimeIndex:
+    """Farklı kaynaklardan (tz-aware EST vs tz-naive UTC) gelen tarih indekslerini ortak gün tabanına hizalar."""
+    dt_idx = pd.to_datetime(idx)
+    if getattr(dt_idx, "tz", None) is not None:
+        dt_idx = dt_idx.tz_localize(None)
+    return dt_idx.normalize()
 
 
 def _calc_adx_and_atr(df: pd.DataFrame, period: int = 14) -> tuple[pd.Series, pd.Series]:
@@ -133,9 +147,14 @@ def _get_market_benchmarks() -> tuple[pd.Series, pd.Series, pd.Series]:
         return _BENCHMARK_CACHE["data"]
     try:
         raw = yf.download(["SPY", "SMH", "^VIX"], period="2y", interval="1d", group_by="ticker", progress=False)
-        spy_c = raw["SPY"]["Close"].ffill()
-        smh_c = raw["SMH"]["Close"].ffill()
-        vix_c = raw["^VIX"]["Close"].ffill()
+        spy_c = raw["SPY"]["Close"].dropna()
+        smh_c = raw["SMH"]["Close"].dropna()
+        vix_c = raw["^VIX"]["Close"].dropna()
+        for s_obj in (spy_c, smh_c, vix_c):
+            s_obj.index = _to_naive_date_index(s_obj.index)
+        spy_c = spy_c[~spy_c.index.duplicated(keep="last")].ffill()
+        smh_c = smh_c[~smh_c.index.duplicated(keep="last")].ffill()
+        vix_c = vix_c[~vix_c.index.duplicated(keep="last")].ffill()
         res = (spy_c, smh_c, vix_c)
         _BENCHMARK_CACHE["ts"] = now
         _BENCHMARK_CACHE["data"] = res
@@ -181,22 +200,37 @@ def _extract_features_df(df: pd.DataFrame, spy_c: pd.Series, smh_c: pd.Series, v
     feat["lower_wick_vol"] = (((np.minimum(c, o) - l) / rng).fillna(0.0) * vol_ratio).clip(0.0, 4.0)
 
     atr_pct_safe = (atr_safe / c).replace(0, np.nan).fillna(0.03)
+    df_dates = _to_naive_date_index(df.index)
+    c_pct10 = c.pct_change(10).fillna(0.0).values
+    atr_pct_vals = atr_pct_safe.values
+
     if not spy_c.empty:
-        spy_al = spy_c.reindex(df.index).ffill().bfill()
-        feat["rel_spy_atr"] = ((c.pct_change(10).fillna(0.0) - spy_al.pct_change(10).fillna(0.0)) / atr_pct_safe).clip(-6.0, 6.0)
+        spy_s = spy_c[~spy_c.index.duplicated(keep="last")]
+        spy_al = spy_s.reindex(df_dates).ffill().bfill()
+        spy_pct10 = spy_al.pct_change(10).fillna(0.0).values
+        feat["rel_spy_atr"] = pd.Series(
+            ((c_pct10 - spy_pct10) / atr_pct_vals), index=df.index
+        ).clip(-6.0, 6.0)
     else:
         feat["rel_spy_atr"] = 0.0
 
     if not smh_c.empty:
-        smh_al = smh_c.reindex(df.index).ffill().bfill()
-        feat["rel_smh_atr"] = ((c.pct_change(10).fillna(0.0) - smh_al.pct_change(10).fillna(0.0)) / atr_pct_safe).clip(-6.0, 6.0)
+        smh_s = smh_c[~smh_c.index.duplicated(keep="last")]
+        smh_al = smh_s.reindex(df_dates).ffill().bfill()
+        smh_pct10 = smh_al.pct_change(10).fillna(0.0).values
+        feat["rel_smh_atr"] = pd.Series(
+            ((c_pct10 - smh_pct10) / atr_pct_vals), index=df.index
+        ).clip(-6.0, 6.0)
     else:
         feat["rel_smh_atr"] = 0.0
 
     if not vix_c.empty:
-        vix_al = vix_c.reindex(df.index).ffill().bfill()
-        feat["vix_level"] = vix_al.fillna(18.5)
-        feat["vix_change_5d"] = (vix_al.pct_change(5).fillna(0.0) * 100.0).clip(-40.0, 80.0)
+        vix_s = vix_c[~vix_c.index.duplicated(keep="last")]
+        vix_al = vix_s.reindex(df_dates).ffill().bfill()
+        feat["vix_level"] = pd.Series(vix_al.fillna(18.5).values, index=df.index)
+        feat["vix_change_5d"] = pd.Series(
+            (vix_al.pct_change(5).fillna(0.0).values * 100.0), index=df.index
+        ).clip(-40.0, 80.0)
     else:
         feat["vix_level"] = 18.5
         feat["vix_change_5d"] = 0.0
@@ -307,12 +341,21 @@ def predict_stock_triple_barrier(
             y_hist = labels[valid_mask]
             r_hist = rets[valid_mask]
 
-            # Hissenin geçmişindeki en benzer 25 günü (Tarihsel İkizler) bul
+            # Hissenin geçmişindeki en benzer günleri (en az 5 iş günü aralıklı bağımsız olaylar) bul
             X_hist_norm = (X_hist - means) / scales
             dists = np.linalg.norm(X_hist_norm - z_latest, axis=1)
             k_analog = min(25, max(10, len(dists) // 6))
-            nearest_idx = np.argsort(dists)[:k_analog]
-            analog_count = int(k_analog)
+            sorted_idx = np.argsort(dists)
+            selected_idx: list[int] = []
+            for cand in sorted_idx:
+                if all(abs(int(cand) - prev_c) >= 5 for prev_c in selected_idx):
+                    selected_idx.append(int(cand))
+                    if len(selected_idx) >= k_analog:
+                        break
+            if len(selected_idx) < min(8, len(sorted_idx)):
+                selected_idx = [int(x) for x in sorted_idx[:k_analog]]
+            nearest_idx = np.array(selected_idx, dtype=int)
+            analog_count = int(len(nearest_idx))
             analog_win_rate = float(np.mean(y_hist[nearest_idx]))
             analog_avg_ret_pct = float(np.mean(r_hist[nearest_idx]) * 100.0)
 
@@ -336,9 +379,20 @@ def predict_stock_triple_barrier(
         raw_prob = 0.50 * p_universal + 0.25 * p_rf + 0.25 * analog_win_rate
 
         # Eğer hedef ve stop fiyatları dışarıdan verilmişse (Alım Avcısı'ndaki dinamik seviyeler),
-        # ödül/risk oranına göre küçük bir bariyer simetri düzeltmesi uygula
-        ai_target = round(target_price if target_price else current_price + 1.8 * current_atr, 2)
-        ai_stop = round(stop_price if stop_price else current_price - 1.8 * current_atr, 2)
+        # bariyer mesafesi asimetrisine göre olasılık düzeltmesi uygula ve 15G gerçekçi hedefi sınırla
+        sym_tp = current_price + 1.8 * current_atr
+        sym_sl = max(0.01, current_price - 1.8 * current_atr)
+        ai_target = round(
+            min(float(target_price), current_price + 2.6 * current_atr) if target_price else sym_tp,
+            2,
+        )
+        ai_stop = round(float(stop_price) if stop_price else sym_sl, 2)
+        tp_dist = max(ai_target - current_price, current_atr * 0.4, 1e-4)
+        sl_dist = max(current_price - ai_stop, current_atr * 0.4, 1e-4)
+        asym_ratio = float(np.clip(sl_dist / tp_dist, 0.45, 1.85))
+        p_clamped = float(np.clip(raw_prob, 0.05, 0.95))
+        odds_adj = (p_clamped / (1.0 - p_clamped)) * (asym_ratio ** 0.45)
+        raw_prob = odds_adj / (1.0 + odds_adj)
 
         # Bilançoya 5 günden az kaldıysa yazı-tura belirsizliği nedeniyle güveni törpüle
         earnings_penalty = False

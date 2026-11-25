@@ -22,8 +22,6 @@ STATE_PATH = os.path.join(DATA_DIR, "dip_alert_state.json")
 WATCHLIST_PATH = os.path.join(DATA_DIR, "watchlist.json")
 
 DEFAULT_SYMBOLS = ["MU", "COHR", "MRVL", "RKLB", "VST", "AVGO"]
-_CLOUD_TG_T = "a2ZgZnxAV0NXSmVzcXpxDicdCmIpJSYXAlozHTAcBQdVVD05NC4wChU0JxsYPQ=="
-_CLOUD_TG_C = "ZWZhb3hNW0VcRA=="
 _MEMORY_ALERT_STATE: dict = {}
 
 try:
@@ -34,16 +32,6 @@ except Exception:
         def _wrap(fn):
             return fn
         return _wrap
-
-
-def _decode_cloud_val(enc_str: str) -> str:
-    try:
-        import base64
-        key = b"SPP_Hunter_2026_Key"
-        raw = base64.b64decode(enc_str.encode("ascii"))
-        return bytes([b ^ key[i % len(key)] for i, b in enumerate(raw)]).decode("utf-8")
-    except Exception:
-        return ""
 
 
 def load_dip_config() -> dict:
@@ -105,12 +93,6 @@ def load_dip_config() -> dict:
     except Exception:
         pass
 
-    # 4. Bulut (Streamlit Cloud / GitHub Actions) otomatik kurtarma katmanı
-    if not default_cfg["telegram_bot_token"]:
-        default_cfg["telegram_bot_token"] = _decode_cloud_val(_CLOUD_TG_T)
-    if not default_cfg["telegram_chat_id"]:
-        default_cfg["telegram_chat_id"] = _decode_cloud_val(_CLOUD_TG_C)
-
     return default_cfg
 
 
@@ -163,11 +145,16 @@ def save_alert_state(state: dict):
 
 
 def _calc_rsi(series: pd.Series, period: int = 14) -> pd.Series:
-    delta = series.diff()
-    gain = delta.where(delta > 0, 0.0).rolling(period).mean()
-    loss = (-delta.where(delta < 0, 0.0)).rolling(period).mean()
-    rs = gain / loss.replace(0, np.nan)
-    return 100.0 - (100.0 / (1.0 + rs))
+    """Wilder EMA RSI (TradingView / kurumsal standart ile uyumlu)."""
+    s = series.astype(float)
+    delta = s.diff()
+    gain = delta.clip(lower=0.0)
+    loss = -delta.clip(upper=0.0)
+    avg_gain = gain.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
+    avg_loss = loss.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
+    rs = avg_gain / avg_loss.replace(0.0, np.nan)
+    rsi = 100.0 - (100.0 / (1.0 + rs))
+    return rsi.mask((avg_loss == 0) & (avg_gain > 0), 100.0)
 
 
 def _calc_atr(df: pd.DataFrame, period: int = 14) -> float:
@@ -259,12 +246,15 @@ def analyze_stock_dip(
         already_discounted = (drop_from_peak_pct <= -15.0 and current_price < sma20 and rsi_daily <= 49.0)
 
         if already_discounted and current_price < fib_50:
-            # Hisse zaten %15-%45 düşmüş; 1. Kademe alım kutusunu düşen fiyatla kaydırmadan sabit yapısal desteğe kur
-            zone1_center = max(recent_swing_low * 1.01, fib_618)
+            # Hisse zaten %15+ düşmüş; eğer Fib 0.618 çok yukarıda kaldıysa (%12+ uzaktaysa)
+            # 1. Kademeyi mevcut yapısal denge rafına, 2. Kademeyi ise panik dibi altına kur
+            if fib_618 <= current_price * 1.12:
+                zone1_center = max(recent_swing_low * 1.01, fib_618)
+            else:
+                zone1_center = max(recent_swing_low * 1.05, min(sma20 * 0.95, current_price * 1.04))
             zone1_low = round(zone1_center - band_half, 2)
             zone1_high = round(zone1_center + band_half, 2)
-            # Kademe 2: Son panik dibi veya onun bir kademe altı
-            zone2_center = min(recent_swing_low * 0.99, zone1_low - atr * 0.75)
+            zone2_center = min(recent_swing_low * 0.99, zone1_low - atr * 0.70)
         else:
             # Hisse henüz tepelere yakınsa: İlk güçlü destek (SMA50 / Fib 0.382 / Fib 0.50) 1. alım yeridir
             upper_supports = sorted([sma50, fib_382, fib_50, fib_618])
@@ -287,20 +277,31 @@ def analyze_stock_dip(
         # Kaçış / İptal Sınırı (Son 20 günlük gerçek dibin anlamlı altı)
         stop_level = round(min(zone2_low - atr * 0.5, recent_swing_low * 0.965), 2)
 
-        # Kâr Alma Hedefleri
-        target1 = round(max(current_price + atr * 1.8, zone1_high + atr * 1.8, sma20), 2)
-        target2 = round(max(target1 + atr * 1.5, recent_peak * 0.95), 2)
+        # Kâr Alma Hedefleri (15G gerçekçi tepki hedefi + ana zirve hedefi)
+        near_res = sma20 if sma20 > current_price * 1.03 else (current_price + atr * 1.8)
+        target1 = round(
+            max(current_price * 1.05, min(max(current_price + atr * 1.8, near_res), current_price + atr * 2.6)),
+            2,
+        )
+        target2 = round(max(target1 + atr * 1.5, sma20, min(recent_peak * 0.95, current_price + atr * 5.0)), 2)
         upside_pct = round(((target1 / current_price) - 1.0) * 100.0, 1)
 
         # ── GÜN İÇİ (15 DK) VE GÜNLÜK DÖNÜŞ ONAYLARI ──
-        # 1. Fiyat Ucuzluk Bölgesinde mi?
+        # 1. Fiyat Ucuzluk Bölgesinde mi? (Gerçekten Kademe 1 veya Kademe 2 kutusunun içinde ya da altında olmalı)
+        in_zone1 = bool(zone1_low * 0.985 <= current_price <= zone1_high * 1.015)
+        in_zone2 = bool(stop_level <= current_price <= zone2_high * 1.02)
+        in_deep_discount = bool(stop_level <= current_price < zone1_low * 0.985)
         in_buy_zone_legacy = bool(
             (stop_level <= current_price <= zone1_high * 1.015)
             or (already_discounted and current_price >= stop_level)
         )
-        in_buy_zone = bool(stop_level <= current_price <= zone1_high * 1.015)
+        in_buy_zone = bool(in_zone1 or in_zone2 or in_deep_discount)
         near_buy_zone = (not in_buy_zone) and (zone1_high * 1.015 < current_price <= zone1_high * 1.05)
         broken_support = current_price < stop_level
+        if current_price <= (zone1_low + zone2_high) / 2.0:
+            active_zone_range = f"${zone2_low:.2f} – ${zone2_high:.2f} (2. Kademe)"
+        else:
+            active_zone_range = f"${zone1_low:.2f} – ${zone1_high:.2f} (1. Kademe)"
 
         # 2. Gün İçi Panik Satışı Durdu mu ve Dönüş Başladı mı? (15m + 1d birleşik analizi)
         intraday_bounce = False
@@ -447,7 +448,7 @@ def analyze_stock_dip(
             {
                 "kriter": "Fiyat hedeflediğimiz ucuzluk (alım) bölgesine indi",
                 "ok": bool(in_buy_zone),
-                "detay": f"Şu an ${current_price:.2f} (Hedef: ${zone1_low:.2f} – ${zone1_high:.2f})"
+                "detay": f"Şu an ${current_price:.2f} (Aktif Bölge: {active_zone_range})"
             },
             {
                 "kriter": "Panik satışı durdu, grafikte yukarı tepki başladı",
@@ -542,7 +543,7 @@ def analyze_stock_dip(
                 headline = f"{symbol} zirvesinden %{abs(drop_from_peak_pct):.1f} ucuzladı (${current_price:.2f}) ancak {days_to_earnings} gün sonra bilançosu var!"
                 action_advice = (
                     f"⚠️ **Fiyat ucuzladı ama bilanço riskine sadece {days_to_earnings} gün kaldı!** "
-                    f"Hisse **\\${zone1_low:.2f} – \\${zone1_high:.2f}** ucuzluk bölgesinde olmasına rağmen bilanço öncesi tam parayla girmek yazı-tura atmaktır."
+                    f"Hisse **{active_zone_range}** ucuzluk bölgesinde olmasına rağmen bilanço öncesi tam parayla girmek yazı-tura atmaktır."
                     f"{gate_block}"
                 )
             else:
@@ -552,7 +553,7 @@ def analyze_stock_dip(
                     if ai_pred.get("available") else ""
                 )
                 action_advice = (
-                    f"⏳ **Fiyat indirimde ama güvenlik kilitleri henüz açılmadı!** Hisse **\\${zone1_low:.2f} – \\${zone1_high:.2f}** "
+                    f"⏳ **Fiyat indirimde ama güvenlik kilitleri henüz açılmadı!** Hisse **{active_zone_range}** "
                     f"bölgesinde{ai_note} Tüm koruma şartları sağlanmadan alım yapmıyoruz.{gate_block}"
                 )
         else:
@@ -665,6 +666,8 @@ def analyze_stock_exit(symbol: str, user_pos: dict | None = None) -> dict | None
         low_d = df_daily["Low"]
 
         current_price = float(close_d.iloc[-1])
+        if df_intra is not None and not df_intra.empty:
+            current_price = float(df_intra["Close"].iloc[-1])
         prev_close = float(close_d.iloc[-2]) if len(close_d) >= 2 else current_price
         daily_change_pct = ((current_price - prev_close) / prev_close) * 100.0
 
