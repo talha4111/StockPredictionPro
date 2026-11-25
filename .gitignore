@@ -20,9 +20,15 @@ QuantBot/demo_trade_journal*.jsonl
 
 # ========== YAPAY ZEKA MODELLERİ (Her sunucuda sıfırdan eğitilir) ==========
 *.pkl
+*.keras
+beyin_*
 beyin_*_meta.json
 QuantBot/beyin_*
 QuantBot/stock_beyin_*
+*-Talha*
+* - Kopya/
+Yeni Metin Belgesi*.txt
+scratch_*.py
 
 # ========== VERİTABANI & VERİ DOSYALARI ==========
 *.db
